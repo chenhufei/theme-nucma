@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="https://www.thymeleaf.org" th:fragment="html (content)" data-theme="light" th:classappend="|theme-bg-${theme.config.appearance?.background_mode ?: 'mesh'} theme-glass-${theme.config.appearance?.glass_strength ?: 'standard'}|">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="'内容分类 - ' + ${site.title}"></title>
+  <link rel="stylesheet" th:href="@{/assets/css/main.css(v={VERSION})}">
+  <th:block th:replace="~{modules/common/components :: headMeta}"></th:block>
+</head>
+<body class="theme-page">
+  <th:block th:replace="~{modules/common/components :: header}"></th:block>
+  <th:block th:replace="~{modules/common/components :: mobileMenu}"></th:block>
+
+  <main>
+    <th:block th:replace="${content}" />
+  </main>
+  <th:block th:replace="~{modules/common/components :: footer}"></th:block>
+  <th:block th:replace="~{modules/common/components :: baseScripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,811 @@
+﻿apiVersion: v1alpha1
+kind: Setting
+metadata:
+  name: theme-nucma-setting
+spec:
+  forms:
+
+    - group: appearance
+      label: �����ʽ
+      formSchema:
+        - $formkit: select
+          name: default_theme_mode
+          label: Ĭ����ɫģʽ
+          value: system
+          options:
+            - label: ����ϵͳ
+              value: system
+            - label: ǳɫ
+              value: light
+            - label: ��ɫ
+              value: dark
+        - $formkit: select
+          name: card_radius
+          label: ��ƬԲ��
+          value: xl
+          options:
+            - label: С��8px��
+              value: sm
+            - label: �У�12px��
+              value: md
+            - label: ��16px��
+              value: xl
+            - label: ����24px��
+              value: 2xl
+        - $formkit: select
+          name: body_font
+          label: ��������
+          value: misans
+          options:
+            - label: ϵͳĬ��
+              value: system
+            - label: ϼ���Ŀ�
+              value: lxgw-wenkai
+            - label: MiSans
+              value: misans
+            - label: �Զ���
+              value: custom
+        - $formkit: select
+          name: misans_weight
+          label: MiSans ����
+          value: bold
+          help: �� MiSans ������Ч
+          options:
+            - label: Regular��ϸ��
+              value: regular
+            - label: Medium���У�
+              value: medium
+            - label: Bold���֣�
+              value: bold
+        - $formkit: text
+          name: custom_font_url
+          label: �Զ������� CSS ����
+          placeholder: "https://fonts.googleapis.com/css2?family=..."
+          help: �Զ���������Ч
+        - $formkit: text
+          name: custom_font_family
+          label: �Զ�����������
+          placeholder: "'MyFont', sans-serif"
+          help: �Զ���������Ч
+        - $formkit: checkbox
+          name: enable_animations
+          label: ���ù�����Ч
+          value: true
+        - $formkit: checkbox
+          name: enable_back_to_top
+          label: ��ʾ���ض�����ť
+          value: true
+        - $formkit: checkbox
+          name: enable_login_style
+          label: ���õ�¼/ע��ҳ����
+          value: true
+          help: �رպ�ʹ�� Halo Ĭ����ʽ
+        - $formkit: checkbox
+          name: load_hero_font
+          label: ���� Hero ����������
+          value: true
+          help: ϼ���Ŀ����壬�رպ�ʹ��ϵͳ����
+        - $formkit: select
+          name: background_effect
+          label: ����Ч��
+          value: none
+          options:
+            - label: ��
+              value: none
+            - label: �������
+              value: gradient
+            - label: ��������
+              value: orbs
+            - label: ����Ч��
+              value: particles
+            - label: ����Ƽ�
+              value: grid
+            - label: ���Ư��
+              value: dots
+            - label: Բ�λ���
+              value: circles
+            - label: C4D���峡��
+              value: c4d
+
+    - group: header
+      label: ������
+      formSchema:
+        - $formkit: checkbox
+          name: show_theme_toggle
+          label: ��ʾ�����л���ť
+          value: true
+        - $formkit: checkbox
+          name: show_user_avatar
+          label: ��ʾ�û�ͷ��/��¼��ť
+          value: true
+
+    - group: home
+      label: ��ҳ����
+      formSchema:
+        - $formkit: checkbox
+          name: show_hero
+          label: ��ʾ Hero ����
+          value: true
+        - $formkit: text
+          name: home_subtitle
+          label: ��ҳ������
+          value: �����뷨����¼����
+          placeholder: ����վ�㸱���⣬���ʹ��Ĭ��
+        - $formkit: select
+          name: hero_subtitle_size
+          label: �����������С
+          value: xl
+          options:
+            - label: С��18px��
+              value: sm
+            - label: �У�24px��
+              value: md
+            - label: ��32px��
+              value: lg
+            - label: ����40px��
+              value: xl
+        - $formkit: text
+          name: hero_motto
+          label: Hero ��ּ
+          value: ������ ��������
+          help: �������ʾ
+        - $formkit: select
+          name: hero_motto_size
+          label: ��ּ�����С
+          value: base
+          options:
+            - label: С��14px��
+              value: sm
+            - label: �У�16px��
+              value: base
+            - label: ��18px��
+              value: lg
+        - $formkit: checkbox
+          name: hero_show_scroll_hint
+          label: ��ʾ������ʾ
+          value: true
+        - $formkit: text
+          name: hero_secondary_link
+          label: Hero �ΰ�ť����
+          value: /page_about
+          placeholder: /page_about
+          help: ���ơ��˽���ࡱ��ť��ת��ַ�����ʱ���˵� /page_about
+        - $formkit: text
+          name: home_section_title
+          label: �����������
+          value: ��������
+        - $formkit: select
+          name: posts_per_page
+          label: ��ҳ������
+          value: 8
+          options:
+            - label: 4 ƪ
+              value: 4
+            - label: 6 ƪ
+              value: 6
+            - label: 8 ƪ
+              value: 8
+            - label: 12 ƪ
+              value: 12
+            - label: 16 ƪ
+              value: 16
+        - $formkit: select
+          name: post_cover_ratio
+          label: ����ͼ����
+          value: '16/9'
+          options:
+            - label: 16:9��������
+              value: '16/9'
+            - label: 4:3����׼��
+              value: '4/3'
+            - label: 1:1�����Σ�
+              value: '1/1'
+            - label: 3:2����Ƭ��
+              value: '3/2'
+        - $formkit: checkbox
+          name: show_post_stats
+          label: ��ʾ����ͳ�ƣ��Ķ�/���ޣ�
+          value: true
+        - $formkit: checkbox
+          name: show_reviews_section
+          label: ��ʾ�û���������
+          value: true
+        - $formkit: checkbox
+          name: show_faq_section
+          label: ��ʾ FAQ ����
+          value: true
+        - $formkit: checkbox
+          name: show_links_section
+          label: ��ʾ������������
+          value: true
+          help: �谲װ�������Ӳ��
+        - $formkit: text
+          name: featured_link_ids
+          label: ����ɸѡ ID
+          value: ""
+          placeholder: "1,2,3"
+          help: ���ŷָ�������ʾȫ��
+        - $formkit: checkbox
+          name: show_members_section
+          label: ��ʾ�Ŷӳ�Ա����
+          value: true
+          help: �谲װ��Ա���
+        - $formkit: text
+          name: featured_member_ids
+          label: ��Աɸѡ ID
+          value: ""
+          placeholder: "1,2,3"
+          help: ���ŷָ�������ʾȫ��
+        - $formkit: repeater
+          name: static_members
+          label: ��̬��Ա�б�
+          help: �ֶ����ó�Ա�����ȼ����ڲ��
+          children:
+            - $formkit: text
+              name: displayName
+              label: ����
+              validation: required
+            - $formkit: text
+              name: avatar
+              label: ͷ������
+              placeholder: https://...
+            - $formkit: text
+              name: bio
+              label: ���
+            - $formkit: text
+              name: school
+              label: ѧУ/����
+
+    - group: reviews
+      label: �û�����
+      formSchema:
+        - $formkit: repeater
+          name: review_items
+          label: �����б�
+          value:
+            - content: �����Ű��������Ķ����鼫�ѣ���ɫģʽҲ�����ʣ�ǿ���Ƽ���
+              author: ��С��
+              role: ǰ�˹���ʦ
+            - content: �����ٶȺܿ죬���½ṹ���������Ҽ�����������ĵĲ������⡣
+              author: ������
+              role: UI ���ʦ
+            - content: �������ܺܺ��ã�Ŀ¼�����ó����Ķ����ɺܶ࣬����ǳ�������
+              author: �½���
+              role: ȫջ������
+            - content: ��ɫģʽ�µ���ɫ�ǳ����ʣ���ʱ���Ķ��۾����ۣ�ϸ�����úܺá�
+              author: ��˼Զ
+              role: ��������
+            - content: �ƶ����������������ֻ����Ķ�����������һ���ã����ޣ�
+              author: ������
+              role: ��Ʒ����
+          children:
+            - $formkit: text
+              name: content
+              label: ��������
+              validation: required
+            - $formkit: text
+              name: author
+              label: ������
+              validation: required
+            - $formkit: text
+              name: role
+              label: �������
+              placeholder: ��������������
+
+    - group: faq
+      label: ��������
+      formSchema:
+        - $formkit: repeater
+          name: faq_items
+          label: FAQ �б�
+          value:
+            - question: ����֧����Щ�������
+              answer: ֧�������ִ������������ Chrome��Firefox��Safari��Edge �ȣ�����ʹ�����°汾�Ի��������顣
+            - question: ��ζ��Ĳ��͸��£�
+              answer: ����ͨ��ҳ��ײ��� RSS ���Ӷ��ģ�Ҳ���Թ�ע���ǵ��罻ý���˺Ż�ȡ���¶�̬��
+            - question: ���¿���ת����
+              answer: ת����ע��ԭ�����Ӻ�������Ϣ����ҵ��;����ǰ��ϵ�����Ȩ��
+            - question: �����ϵ���ߣ�
+              answer: ����ͨ������ҳ�����ϵ��ʽ�����������·��������ۣ��һᾡ��ظ���
+          children:
+            - $formkit: text
+              name: question
+              label: ����
+              validation: required
+            - $formkit: textarea
+              name: answer
+              label: ��
+              rows: 3
+              validation: required
+
+    - group: post
+      label: ����ҳ
+      formSchema:
+        - $formkit: select
+          name: post_cover_height_preset
+          label: ����ͼ�߶�
+          value: 'medium'
+          options:
+            - label: С��300px �̶���
+              value: small
+            - label: �У�45vh ����Ӧ�����520px��
+              value: medium
+            - label: ��60vh ����Ӧ�����700px��
+              value: large
+            - label: ȫ����100vh ȫ����
+              value: fullscreen
+            - label: �Զ���
+              value: custom
+        - $formkit: text
+          name: post_cover_height_custom
+          label: �Զ������ͼ�߶�
+          value: 'clamp(300px,45vh,520px)'
+          placeholder: '�磺400px �� 50vh'
+          help: ѡ���Զ��塹ʱ��Ч��֧�� px��vh��clamp() �� CSS ֵ
+        - $formkit: text
+          name: default_cover_image
+          label: Ĭ�Ϸ���ͼ
+          value: ""
+          placeholder: 'https://example.com/cover.jpg'
+          help: �����޷���ʱʹ�ã����ʹ�����ͼƬ
+        - $formkit: text
+          name: date_format
+          label: ���ڸ�ʽ
+          value: 'yyyy��MM��dd��'
+          placeholder: 'yyyy��MM��dd��'
+          help: �� yyyy-MM-dd��dd/MM/yyyy
+        - $formkit: checkbox
+          name: show_cover
+          label: ��ʾ���·���ͼ
+          value: true
+        - $formkit: checkbox
+          name: show_excerpt
+          label: ��ʾ����ժҪ
+          value: true
+        - $formkit: checkbox
+          name: show_toc
+          label: ��ʾĿ¼����
+          value: true
+        - $formkit: checkbox
+          name: show_reading_time
+          label: ��ʾԤ���Ķ�ʱ��
+          value: true
+        - $formkit: checkbox
+          name: show_views
+          label: ��ʾ�Ķ���
+          value: true
+        - $formkit: checkbox
+          name: show_upvote
+          label: ��ʾ������
+          value: true
+        - $formkit: checkbox
+          name: show_tags
+          label: ��ʾ��ǩ
+          value: true
+        - $formkit: checkbox
+          name: show_author_card
+          label: ��ʾ���߿�Ƭ
+          value: true
+        - $formkit: checkbox
+          name: show_share
+          label: ��ʾ�����ť
+          value: true
+        - $formkit: select
+          name: prose_size
+          label: �����ֺ�
+          value: base
+          options:
+            - label: С��14px��
+              value: sm
+            - label: ��׼��16px��
+              value: base
+            - label: ��18px��
+              value: lg
+        - $formkit: checkbox
+          name: paragraph_indent
+          label: ������������
+          value: true
+          help: �����Ű�ϰ��
+
+    - group: about
+      label: ����ҳ
+      formSchema:
+        - $formkit: text
+          name: name
+          label: ���� / �ǳ�
+          value: ȫ����У��ý������
+          placeholder: ��������
+          validation: required
+        - $formkit: text
+          name: avatar
+          label: ͷ������
+          value: ""
+          placeholder: https://...
+          help: ���ʹ��վ�� Logo
+        - $formkit: textarea
+          name: bio
+          label: ���˼��
+          value: ȫ����У��ý��������һ���ɸ�Уѧ����ɵ���ý����֯�������ڴ���У԰�Ļ����������������
+          rows: 3
+          placeholder: ��̽����Լ���֧�ֻ���
+        - $formkit: text
+          name: location
+          label: ���ڵ�
+          value: �й�
+          placeholder: �����������й�
+        - $formkit: text
+          name: job_title
+          label: ְλ / ���
+          value: ��У��ý����֯
+          placeholder: ����ȫջ����ʦ
+        - $formkit: checkbox
+          name: show_stats
+          label: ��ʾվ��ͳ��
+          value: true
+        - $formkit: checkbox
+          name: show_skills
+          label: ��ʾ���ܱ�ǩ
+          value: true
+        - $formkit: repeater
+          name: skills
+          label: ���ܱ�ǩ
+          value:
+            - name: Vue.js
+              color: "#42b883"
+            - name: TypeScript
+              color: "#3178c6"
+            - name: Python
+              color: "#3776ab"
+            - name: Node.js
+              color: "#339933"
+            - name: Docker
+              color: "#2496ed"
+          children:
+            - $formkit: text
+              name: name
+              label: ��������
+              validation: required
+            - $formkit: text
+              name: color
+              label: ��ǩ��ɫ
+              placeholder: "#6366f1"
+        - $formkit: checkbox
+          name: show_timeline
+          label: ��ʾʱ����
+          value: true
+        - $formkit: repeater
+          name: timeline
+          label: ʱ����
+          value:
+            - year: "2025"
+              title: ��ʼд����
+              desc: ����˲��ͣ���ʼϵͳ��¼�����ɳ����������
+            - year: "2024"
+              title: ���뿪Դ����
+              desc: ��������Դ��Ŀ�����״��룬��ʶ�˺ܶ�־ͬ���ϵ�����
+            - year: "2023"
+              title: ת��ȫջ����
+              desc: ��ǰ����չ����ˣ������������� Web ��������ջ
+          help: ��ʱ�䵹������
+          children:
+            - $formkit: text
+              name: year
+              label: ���
+              placeholder: ����2024
+              validation: required
+            - $formkit: text
+              name: title
+              label: ����
+              validation: required
+            - $formkit: text
+              name: desc
+              label: ����
+        - $formkit: checkbox
+          name: show_contact
+          label: ��ʾ��ϵ��ʽ
+          value: true
+        - $formkit: repeater
+          name: contacts
+          label: ��ϵ��ʽ
+          value:
+            - label: �ʼ�
+              value: hello@example.com
+              icon_type: preset
+              icon: email
+              url: mailto:hello@example.com
+            - label: GitHub
+              value: github.com/yourname
+              icon_type: preset
+              icon: github
+              url: https://github.com/yourname
+          children:
+            - $formkit: text
+              name: label
+              label: ����
+              validation: required
+            - $formkit: text
+              name: value
+              label: ��ʾ����
+              validation: required
+            - $formkit: text
+              name: url
+              label: ���ӵ�ַ
+            - $formkit: select
+              name: icon_type
+              label: ͼ������
+              value: preset
+              options:
+                - label: Ԥ��ͼ��
+                  value: preset
+                - label: ͼƬ����
+                  value: image
+                - label: ���� SVG
+                  value: svg
+            - $formkit: select
+              name: icon
+              label: Ԥ��ͼ��
+              value: link
+              help: Ԥ��ͼ��������Ч
+              options:
+                - label: ͨ������
+                  value: link
+                - label: �ʼ�
+                  value: email
+                - label: GitHub
+                  value: github
+                - label: ΢��
+                  value: weibo
+                - label: Bilibili
+                  value: bilibili
+                - label: ΢��
+                  value: wechat
+                - label: QQ
+                  value: qq
+                - label: ֪��
+                  value: zhihu
+                - label: ����
+                  value: douyin
+                - label: С����
+                  value: xiaohongshu
+                - label: ���
+                  value: juejin
+                - label: CSDN
+                  value: csdn
+                - label: ����
+                  value: douban
+                - label: Steam
+                  value: steam
+                - label: YouTube
+                  value: youtube
+                - label: Instagram
+                  value: instagram
+                - label: RSS
+                  value: rss
+            - $formkit: text
+              name: icon_image
+              label: ͼ��ͼƬ����
+              placeholder: "https://..."
+              help: ͼƬ������Ч
+            - $formkit: textarea
+              name: icon_svg
+              label: SVG ͼ�����
+              rows: 3
+              placeholder: "<svg viewBox=\"0 0 24 24\" ...>...</svg>"
+              help: SVG ������Ч
+
+    - group: footer
+      label: ҳ������
+      formSchema:
+        - $formkit: text
+          name: site_desc
+          label: վ������
+          value: ȫ����У��ý������ - ����У԰�Ļ���������������
+          placeholder: ���ʹ��վ�㸱����
+        - $formkit: checkbox
+          name: show_social
+          label: ��ʾ�罻ͼ��
+          value: true
+        - $formkit: repeater
+          name: social_links
+          label: �罻�����б�
+          summary: name
+          value:
+            - name: GitHub
+              url: https://github.com/yourname
+              icon_type: preset
+              icon: github
+            - name: �ʼ�
+              url: mailto:hello@example.com
+              icon_type: preset
+              icon: email
+            - name: RSS
+              url: /rss.xml
+              icon_type: preset
+              icon: rss
+          help: �迪�����ʾ�罻ͼ�꡹
+          children:
+            - $formkit: text
+              name: name
+              label: ����
+              validation: required
+            - $formkit: text
+              name: url
+              label: ���ӵ�ַ
+              validation: required
+            - $formkit: select
+              name: icon_type
+              label: ͼ������
+              value: preset
+              options:
+                - label: Ԥ��ͼ��
+                  value: preset
+                - label: ͼƬ����
+                  value: image
+                - label: ���� SVG
+                  value: svg
+            - $formkit: select
+              name: icon
+              label: Ԥ��ͼ��
+              value: link
+              help: Ԥ��ͼ��������Ч
+              options:
+                - label: ͨ������
+                  value: link
+                - label: �ʼ�
+                  value: email
+                - label: GitHub
+                  value: github
+                - label: ΢��
+                  value: weibo
+                - label: Bilibili
+                  value: bilibili
+                - label: ΢��
+                  value: wechat
+                - label: QQ
+                  value: qq
+                - label: ֪��
+                  value: zhihu
+                - label: ����
+                  value: douyin
+                - label: С����
+                  value: xiaohongshu
+                - label: ���
+                  value: juejin
+                - label: CSDN
+                  value: csdn
+                - label: ����
+                  value: douban
+                - label: Steam
+                  value: steam
+                - label: YouTube
+                  value: youtube
+                - label: Instagram
+                  value: instagram
+                - label: Twitter/X
+                  value: twitter
+                - label: RSS
+                  value: rss
+            - $formkit: text
+              name: icon_image
+              label: ͼ��ͼƬ����
+              placeholder: "https://..."
+              help: ͼƬ������Ч
+            - $formkit: textarea
+              name: icon_svg
+              label: SVG ͼ�����
+              rows: 3
+              placeholder: "<svg viewBox=\"0 0 24 24\" ...>...</svg>"
+              help: SVG ������Ч
+        - $formkit: checkbox
+          name: show_nav
+          label: ��ʾ������
+          value: true
+        - $formkit: text
+          name: nav_title
+          label: �����б���
+          value: ����
+        - $formkit: checkbox
+          name: show_links
+          label: ��ʾ�Զ���������
+          value: true
+        - $formkit: text
+          name: links_title
+          label: �����б���
+          value: ����
+        - $formkit: repeater
+          name: links
+          label: �Զ��������б�
+          summary: text
+          value:
+            - text: ������
+              url: /about
+            - text: ��������
+              url: /links
+            - text: �鵵
+              url: /archives
+            - text: ����
+              url: /categories
+            - text: ��ǩ
+              url: /tags
+          children:
+            - $formkit: text
+              name: text
+              label: ��������
+              validation: required
+            - $formkit: text
+              name: url
+              label: ���ӵ�ַ
+              value: /
+        - $formkit: checkbox
+          name: theme_credit
+          label: ��ʾ��������
+          value: true
+        - $formkit: text
+          name: copyright
+          label: �Զ����Ȩ����
+          value: ""
+          placeholder: "����? 2025 MyBlog. All rights reserved."
+          help: ֧�� HTML�����ʹ��Ĭ�ϸ�ʽ
+        - $formkit: text
+          name: icp_number
+          label: ICP ������
+          value: ""
+          placeholder: "��ICP��XXXXXXXX��"
+          help: ��ղ���ʾ
+        - $formkit: text
+          name: icp_link
+          label: ICP ��������
+          value: https://beian.miit.gov.cn/
+        - $formkit: text
+          name: police_number
+          label: ����������
+          value: ""
+          placeholder: "���������� XXXXXXXXXXXXXX ��"
+          help: ��ղ���ʾ
+        - $formkit: text
+          name: police_record_code
+          label: �����������
+          value: ""
+          placeholder: "11010802012345"
+          help: �������ɱ�������
+        - $formkit: textarea
+          name: footer_extra_html
+          label: ҳ�Ŷ�������
+          value: ""
+          rows: 3
+          placeholder: "����<p>��ϵ���ǣ�contact@example.com</p>"
+          help: ֧�� HTML
+
+    - group: advanced
+      label: ������ǿ
+      formSchema:
+        - $formkit: checkbox
+          name: enable_code_copy
+          label: ����鸴�ư�ť
+          value: true
+        - $formkit: checkbox
+          name: enable_image_lightbox
+          label: ͼƬ����Ч��
+          value: true
+        - $formkit: select
+          name: mobile_toc_behavior
+          label: �ƶ���Ŀ¼��Ϊ
+          value: global
+          options:
+            - label: ȫ������
+              value: global
+            - label: ȫ�ֽ���
+              value: disabled
+            - label: �����Զ���ʾ
+              value: auto
+        - $formkit: text
+          name: mobile_toc_min_headings
+          label: �Զ���ʾ��С������
+          value: 5
+          help: �����Զ���ʾʱ��Ч
+        - $formkit: checkbox
+          name: enable_external_link_icon
+          label: ������ʶ
+          value: true
+
+

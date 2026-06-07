@@ -1,0 +1,90 @@
+<section class="plugin-page-shell">
+  <header class="plugin-page-header reveal">
+    <p class="theme-page-subtitle">同步协作伙伴站点的最新内容，便于关注校园媒体动态。</p>
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 class="theme-page-title">伙伴动态</h1>
+        <p class="theme-text-soft text-sm" th:text="|当前页 ${friends.page ?: 1} / ${friends.totalPages ?: 1}，共 ${friends.total ?: 0} 篇文章|">当前页 1 / 1，共 0 篇文章</p>
+      </div>
+    </div>
+  </header>
+
+  <div th:if="${friends.items != null and !#lists.isEmpty(friends.items)}"
+       class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <article th:each="friend : ${friends.items}"
+             th:with="spec=${friend.spec},
+                      entryUrl=${spec.postLink ?: spec.link ?: spec.permalink ?: friend.status?.permalink ?: '#'},
+                      authorUrl=${spec.authorUrl ?: spec.siteUrl},
+                      entryTitle=${spec.title ?: spec.siteName ?: friend.metadata.name ?: '未命名文章'},
+                      entrySummary=${spec.description ?: spec.summary ?: '这篇文章暂时没有摘要。'},
+                      authorName=${spec.author ?: spec.siteName ?: '未知作者'},
+                      logoUrl=${spec.logo ?: spec.avatar ?: '/themes/theme-nucma/assets/default-avatar.svg'}"
+             class="plugin-page-card p-5 sm:p-6">
+      <div class="flex items-start gap-4">
+        <a th:if="${authorUrl != null and !#strings.isEmpty(authorUrl)}"
+           th:href="${authorUrl}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="w-12 h-12 rounded-full overflow-hidden shrink-0 plugin-media-frame border">
+          <img th:src="${logoUrl}" th:alt="${authorName}" loading="lazy" />
+        </a>
+        <div th:unless="${authorUrl != null and !#strings.isEmpty(authorUrl)}"
+             class="w-12 h-12 rounded-full overflow-hidden shrink-0 plugin-media-frame border">
+          <img th:src="${logoUrl}" th:alt="${authorName}" loading="lazy" />
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <a th:if="${authorUrl != null and !#strings.isEmpty(authorUrl)}"
+               th:href="${authorUrl}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="theme-text-strong text-sm font-semibold"
+               th:text="${authorName}">未知作者</a>
+            <span th:unless="${authorUrl != null and !#strings.isEmpty(authorUrl)}"
+                  class="theme-text-strong text-sm font-semibold"
+                  th:text="${authorName}">未知作者</span>
+            <time class="theme-text-soft text-xs"
+                  th:if="${spec.pubDate != null}"
+                  th:text="${spec.pubDate}">2026-05-14</time>
+          </div>
+
+          <a th:href="${entryUrl}"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="block mt-3">
+            <h2 class="theme-text-strong text-lg font-semibold leading-snug line-clamp-2"
+                th:text="${entryTitle}">未命名文章</h2>
+          </a>
+
+          <p class="theme-text-muted text-sm leading-relaxed mt-3 line-clamp-3"
+             th:text="${entrySummary}">这篇文章暂时没有摘要。</p>
+
+          <div class="flex items-center justify-between gap-3 mt-5 pt-4 border-t theme-border-soft">
+            <span class="theme-text-soft text-xs" th:text="${friend.metadata.name}">friend-post</span>
+            <a th:href="${entryUrl}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="theme-outline-button px-3 py-1.5 rounded-full text-sm">阅读全文</a>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div th:if="${friends.items == null or #lists.isEmpty(friends.items)}"
+       class="plugin-page-card plugin-empty-state">
+    <p class="theme-empty-text text-sm">暂未同步伙伴动态</p>
+    <p class="theme-empty-meta text-xs">等待插件抓取完成后，这里会自动展示协作伙伴更新。</p>
+  </div>
+
+  <div th:if="${friends.hasPrevious() || friends.hasNext()}" class="plugin-pagination">
+    <a th:if="${friends.hasPrevious()}"
+       th:href="@{${friends.prevUrl}}"
+       class="theme-outline-button px-5 py-2 rounded-full text-sm">上一页</a>
+    <span class="theme-text-soft text-sm" th:text="|第 ${friends.page} / ${friends.totalPages ?: 1} 页|">第 1 / 1 页</span>
+    <a th:if="${friends.hasNext()}"
+       th:href="@{${friends.nextUrl}}"
+       class="theme-outline-button px-5 py-2 rounded-full text-sm">下一页</a>
+  </div>
+</section>

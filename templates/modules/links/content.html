@@ -1,0 +1,571 @@
+<section class="links-shell theme-page-shell theme-page-shell--padded py-8 sm:py-12">
+
+  <div class="theme-page-intro theme-page-intro--center reveal">
+    <h1 class="theme-page-title text-3xl sm:text-4xl mb-2">友情链接</h1>
+    <p class="theme-page-subtitle">协同传播的校园媒体伙伴</p>
+    <div class="theme-page-actions theme-page-actions--center">
+      <button id="apply-link-btn" class="nucma-action-chip primary">
+        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        申请友链
+      </button>
+    </div>
+  </div>
+
+  <!-- 有数据：按分组展示 -->
+  <div th:if="${groups != null and !#lists.isEmpty(groups)}" class="space-y-10">
+    <div th:each="group : ${groups}" class="theme-layout-group theme-section-stack reveal">
+      <div class="flex items-center gap-3 mb-5" th:if="${group.spec.displayName != null}">
+        <div class="nucma-section-badge">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+          </svg>
+        </div>
+        <h2 class="theme-text-muted text-base font-semibold"
+            th:text="${group.spec.displayName}"></h2>
+        <span class="theme-count-chip text-xs px-2 py-0.5 rounded-full"
+              th:text="${group.links != null ? #lists.size(group.links) : 0}"></span>
+      </div>
+
+      <!-- 链接卡片 -->
+      <div class="theme-card-grid">
+        <a th:each="link : ${group.links}"
+           th:href="${link.spec.url}" target="_blank" rel="noopener noreferrer"
+           class="link-card">
+          <!-- Logo 容器：固定 48x48 -->
+          <div class="link-card-logo">
+            <img th:if="${link.spec.logo != null and !link.spec.logo.isEmpty()}"
+                 th:src="${link.spec.logo}" th:alt="${link.spec.displayName}"
+                  class="theme-media-48"
+                  loading="lazy" />
+            <svg th:style="${link.spec.logo != null and !link.spec.logo.isEmpty() ? 'display:none' : 'display:block'}"
+                 class="theme-placeholder-icon"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/>
+            </svg>
+          </div>
+          <!-- 信息 -->
+          <div class="link-card-body">
+            <div class="link-card-name" th:text="${link.spec.displayName}"></div>
+            <div class="link-card-desc" th:text="${link.spec.description ?: '校园媒体伙伴'}"></div>
+          </div>
+          <!-- 箭头 -->
+          <svg class="link-card-arrow"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 空状态 -->
+  <div th:if="${groups == null or #lists.isEmpty(groups)}"
+       class="flex flex-col items-center justify-center py-24 text-center">
+    <div class="theme-empty-icon-wrap w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
+      <svg class="theme-empty-icon w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+      </svg>
+    </div>
+    <p class="theme-empty-text text-sm">暂无友情链接</p>
+    <p class="theme-empty-meta text-xs mt-1">相关伙伴信息整理中，完成后将在这里展示。</p>
+  </div>
+
+  <!-- 申请加入区域 -->
+  <div class="theme-submit-callout reveal">
+    <div class="apply-panel theme-section-card">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 flex-1 min-w-0">
+          <div class="theme-icon-box-accent">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <h3 class="theme-text-strong text-base font-bold">申请友链</h3>
+            <p class="theme-text-muted text-xs truncate">提交校园媒体或协作伙伴信息</p>
+          </div>
+        </div>
+        <button id="apply-link-btn-bottom"
+           class="nucma-action-chip primary shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          立即申请
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 友链申请模态框 - 移到 main 外部以避免层叠上下文限制 -->
+<div id="link-submit-modal" class="nucma-modal-overlay hidden fixed inset-0 flex items-center justify-center p-4">
+  <div class="nucma-modal-panel max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="theme-border-soft flex items-center justify-between p-4 sm:p-6 border-b">
+        <h3 class="theme-text-strong text-lg font-bold">提交友链申请</h3>
+        <button id="link-modal-close-btn" type="button" class="theme-icon-button w-8 h-8 rounded-full flex items-center justify-center transition-colors" aria-label="关闭">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form id="link-form" class="p-4 sm:p-6 space-y-3 sm:space-y-4">
+        <!-- 网站名称 -->
+        <div>
+          <label class="theme-text-muted block text-sm font-medium mb-2">
+            网站名称 <span class="text-red-500">*</span>
+          </label>
+          <input type="text" name="displayName" required
+            class="nucma-form-control"
+            placeholder="例如：校园媒体伙伴" />
+        </div>
+
+        <!-- 网站地址 -->
+        <div>
+          <label class="theme-text-muted block text-sm font-medium mb-2">
+            网站地址 <span class="text-red-500">*</span>
+          </label>
+          <input type="url" name="url" required
+            class="nucma-form-control"
+            placeholder="https://example.com" />
+        </div>
+
+        <!-- Logo 地址 -->
+        <div>
+          <label class="theme-text-muted block text-sm font-medium mb-2">
+            Logo 地址
+          </label>
+          <input type="url" name="logo"
+            class="nucma-form-control"
+            placeholder="https://example.com/logo.png" />
+        </div>
+
+        <!-- 网站描述 -->
+        <div>
+          <label class="theme-text-muted block text-sm font-medium mb-2">
+            网站描述
+          </label>
+          <textarea name="description" rows="3"
+            class="nucma-form-control resize-none"
+            placeholder="简单介绍一下校园媒体或协作方向"></textarea>
+        </div>
+
+        <!-- 申请分组 -->
+        <div th:if="${groups != null and !#lists.isEmpty(groups)}">
+          <label class="theme-text-muted block text-sm font-medium mb-2">
+            申请分组
+          </label>
+          <select name="groupName"
+            class="nucma-form-control">
+            <option value="">请选择分组（可选）</option>
+            <option th:each="group : ${groups}" th:value="${group.metadata.name}" th:text="${group.spec.displayName}"></option>
+          </select>
+        </div>
+
+        <!-- 结果提示 -->
+        <div id="link-result-alert" style="display:none;" class="theme-status-alert">
+          <p id="link-result-message" class="theme-status-message"></p>
+        </div>
+
+        <button type="submit" id="link-submit-btn" class="nucma-submit-btn">
+          <span id="link-submit-text">提交申请</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+<script th:inline="none">
+(function() {
+  'use strict';
+
+  // ========== 友链申请模态框处理 ==========
+  const applyLinkBtn = document.getElementById('apply-link-btn');
+  const applyLinkBtnBottom = document.getElementById('apply-link-btn-bottom');
+  const linkModal = document.getElementById('link-submit-modal');
+  const linkModalCloseBtn = document.getElementById('link-modal-close-btn');
+  const linkForm = document.getElementById('link-form');
+  const linkSubmitBtn = document.getElementById('link-submit-btn');
+  const linkSubmitText = document.getElementById('link-submit-text');
+  const linkResultAlert = document.getElementById('link-result-alert');
+  const linkResultMessage = document.getElementById('link-result-message');
+
+  let savedLinkScrollY = 0;
+  let previousLinkBodyOverflow = '';
+  let previousLinkBodyPaddingRight = '';
+
+  if (linkModal && linkModal.parentElement !== document.body) {
+    document.body.appendChild(linkModal);
+  }
+
+  function lockLinkPageScroll() {
+    savedLinkScrollY = window.scrollY;
+    previousLinkBodyOverflow = document.body.style.overflow;
+    previousLinkBodyPaddingRight = document.body.style.paddingRight;
+
+    const scrollbarWidth = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+    document.documentElement.classList.add('theme-modal-open');
+    document.body.classList.add('theme-modal-open');
+    document.body.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+  }
+
+  function unlockLinkPageScroll() {
+    document.documentElement.classList.remove('theme-modal-open');
+    document.body.classList.remove('theme-modal-open');
+    document.body.style.overflow = previousLinkBodyOverflow;
+    document.body.style.paddingRight = previousLinkBodyPaddingRight;
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: savedLinkScrollY, left: 0, behavior: 'auto' });
+    });
+  }
+
+  function openLinkModal() {
+    if (linkModal) {
+      lockLinkPageScroll();
+      linkModal.classList.remove('hidden');
+    }
+  }
+
+  if (applyLinkBtn) {
+    applyLinkBtn.addEventListener('click', openLinkModal);
+  }
+
+  if (applyLinkBtnBottom) {
+    applyLinkBtnBottom.addEventListener('click', openLinkModal);
+  }
+
+  if (linkModalCloseBtn) {
+    linkModalCloseBtn.addEventListener('click', closeLinkModal);
+  }
+
+  function closeLinkModal() {
+    if (linkModal) {
+      linkModal.classList.add('hidden');
+      unlockLinkPageScroll();
+      linkForm?.reset();
+      if (linkResultAlert) {
+        linkResultAlert.style.display = 'none';
+      }
+    }
+  }
+
+  // 点击背景关闭
+  if (linkModal) {
+    linkModal.addEventListener('click', (e) => {
+      if (e.target === linkModal) closeLinkModal();
+    });
+  }
+
+  // ESC 键关闭
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && linkModal && !linkModal.classList.contains('hidden')) {
+      closeLinkModal();
+    }
+  });
+
+  // 表单提交
+  if (linkForm) {
+    linkForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      linkSubmitBtn.disabled = true;
+      linkSubmitText.textContent = '提交中...';
+      linkResultAlert.style.display = 'none';
+
+      const formData = {
+        displayName: linkForm.displayName.value,
+        url: linkForm.url.value,
+        logo: linkForm.logo.value || '',
+        description: linkForm.description.value || '',
+        groupName: linkForm.groupName?.value || ''
+      };
+
+      try {
+        const response = await fetch('/apis/api.plugin.halo.run/v1alpha1/plugins/PluginLinks/links', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+          linkResultAlert.style.display = 'block';
+          linkResultAlert.className = 'theme-status-alert is-success';
+          linkResultMessage.className = 'theme-status-message';
+          linkResultMessage.textContent = '✓ 申请提交成功！我们会尽快审核您的申请。';
+          window.showThemeToast?.('\u53cb\u94fe\u7533\u8bf7\u5df2\u63d0\u4ea4', 'success');
+          linkForm.reset();
+          setTimeout(() => {
+            closeLinkModal();
+          }, 2000);
+        } else {
+          const error = await response.json();
+          throw new Error(error.message || '提交失败');
+        }
+      } catch (error) {
+        linkResultAlert.style.display = 'block';
+        linkResultAlert.className = 'theme-status-alert is-error';
+        linkResultMessage.className = 'theme-status-message';
+        window.showThemeToast?.('\u53cb\u94fe\u7533\u8bf7\u5931\u8d25', 'error');
+        linkResultMessage.textContent = '✗ ' + (error.message || '提交失败，请稍后重试');
+      } finally {
+        linkSubmitBtn.disabled = false;
+        linkSubmitText.textContent = '提交申请';
+      }
+    });
+  }
+
+  // ── QR 库懒加载 ──────────────────────────────────────────
+  let qrReady = false, qrLoading = false;
+  const qrCbs = [];
+  function loadQRLib(cb) {
+    if (qrReady || window.qrcode) {
+      qrReady = true;
+      if (typeof cb === 'function') cb();
+      return;
+    }
+    if (typeof cb === 'function') qrCbs.push(cb);
+    if (qrLoading) return;
+    const existingScript = document.querySelector('script[data-nucma-qrcode]');
+    if (existingScript) {
+      qrLoading = true;
+      existingScript.addEventListener('load', () => {
+        qrReady = true;
+        qrCbs.splice(0).forEach(fn => fn());
+      }, { once: true });
+      existingScript.addEventListener('error', () => console.warn('[QR] 库加载失败'), { once: true });
+      return;
+    }
+    qrLoading = true;
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js';
+    s.async = true;
+    s.dataset.nucmaQrcode = '1';
+    s.onload = () => {
+      qrReady = true;
+      qrCbs.splice(0).forEach(fn => fn());
+    };
+    s.addEventListener('error', () => console.warn('[QR] 库加载失败'), { once: true });
+    document.head.appendChild(s);
+  }
+
+  // ── 生成 QR canvas ────────────────────────────────────────
+  const qrCache = new Map();
+  function makeQRCanvas(url, size) {
+    if (qrCache.has(url)) {
+      // 从缓存复制 Canvas 内容
+      const cached = qrCache.get(url);
+      const copy = document.createElement('canvas');
+      copy.width = cached.width;
+      copy.height = cached.height;
+      copy.getContext('2d').drawImage(cached, 0, 0);
+      return copy;
+    }
+    try {
+      var qr = window.qrcode(0, 'M');
+      qr.addData(url); qr.make();
+      var mc = qr.getModuleCount(), cs = Math.floor(size / mc), qs = cs * mc;
+      var c = document.createElement('canvas');
+      c.width = qs; c.height = qs;
+      var ctx = c.getContext('2d');
+      var rootStyle = getComputedStyle(document.documentElement);
+      var cardRgb = rootStyle.getPropertyValue('--color-card').trim() || '255 255 255';
+      var textRgb = rootStyle.getPropertyValue('--color-text').trim() || '18 18 18';
+      ctx.fillStyle = 'rgba(' + cardRgb.replace(/\s+/g, ',') + ',0.78)';
+      ctx.fillRect(0, 0, qs, qs);
+      ctx.fillStyle = 'rgb(' + textRgb.replace(/\s+/g, ',') + ')';
+      for (var r = 0; r < mc; r++) {
+        for (var col = 0; col < mc; col++) {
+          if (qr.isDark(r, col)) {
+            ctx.fillRect(col * cs, r * cs, cs, cs);
+          }
+        }
+      }
+      qrCache.set(url, c);
+      // 返回复制的 Canvas
+      var copy = document.createElement('canvas');
+      copy.width = qs; copy.height = qs;
+      copy.getContext('2d').drawImage(c, 0, 0);
+      return copy;
+    } catch(e) {
+      console.error('[QR] 生成失败:', e);
+      return null;
+    }
+  }
+
+  // ── 全局单例 tooltip ──────────────────────────────────────
+  let tooltip = null, tooltipCanvas = null, tooltipLabel = null;
+  let tooltipRenderedUrl = '';
+  let hideTimer = null;
+  let activeCard = null, activeUrl = '', activeLabel = '';
+  let lastPointerX = null, lastPointerY = null;
+  let syncRaf = 0;
+  const hoverQrQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+  function canUseHoverQR() {
+    return hoverQrQuery.matches;
+  }
+
+  function getTooltip() {
+    if (tooltip) return tooltip;
+    tooltip = document.createElement('div');
+    tooltip.id = 'link-qr-tooltip';
+    tooltipCanvas = document.createElement('div');
+    tooltipCanvas.id = 'link-qr-canvas-wrap';
+    tooltipLabel = document.createElement('div');
+    tooltipLabel.className = 'qr-label';
+    tooltip.appendChild(tooltipCanvas);
+    tooltip.appendChild(tooltipLabel);
+    document.body.appendChild(tooltip);
+    return tooltip;
+  }
+
+  function positionTooltip(rect) {
+    const tt = getTooltip();
+    const ttW = 120, ttH = 130;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let left = rect.right + 10;
+    if (left + ttW > vw - 8) left = rect.left - ttW - 10;
+    let top = rect.top + (rect.height - ttH) / 2;
+    top = Math.max(8, Math.min(top, vh - ttH - 8));
+    tt.style.left = left + 'px';
+    tt.style.top = top + 'px';
+  }
+
+  function isPointerInsideCard(card) {
+    if (!card || lastPointerX === null || lastPointerY === null) return false;
+    const rect = card.getBoundingClientRect();
+    return lastPointerX >= rect.left &&
+      lastPointerX <= rect.right &&
+      lastPointerY >= rect.top &&
+      lastPointerY <= rect.bottom;
+  }
+
+  function syncActiveTooltip() {
+    if (!canUseHoverQR()) {
+      hideTooltip(true);
+      return;
+    }
+    if (!activeCard || !tooltip || !tooltip.classList.contains('visible')) return;
+    if (!document.body.contains(activeCard) || !isPointerInsideCard(activeCard)) {
+      hideTooltip(true);
+      return;
+    }
+    positionTooltip(activeCard.getBoundingClientRect());
+  }
+
+  function scheduleActiveTooltipSync() {
+    if (syncRaf) return;
+    syncRaf = window.requestAnimationFrame(function() {
+      syncRaf = 0;
+      syncActiveTooltip();
+    });
+  }
+
+  function showTooltip(card, url, label, pointerEvent) {
+    if (!canUseHoverQR()) return;
+    clearTimeout(hideTimer);
+    activeCard = card;
+    activeUrl = url;
+    activeLabel = label || '扫码访问';
+    if (pointerEvent) {
+      lastPointerX = pointerEvent.clientX;
+      lastPointerY = pointerEvent.clientY;
+    }
+    const tt = getTooltip();
+    tooltipLabel.textContent = activeLabel;
+
+    const rect = card.getBoundingClientRect();
+    positionTooltip(rect);
+
+    if (tooltipRenderedUrl !== url) {
+      tooltipRenderedUrl = '';
+      tooltipCanvas.innerHTML = '';
+      loadQRLib(function() {
+        try {
+          if (activeCard !== card || activeUrl !== url) return;
+          const c = makeQRCanvas(url, 96);
+          tooltipCanvas.innerHTML = '';
+          if (c) {
+            tooltipCanvas.appendChild(c);
+            tooltipRenderedUrl = url;
+          }
+          syncActiveTooltip();
+        } catch(e) { console.warn('QR生成失败', e); }
+      });
+    } else {
+      if (tooltipCanvas.children.length === 0 && qrReady) {
+        try {
+          const c = makeQRCanvas(url, 96);
+          if (c) tooltipCanvas.appendChild(c);
+        } catch(e) {}
+      }
+    }
+
+    tt.classList.add('visible');
+  }
+
+  function hideTooltip(immediate) {
+    clearTimeout(hideTimer);
+    const doHide = function() {
+      activeCard = null;
+      activeUrl = '';
+      activeLabel = '';
+      if (tooltip) tooltip.classList.remove('visible');
+    };
+    if (immediate) {
+      doHide();
+      return;
+    }
+    hideTimer = setTimeout(doHide, 120);
+  }
+
+  // ── 绑定卡片事件 ──────────────────────────────────────────
+  function initCards() {
+    if (!canUseHoverQR()) return;
+    document.querySelectorAll('a.link-card[href]').forEach(function(card) {
+      if (card.dataset.qrBound === '1') return;
+      card.dataset.qrBound = '1';
+      const url = card.getAttribute('href');
+      if (!url || url === '#') return;
+      card.addEventListener('pointerenter', function(event) {
+        if (event.pointerType && event.pointerType !== 'mouse') return;
+        showTooltip(card, url, '扫码访问', event);
+      });
+      card.addEventListener('mouseenter', function(event) {
+        showTooltip(card, url, '扫码访问', event);
+      });
+      card.addEventListener('pointermove', function(event) {
+        if (event.pointerType && event.pointerType !== 'mouse') return;
+        lastPointerX = event.clientX;
+        lastPointerY = event.clientY;
+        if (activeCard !== card) {
+          showTooltip(card, url, '扫码访问', event);
+          return;
+        }
+        syncActiveTooltip();
+      });
+      card.addEventListener('pointerleave', hideTooltip);
+      card.addEventListener('mouseleave', hideTooltip);
+    });
+  }
+
+  window.addEventListener('scroll', function() { hideTooltip(true); }, { passive: true });
+  window.addEventListener('resize', function() { hideTooltip(true); }, { passive: true });
+  hoverQrQuery.addEventListener('change', function() {
+    hideTooltip(true);
+    if (canUseHoverQR()) initCards();
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCards);
+  } else {
+    initCards();
+  }
+})();
+</script>

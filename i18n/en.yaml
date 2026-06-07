@@ -1,0 +1,52 @@
+common:
+  noPosts: No posts yet
+  readMore: Read more
+  share: Share
+  comment: Comment
+  previous: Previous
+  next: Next
+  relatedPosts: Related Posts
+  toc: Table of Contents
+  backToTop: Back to top
+  search: Search
+  menu: Menu
+  close: Close
+  loading: Loading...
+  noResults: No results found
+
+home:
+  heroTitle: National University Campus Media Alliance
+  heroSubtitle: Interaction, guidance and diverse communication
+  heroMotto: See you, see us.
+  recentPosts: Latest Notices
+  reviews: Campus Feedback
+  faq: FAQ
+  members: Member Notices
+  links: Partner Links
+
+post:
+  readTime: Reading time
+  readTimeFormat: "{minutes} min read"
+  views: Views
+  upvotes: Upvotes
+  comments: Comments
+  publishedAt: Published at
+  updatedAt: Updated at
+  author: Author
+  tags: Tags
+  categories: Categories
+  share: Share post
+  copyLink: Copy link
+  linkCopied: Link copied
+
+footer:
+  allRightsReserved: All rights reserved
+  poweredByHalo: Powered by Halo
+  themeByNucma: NUCMA Theme
+
+theme:
+  light: Light mode
+  dark: Dark mode
+  system: Follow system
+  switchTheme: Switch theme
+  accentColor: Accent color

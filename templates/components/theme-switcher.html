@@ -1,0 +1,78 @@
+<!-- 主题切换器 -->
+<div class="theme-switcher" th:fragment="switcher">
+  <button id="themeSwitcherBtn" class="theme-switcher-btn" aria-label="切换主题">
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+    </svg>
+  </button>
+
+  <div id="themePanel" class="theme-panel">
+    <div class="theme-panel-title">配色模式</div>
+    <div class="theme-mode-toggle">
+      <span class="theme-mode-label">默认模式</span>
+      <div class="theme-mode-btns">
+        <button id="modeLight" class="theme-mode-btn" data-theme-mode="light" title="浅色">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </button>
+        <button id="modeDark" class="theme-mode-btn" data-theme-mode="dark" title="深色">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+        </button>
+        <button id="modeSystem" class="theme-mode-btn active" data-theme-mode="system" title="跟随系统">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script th:inline="javascript">
+(function() {
+  'use strict';
+
+  const themeSwitcherBtn = document.getElementById('themeSwitcherBtn');
+  const themePanel = document.getElementById('themePanel');
+
+  if (themeSwitcherBtn && themePanel) {
+    themeSwitcherBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      themePanel.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!themePanel.contains(event.target) && !themeSwitcherBtn.contains(event.target)) {
+        themePanel.classList.remove('active');
+      }
+    });
+  }
+
+  document.querySelectorAll('.theme-mode-btn[data-theme-mode]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const mode = button.dataset.themeMode;
+      if (!mode) return;
+
+      if (typeof window.applyThemeMode === 'function') {
+        window.applyThemeMode(mode);
+        return;
+      }
+
+      const actualMode = mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : mode === 'system'
+          ? 'light'
+          : mode;
+
+      document.documentElement.setAttribute('data-theme', actualMode);
+      document.documentElement.classList.remove('light', 'dark');
+      document.documentElement.classList.add(actualMode);
+      localStorage.setItem('theme-mode', mode);
+      localStorage.setItem('theme', actualMode);
+    });
+  });
+})();
+</script>

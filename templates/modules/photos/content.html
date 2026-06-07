@@ -1,0 +1,77 @@
+<section class="plugin-page-shell">
+  <header class="plugin-page-header reveal">
+    <p class="theme-page-subtitle">按分组浏览组织活动与校园图文资料。</p>
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 class="theme-page-title" th:text="${title ?: '校园影像'}">校园影像</h1>
+        <p class="theme-text-soft text-sm" th:text="|当前页 ${photos.page ?: 1} / ${photos.totalPages ?: 1}，共 ${photos.total ?: 0} 张|">当前页 1 / 1，共 0 张</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="plugin-page-grid plugin-page-grid--sidebar">
+    <aside class="plugin-page-sidebar-card plugin-page-card p-5">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <h2 class="theme-text-strong text-sm font-semibold">影像分组</h2>
+        <span class="theme-count-chip text-xs px-2 py-0.5 rounded-full"
+              th:text="${groups != null ? #lists.size(groups) : 0}">0</span>
+      </div>
+      <div class="plugin-chip-list">
+        <a href="/photos"
+           class="plugin-chip"
+           th:classappend="${#lists.isEmpty(param.group) ? ' is-active' : ''}">全部</a>
+        <a th:each="groupItem : ${groups}"
+           th:href="@{${photoUrl.list(groupItem.metadata.name)}}"
+           class="plugin-chip"
+           th:classappend="${#lists.contains(param.group, groupItem.metadata.name) ? ' is-active' : ''}">
+          <span th:text="${groupItem.spec.displayName}">分组</span>
+          <span th:text="${groupItem.status?.photoCount ?: (groupItem.photos != null ? #lists.size(groupItem.photos) : 0)}">0</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="plugin-page-stack">
+      <div th:if="${photos.items != null and !#lists.isEmpty(photos.items)}"
+           class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        <a th:each="photoItem : ${photos.items}"
+           th:href="@{${photoUrl.detail(photoItem)}}"
+           class="plugin-page-card group overflow-hidden">
+          <div class="plugin-media-frame aspect-[4/3] rounded-none border-0">
+            <img th:src="${photoItem.spec.cover ?: photoItem.spec.url}"
+                 th:alt="${photoItem.spec.displayName ?: '图片'}"
+                 loading="lazy"
+                 class="" />
+          </div>
+          <div class="p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <h2 class="theme-text-strong text-sm font-semibold line-clamp-1"
+                    th:text="${photoItem.spec.displayName ?: '未命名图片'}">未命名图片</h2>
+                <p class="theme-text-muted text-xs mt-1 line-clamp-2"
+                   th:text="${photoItem.spec.description ?: '暂无说明'}">暂无说明</p>
+              </div>
+              <span class="theme-count-chip text-xs px-2 py-0.5 rounded-full shrink-0"
+                    th:text="${photoItem.spec.tags != null ? #lists.size(photoItem.spec.tags) : 0}">0</span>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div th:if="${photos.items == null or #lists.isEmpty(photos.items)}"
+           class="plugin-page-card plugin-empty-state">
+        <p class="theme-empty-text text-sm">当前分组暂无图片资料</p>
+        <p class="theme-empty-meta text-xs">上传组织活动或校园图文后，这里会自动展示。</p>
+      </div>
+
+      <div th:if="${photos.hasPrevious() || photos.hasNext()}" class="plugin-pagination">
+        <a th:if="${photos.hasPrevious()}"
+           th:href="@{${photos.prevUrl}}"
+           class="theme-outline-button px-5 py-2 rounded-full text-sm">上一页</a>
+        <span class="theme-text-soft text-sm" th:text="|第 ${photos.page} / ${photos.totalPages ?: 1} 页|">第 1 / 1 页</span>
+        <a th:if="${photos.hasNext()}"
+           th:href="@{${photos.nextUrl}}"
+           class="theme-outline-button px-5 py-2 rounded-full text-sm">下一页</a>
+      </div>
+    </div>
+  </div>
+</section>

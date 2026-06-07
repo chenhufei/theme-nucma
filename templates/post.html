@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/post/layout :: html(content = ~{::content})}">
+
+<th:block th:fragment="content">
+  <th:block th:replace="~{modules/post/content}" />
+</th:block>
+
+</html>

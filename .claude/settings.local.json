@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const fs = require\\('fs'\\); const css = fs.readFileSync\\('assets/css/main.css', 'utf8'\\); const rules = css.match\\(/[^}]*?\\(?:posts-view-panel|is-visible|is-active|is-inactive|theme-view-btn\\)[^}]*}/g\\); rules && rules.forEach\\(r => console.log\\(r.trim\\(\\)\\)\\);\")",
+      "Bash(node scripts/build.js)",
+      "Bash(npx vite *)",
+      "Bash(node scripts/manual-package.js)",
+      "Bash(npm run *)"
+    ]
+  }
+}

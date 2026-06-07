@@ -1,0 +1,6 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/plugin/layout :: html(title=${title ?: '校园影像'}, content = ~{::content})}">
+<th:block th:fragment="content">
+  <th:block th:replace="~{modules/photos/content}" />
+</th:block>
+</html>

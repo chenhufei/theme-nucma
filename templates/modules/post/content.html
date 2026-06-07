@@ -1,0 +1,287 @@
+<div th:if="${theme.config.advanced?.enable_image_lightbox == null or !(theme.config.advanced.enable_image_lightbox == false or #strings.equalsIgnoreCase(theme.config.advanced.enable_image_lightbox.toString(), 'false'))}"
+     id="lightbox" class="fixed inset-0 bg-black/80 z-[9999] items-center justify-center p-4"
+     style="display:none;">
+  <img id="lightboxImg" src="" alt="" class="max-w-[92vw] max-h-[92vh] object-contain rounded-lg" />
+</div>
+
+<style>
+  .post-copy-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 10;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: rgba(255, 255, 255, 0.76);
+    color: #475569;
+    border-radius: 9999px;
+    padding: 0.4rem 0.78rem;
+    font-size: 0.75rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.58);
+    backdrop-filter: var(--liquid-backdrop-card, blur(12px) saturate(1.12));
+    -webkit-backdrop-filter: var(--liquid-backdrop-card, blur(12px) saturate(1.12));
+  }
+  .post-copy-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    color: #0f172a;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.64);
+  }
+  .post-copy-disabled .post-copy-btn {
+    display: none;
+  }
+  .post-copy-disabled .code-copy-btn {
+    display: none;
+  }
+  .post-copy-disabled .theme-copy-btn {
+    display: none;
+  }
+  .post-copy-btn-disabled .post-copy-btn,
+  .post-copy-btn-disabled .code-copy-btn,
+  .post-copy-btn-disabled .theme-copy-btn {
+    display: none;
+  }
+
+  .post-shell {
+    position: relative;
+  }
+
+  .post-cover-shell {
+    position: relative;
+    overflow: hidden;
+    border-radius: clamp(1.4rem, 3vw, 2.4rem);
+    border: 1px solid var(--liquid-border, rgba(var(--color-text), 0.08));
+    box-shadow: var(--liquid-shadow, 0 24px 70px rgba(var(--color-text), 0.11));
+    background: var(--liquid-fill, rgba(var(--color-card), 0.72));
+    backdrop-filter: var(--liquid-backdrop-card, blur(18px) saturate(1.12));
+    -webkit-backdrop-filter: var(--liquid-backdrop-card, blur(18px) saturate(1.12));
+  }
+
+  .post-cover-shell::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 38%;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.18));
+    pointer-events: none;
+  }
+
+  .post-cover-image {
+    transition: transform 0.7s ease, filter 0.5s ease;
+  }
+
+  .post-cover-shell:hover .post-cover-image {
+    transform: none;
+    filter: none;
+  }
+
+  .post-article {
+    max-width: 860px;
+    position: relative;
+  }
+
+  .post-article::before {
+    content: none;
+    display: none;
+  }
+
+  .post-article > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .post-category-chip {
+    border: 1px solid rgba(var(--color-accent), 0.18);
+    background: rgba(var(--color-accent), 0.05);
+    color: rgb(var(--color-accent));
+    box-shadow: 0 8px 22px rgba(var(--color-text), 0.045), inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  }
+
+  .post-excerpt-card {
+    border-left: 4px solid rgb(var(--color-accent));
+    box-shadow: 0 16px 42px rgba(var(--color-text), 0.055);
+  }
+
+  .post-meta-row {
+    color: rgba(var(--color-text), 0.46);
+  }
+
+  .post-share-btn {
+    background: var(--liquid-fill-strong, rgba(var(--color-card), 0.72));
+    color: rgba(var(--color-text), 0.64);
+    border: 1px solid rgba(var(--color-text), 0.08);
+    backdrop-filter: var(--liquid-backdrop-card, blur(12px) saturate(1.1));
+    -webkit-backdrop-filter: var(--liquid-backdrop-card, blur(12px) saturate(1.1));
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .post-share-btn:hover {
+    color: rgb(var(--color-accent));
+    border-color: rgba(var(--color-accent), 0.18);
+    background: rgba(var(--color-accent), 0.04);
+    box-shadow: 0 10px 26px rgba(var(--color-text), 0.06);
+  }
+
+  .post-author-card {
+    box-shadow: 0 18px 48px rgba(var(--color-text), 0.065), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+
+  .post-cover-empty {
+    background: linear-gradient(135deg, rgba(var(--color-text), 0.08), rgba(var(--color-card), 0.92) 48%, rgba(var(--color-accent), 0.08));
+    color: rgba(var(--color-text-soft), 0.96);
+  }
+
+  .post-cover-empty-icon {
+    background: rgba(var(--color-card), 0.78);
+    border: 1px solid rgba(var(--color-text), 0.08);
+    box-shadow: 0 12px 30px rgba(var(--color-text), 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .post-author-avatar {
+    box-shadow: 0 10px 28px rgba(var(--color-text), 0.08);
+    border: 1px solid rgba(var(--color-text), 0.12);
+  }
+
+  [data-theme="dark"] .post-copy-btn {
+    background: rgba(15, 23, 42, 0.82);
+    color: rgba(226, 232, 240, 0.86);
+    border-color: rgba(148, 163, 184, 0.2);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  [data-theme="dark"] .post-copy-btn:hover {
+    background: var(--liquid-fill-strong, rgba(var(--color-card), 0.78));
+    color: #fff;
+  }
+
+  [data-theme="dark"] .post-cover-shell {
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  [data-theme="dark"] .post-article::before {
+    background: var(--liquid-fill, rgba(var(--color-card), 0.72));
+    border-color: rgba(148, 163, 184, 0.08);
+  }
+
+  [data-theme="dark"] .post-author-avatar {
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  }
+
+</style>
+
+<style th:if="${theme.config.advanced?.enable_code_copy == false or (theme.config.advanced?.enable_code_copy != null and #strings.equalsIgnoreCase(theme.config.advanced.enable_code_copy.toString(), 'false'))}">
+  body .post-copy-btn,
+  body .code-copy-btn,
+  body .theme-copy-btn,
+  body .prose pre button {
+    display: none;
+  }
+</style>
+
+<section th:if="${theme.config.post?.show_cover != false}"
+         class="post-hero-full"
+         th:style="${'--post-hero-height:' + (theme.config.post?.post_cover_height_preset == 'small' ? '320px' : theme.config.post?.post_cover_height_preset == 'large' ? 'clamp(420px,62vh,760px)' : theme.config.post?.post_cover_height_preset == 'fullscreen' ? '100svh' : theme.config.post?.post_cover_height_preset == 'custom' ? (theme.config.post?.post_cover_height_custom ?: 'clamp(360px,52vh,620px)') : 'clamp(360px,52vh,620px)') + ';'}">
+  <img th:if="${post.spec.cover != null and !#strings.isEmpty(post.spec.cover) and (#strings.startsWith(post.spec.cover,'http://') or #strings.startsWith(post.spec.cover,'https://') or #strings.startsWith(post.spec.cover,'/'))}"
+       th:src="${#strings.replace(post.spec.cover, 'http://', 'https://')}"
+       th:alt="${post.spec.title}"
+       class="post-hero-image"
+       loading="eager" fetchpriority="high" />
+  <img th:if="${(post.spec.cover == null or #strings.isEmpty(post.spec.cover)) and theme.config.post?.default_cover_image != null and !#strings.isEmpty(theme.config.post.default_cover_image) and (#strings.startsWith(theme.config.post.default_cover_image,'http://') or #strings.startsWith(theme.config.post.default_cover_image,'https://') or #strings.startsWith(theme.config.post.default_cover_image,'/'))}"
+       th:src="${#strings.replace(theme.config.post.default_cover_image, 'http://', 'https://')}"
+       th:alt="${post.spec.title}"
+       class="post-hero-image"
+       loading="eager" fetchpriority="high" />
+  <div class="post-hero-fallback"
+       th:unless="${(post.spec.cover != null and !#strings.isEmpty(post.spec.cover) and (#strings.startsWith(post.spec.cover,'http://') or #strings.startsWith(post.spec.cover,'https://') or #strings.startsWith(post.spec.cover,'/'))) or ((post.spec.cover == null or #strings.isEmpty(post.spec.cover)) and theme.config.post?.default_cover_image != null and !#strings.isEmpty(theme.config.post.default_cover_image) and (#strings.startsWith(theme.config.post.default_cover_image,'http://') or #strings.startsWith(theme.config.post.default_cover_image,'https://') or #strings.startsWith(theme.config.post.default_cover_image,'/')))}"></div>
+  <div class="post-hero-gradient"></div>
+  <header class="post-hero-content">
+    <div class="post-hero-categories" th:if="${post.categories != null and !post.categories.isEmpty()}">
+      <span th:each="cat : ${post.categories}"
+            th:text="${cat.spec.displayName}"
+            class="post-category-chip"></span>
+    </div>
+    <h1 class="post-hero-title" th:text="${post.spec.title}">文章标题</h1>
+    <p th:if="${theme.config.post?.show_excerpt != false and post.status.excerpt != null and !#strings.isEmpty(post.status.excerpt)}"
+       class="post-hero-excerpt"
+       th:text="${post.status.excerpt}"></p>
+  </header>
+</section>
+
+<header th:unless="${theme.config.post?.show_cover != false}"
+        class="post-plain-header">
+  <div class="post-hero-categories" th:if="${post.categories != null and !post.categories.isEmpty()}">
+    <span th:each="cat : ${post.categories}"
+          th:text="${cat.spec.displayName}"
+          class="post-category-chip"></span>
+  </div>
+  <h1 class="post-hero-title" th:text="${post.spec.title}">文章标题</h1>
+  <p th:if="${theme.config.post?.show_excerpt != false and post.status.excerpt != null and !#strings.isEmpty(post.status.excerpt)}"
+     class="post-hero-excerpt"
+     th:text="${post.status.excerpt}"></p>
+</header>
+
+<div class="post-page-grid">
+  <article class="post-article post-main-card"
+           th:classappend="${theme.config.advanced?.enable_code_copy == false or (theme.config.advanced?.enable_code_copy != null and #strings.equalsIgnoreCase(theme.config.advanced.enable_code_copy.toString(), 'false')) ? ' post-copy-disabled' : ''}">
+    <div class="prose prose-slate max-w-none"
+         th:classappend="${theme.config.post?.prose_size == 'sm' ? ' prose-sm' : theme.config.post?.prose_size == 'lg' ? ' prose-lg' : ''}"
+         th:style="${'--tw-prose-links:rgb(var(--color-accent));--tw-prose-quotes:rgb(var(--color-text));--tw-prose-quote-borders:rgb(var(--color-accent));--tw-prose-code:rgb(var(--color-accent));' + (theme.config.post?.paragraph_indent != false ? 'text-indent:2em;' : '')}"
+         th:utext="${post.content.content}"></div>
+
+    <section th:if="${haloCommentEnabled and (post.spec.allowComment == null or post.spec.allowComment != false)}"
+             class="post-comments-shell theme-border-softer mt-10 pt-8 border-t">
+      <halo:comment group="content.halo.run"
+                    kind="Post"
+                    th:attr="name=${post.metadata.name}" />
+    </section>
+  </article>
+
+  <aside class="post-sidebar">
+    <div th:if="${theme.config.post?.show_author_card != false and post.owner != null}"
+         class="post-sidebar-card post-author-card">
+      <img th:src="${post.owner.avatar != null and (#strings.startsWith(post.owner.avatar,'http://') or #strings.startsWith(post.owner.avatar,'https://') or #strings.startsWith(post.owner.avatar,'/')) ? #strings.replace(post.owner.avatar, 'http://', 'https://') : '/themes/theme-nucma/assets/default-avatar.svg'}"
+           th:alt="${post.owner.displayName}"
+           class="post-author-avatar"
+           loading="lazy" />
+      <div class="min-w-0">
+        <p class="post-sidebar-label">作者</p>
+        <strong class="post-sidebar-title" th:text="${post.owner.displayName}">作者</strong>
+        <p th:if="${post.owner.bio != null and !post.owner.bio.isEmpty()}"
+           class="post-sidebar-desc"
+           th:text="${post.owner.bio}"></p>
+      </div>
+    </div>
+
+    <div class="post-sidebar-card">
+      <p class="post-sidebar-label">文章信息</p>
+      <div class="post-sidebar-meta">
+        <time>
+          <span>发布</span>
+          <strong th:text="${#temporals.format(post.spec.publishTime, theme.config.post?.date_format ?: 'yyyy年MM月dd日')}"></strong>
+        </time>
+        <span th:if="${theme.config.post?.show_views != false and post.stats != null}">
+          <span>阅读</span>
+          <strong th:text="|${post.stats?.visit ?: 0} 次|"></strong>
+        </span>
+        <span th:if="${theme.config.post?.show_upvote != false and post.stats != null}">
+          <span>点赞</span>
+          <strong th:text="${post.stats?.upvote ?: 0}"></strong>
+        </span>
+        <span id="readingTime" th:if="${theme.config.post?.show_reading_time != false}">
+          <span>预计</span>
+          <strong id="readingTimeText"></strong>
+        </span>
+      </div>
+    </div>
+
+    <div class="post-sidebar-card" th:if="${theme.config.post?.show_tags != false and post.tags != null and !post.tags.isEmpty()}">
+      <p class="post-sidebar-label">标签</p>
+      <div class="post-chip-list">
+        <span th:each="tag : ${post.tags}" class="post-category-chip">
+          #<span th:text="${tag.spec.displayName}"></span>
+        </span>
+      </div>
+    </div>
+  </aside>
+</div>

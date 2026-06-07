@@ -1,0 +1,40 @@
+plugins {
+  id 'base'
+}
+
+group 'run.halo'
+version '1.0.0'
+
+task buildTheme(type: Zip) {
+  archiveBaseName = 'theme-nucma'
+  archiveVersion = project.version
+  destinationDirectory = file("$buildDir/libs")
+  
+  from(projectDir) {
+    exclude 'build/**'
+    exclude '.gradle/**'
+    exclude 'node_modules/**'
+    exclude '.git/**'
+    exclude '.vscode/**'
+    exclude '.kiro/**'
+    exclude '*.iml'
+    exclude '.idea/**'
+    exclude 'gradle/**'
+    exclude 'gradlew*'
+    exclude 'build.gradle'
+    exclude 'settings.gradle'
+    exclude 'pnpm-lock.yaml'
+    exclude 'package-lock.json'
+    exclude 'src/**'
+    exclude 'tailwind.config.js'
+    exclude 'postcss.config.js'
+    exclude '*.md'
+  }
+}
+
+build.dependsOn buildTheme
+
+clean {
+  delete 'build'
+  delete 'dist'
+}
