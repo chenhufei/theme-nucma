@@ -190,4 +190,9 @@
   </div>
 </header>
 
+<!-- 社交分享卡片 meta 标签（插件注入点） -->
+<th:block th:if="${post != null}">
+  <th:block th:replace="~{modules/common/components :: share-meta}"></th:block>
+</th:block>
+
 </html>

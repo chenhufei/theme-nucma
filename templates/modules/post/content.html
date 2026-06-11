@@ -168,6 +168,41 @@
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
   }
 
+  /* 加密文章提示卡片 */
+  .nucma-encryption-notice {
+    margin: 2rem 0;
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-lg);
+    background: var(--glass-panel-bg, rgba(var(--color-card), 0.78));
+    border: 1px solid rgba(var(--color-warning), 0.25);
+    box-shadow: 0 12px 32px rgba(var(--color-text), 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    backdrop-filter: var(--liquid-backdrop-card, blur(12px) saturate(1.12));
+    -webkit-backdrop-filter: var(--liquid-backdrop-card, blur(12px) saturate(1.12));
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    color: rgb(var(--color-text));
+  }
+  .nucma-encryption-notice svg {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: rgb(var(--color-warning));
+    margin-top: 0.125rem;
+  }
+  .nucma-encryption-notice .encryption-msg {
+    font-size: var(--font-size-sm);
+    line-height: 1.65;
+    color: rgba(var(--color-text), 0.78);
+  }
+  .nucma-encryption-notice .encryption-msg strong {
+    color: rgb(var(--color-warning));
+    font-weight: 600;
+  }
+  [data-theme="dark"] .nucma-encryption-notice {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
 </style>
 
 <style th:if="${theme.config.advanced?.enable_code_copy == false or (theme.config.advanced?.enable_code_copy != null and #strings.equalsIgnoreCase(theme.config.advanced.enable_code_copy.toString(), 'false'))}">
@@ -221,9 +256,15 @@
      th:text="${post.status?.excerpt}"></p>
 </header>
 
+<!-- 加密文章提示（插件触发） -->
+<th:block th:replace="~{modules/common/components :: encryption-notice}"></th:block>
+
 <div class="post-page-grid">
   <article class="post-article post-main-card"
            th:classappend="${theme.config.advanced?.enable_code_copy == false or (theme.config.advanced?.enable_code_copy != null and #strings.equalsIgnoreCase(theme.config.advanced.enable_code_copy.toString(), 'false')) ? ' post-copy-disabled' : ''}">
+    <!-- 文章组件插件渲染区域 -->
+    <th:block th:if="${post?.enableContentWidgets == true}" th:replace="~{modules/common/widgets}"></th:block>
+    <!-- /文章组件插件渲染区域 -->
     <div class="prose prose-slate max-w-none"
          th:classappend="${theme.config.post?.prose_size == 'sm' ? ' prose-sm' : theme.config.post?.prose_size == 'lg' ? ' prose-lg' : ''}"
          th:style="${'--tw-prose-links:rgb(var(--color-accent));--tw-prose-quotes:rgb(var(--color-text));--tw-prose-quote-borders:rgb(var(--color-accent));--tw-prose-code:rgb(var(--color-accent));' + (theme.config.post?.paragraph_indent != false ? 'text-indent:2em;' : '')}"

@@ -79,4 +79,24 @@
   <th:block th:replace="~{modules/common/scripts :: baseScripts}"></th:block>
 </th:block>
 
+<!-- 社交分享卡片 meta -->
+<th:block th:fragment="share-meta">
+  <meta th:property="og:title" th:content="${post?.spec?.title}" />
+  <meta th:property="og:description" th:content="${post?.status?.excerpt ?: #strings.abbreviate(post?.spec?.description, 200)}" />
+  <meta th:property="og:image" th:content="${#strings.isEmpty(#themes?.get('nucma')?.share_card_cover) ? (#strings.isEmpty(post?.spec?.cover) ? #themes.get('nucma').site_logo : post?.spec?.cover) : #themes.get('nucma').share_card_cover}" />
+  <meta th:property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+</th:block>
+
+<!-- 加密文章提示 -->
+<th:block th:fragment="encryption-notice">
+  <div th:if="${post?.spec?.published == false}" class="nucma-encryption-notice">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+    <div class="encryption-msg">
+      <strong>本文已加密</strong><br/>
+      请输入密码后查看完整内容。
+    </div>
+  </div>
+</th:block>
+
 </html>

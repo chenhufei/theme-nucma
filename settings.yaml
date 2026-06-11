@@ -2117,3 +2117,99 @@ spec:
           label: 关闭图片懒加载
           value: false
           help: 仅在排查图片延迟显示问题时开启，正常情况下建议关闭
+  - group: plugin-widgets
+    label: 文章组件
+    formSchema:
+    - $el: div
+      attrs:
+        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
+      children:
+      - $el: div
+        attrs:
+          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+        children:
+        - $formkit: checkbox
+          name: enable_content_widgets
+          label: 启用文章组件
+          value: true
+          help: 启用后文章正文可渲染文章组件插件的富文本组件（提示框、标签页、折叠面板、聊天气泡、时间线、步骤等）
+      - $el: div
+        attrs:
+          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+        children:
+        - $formkit: checkbox
+          name: enable_article_encryption_notice
+          label: 启用加密文章提示
+          value: true
+          help: 启用后为加密文章显示 Nucma 风格的玻璃态加密提示卡片
+      - $el: div
+        attrs:
+          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+        children:
+        - $formkit: checkbox
+          name: enable_share_card
+          label: 启用社交分享卡片
+          value: true
+          help: 自动注入 og/twitter/meta 标签，复用 Nucma Logo 和品牌色，优化微信/QQ 分享预览效果
+  - group: plugin-online-display
+    label: 在线显示
+    formSchema:
+    - $el: div
+      attrs:
+        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
+      children:
+      - $el: div
+        attrs:
+          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+        children:
+        - $formkit: checkbox
+          name: enable_online_count
+          label: 显示在线人数
+          value: false
+          help: 在页脚显示当前在线人数（需配合 Halo 在线显示插件）
+        - $el: div
+          attrs:
+            style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+          children:
+          - $formkit: text
+            name: online_count_label
+            label: 在线人数标签
+            value: 当前在线
+            placeholder: 显示在在线人数旁的文字
+  - group: plugin-share-card
+    label: 社交分享
+    formSchema:
+    - $el: div
+      attrs:
+        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
+      children:
+      - $el: div
+        attrs:
+          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+        children:
+        - $formkit: text
+          name: share_card_title
+          label: 分享标题
+          value: ''
+          help: 留空则使用文章标题
+        - $el: div
+          attrs:
+            style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+          children:
+          - $formkit: textarea
+            name: share_card_description
+            label: 分享描述
+            rows: 3
+            value: ''
+            placeholder: 分享卡片描述文字
+            help: 留空则使用文章摘要
+        - $el: div
+          attrs:
+            style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+          children:
+          - $formkit: text
+            name: share_card_cover
+            label: 分享封面图
+            value: ''
+            placeholder: https://...
+            help: 留空则使用文章封面图；若文章也无封面则使用站 Logo

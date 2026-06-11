@@ -129,11 +129,18 @@
             <ul class="space-y-2.5">
               <li><a th:href="@{/categories}" class="footer-link text-sm block">分类</a></li>
               <li><a th:href="@{/tags}" class="footer-link text-sm block">标签</a></li>
-              <li><a th:href="@{/rss.xml}" class="footer-link text-sm block">RSS</a></li>
+              <li><a th:href="@{/rss.xml}" class="footer-link text-sm block" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 inline-block mr-1.5 align-text-bottom" fill="currentColor" viewBox="0 0 24 24"><circle cx="6.5" cy="17.5" r="1.5"/><path d="M16 16a4 4 0 01-4-4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16A8 8 0 008 8" fill="none" stroke="currentColor" stroke-width="2"/></svg>RSS</a></li>
             </ul>
           </div>
         </th:block>
       </div>
+    </div>
+
+    <!-- 在线显示插件集成 -->
+    <div th:if="${theme.config.pluginOnlineDisplay?.enableOnlineCount == true}" class="footer-online-count">
+      <span class="footer-online-dot"></span>
+      <span class="footer-online-label" th:text="${theme.config.pluginOnlineDisplay?.onlineCountLabel ?: '当前在线'}">当前在线</span>: 
+      <span class="footer-online-number" id="onlineCount">--</span>
     </div>
 
     <div class="footer-meta">
