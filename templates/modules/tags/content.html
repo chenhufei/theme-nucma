@@ -7,13 +7,13 @@
 
   <div class="flex flex-wrap gap-3" th:if="${tags != null and tags.items != null}">
     <a th:each="tag : ${tags.items}"
-       th:href="@{${tag.status.permalink}}"
+       th:href="@{${tag.status?.permalink}}"
        class="taxonomy-chip theme-surface-panel group inline-flex items-center gap-2 px-4 py-2 rounded-full accent-border-hover transition-colors duration-150 reveal">
       <svg class="w-3.5 h-3.5 accent-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/>
       </svg>
       <span class="font-medium theme-text-muted accent-text-hover transition-colors"
-            th:text="${tag.spec.displayName}"></span>
+            th:text="${tag.spec?.displayName}"></span>
       <span class="theme-count-chip text-xs px-1.5 py-0.5 rounded-full"
             th:text="${tag.postCount != null ? tag.postCount : 0}"></span>
     </a>

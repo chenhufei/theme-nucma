@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="|${post.spec.title} - ${site.title}|"></title>
-  <meta name="description" th:content="${post.status.excerpt ?: site.subtitle}" />
-  <meta property="og:title" th:content="${post.spec.title}" />
-  <meta property="og:description" th:content="${post.status.excerpt ?: site.subtitle}" />
+  <title th:text="|${post.spec?.title} - ${site.title}|"></title>
+  <meta name="description" th:content="${post.status?.excerpt ?: site.subtitle}" />
+  <meta property="og:title" th:content="${post.spec?.title}" />
+  <meta property="og:description" th:content="${post.status?.excerpt ?: site.subtitle}" />
   <meta property="og:type" content="article" />
-  <meta property="og:url" th:content="${post.status.permalink}" />
-  <meta th:if="${post.spec.cover != null and !#strings.isEmpty(post.spec.cover)}"
-        property="og:image" th:content="${post.spec.cover}" />
+  <meta property="og:url" th:content="${post.status?.permalink}" />
+  <meta th:if="${post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}"
+        property="og:image" th:content="${post.spec?.cover}" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="stylesheet" th:href="@{/assets/css/main.css(v={VERSION})}">
   <th:block th:replace="~{modules/common/components :: headMeta}"></th:block>

@@ -270,18 +270,18 @@
          aria-hidden="false">
       <a th:each="post,iter : ${posts.items}"
          th:if="${iter.index < (theme.config.home?.posts_per_page ?: 8)}"
-         th:href="${post.status.permalink}"
+         th:href="${post.status?.permalink}"
          target="_blank" rel="noopener noreferrer"
          th:classappend="'reveal reveal-d' + (${iter.index % 3} + 1)"
          class="group block rounded-xl nucma-card-glass nucma-card-hover home-post-card flex flex-col overflow-hidden">
         <div class="home-post-card-cover relative w-full flex-shrink-0 overflow-hidden" th:style="'aspect-ratio:' + ${theme.config.home?.post_cover_ratio ?: '16/9'} + ';'">
-          <img th:if="${post.spec.cover != null and !#strings.isEmpty(post.spec.cover) and (#strings.startsWith(post.spec.cover,'http://') or #strings.startsWith(post.spec.cover,'https://') or #strings.startsWith(post.spec.cover,'/'))}"
-               th:src="${#strings.replace(post.spec.cover, 'http://', 'https://')}" th:alt="${post.spec.title}"
+          <img th:if="${post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover) and (#strings.startsWith(post.spec?.cover,'http://') or #strings.startsWith(post.spec?.cover,'https://') or #strings.startsWith(post.spec?.cover,'/'))}"
+               th:src="${#strings.replace(post.spec?.cover, 'http://', 'https://')}" th:alt="${post.spec?.title}"
                th:loading="${iter.index < 2 ? 'eager' : 'lazy'}"
                th:fetchpriority="${iter.index == 0 ? 'high' : 'auto'}"
                class="w-full h-full object-cover" />
           <!-- 无封面：简洁色块占位 -->
-          <div th:unless="${post.spec.cover != null and !#strings.isEmpty(post.spec.cover)}"
+          <div th:unless="${post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}"
                class="w-full h-full"
                th:with="ci=${#strings.length(post.metadata.name) % 6}"
                th:style="${'background-color:' +
@@ -296,10 +296,10 @@
           <div class="home-post-card-overlay absolute inset-0 flex flex-col items-center justify-center gap-2
                       opacity-0 group-hover:opacity-100" style="transition: opacity 0.35s ease;">
             <div class="w-10 h-10 rounded-xl border border-white/20 bg-white/12 flex items-center justify-center overflow-hidden">
-              <img th:if="${post.owner != null and post.owner.avatar != null and !#strings.isEmpty(post.owner.avatar) and (#strings.startsWith(post.owner.avatar,'http://') or #strings.startsWith(post.owner.avatar,'https://') or #strings.startsWith(post.owner.avatar,'/'))}"
-                   th:src="${#strings.replace(post.owner.avatar, 'http://', 'https://')}" th:alt="${post.owner.displayName}"
+              <img th:if="${post.owner != null and post.owner?.avatar != null and !#strings.isEmpty(post.owner?.avatar) and (#strings.startsWith(post.owner?.avatar,'http://') or #strings.startsWith(post.owner?.avatar,'https://') or #strings.startsWith(post.owner?.avatar,'/'))}"
+                   th:src="${#strings.replace(post.owner?.avatar, 'http://', 'https://')}" th:alt="${post.owner?.displayName}"
                    class="w-full h-full object-cover" loading="lazy" decoding="async" data-no-dim />
-              <svg th:unless="${post.owner != null and post.owner.avatar != null and !#strings.isEmpty(post.owner.avatar) and (#strings.startsWith(post.owner.avatar,'http://') or #strings.startsWith(post.owner.avatar,'https://') or #strings.startsWith(post.owner.avatar,'/'))}"
+              <svg th:unless="${post.owner != null and post.owner?.avatar != null and !#strings.isEmpty(post.owner?.avatar) and (#strings.startsWith(post.owner?.avatar,'http://') or #strings.startsWith(post.owner?.avatar,'https://') or #strings.startsWith(post.owner?.avatar,'/'))}"
                    class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
               </svg>
@@ -307,12 +307,12 @@
             <span class="text-white text-sm font-semibold"
                   th:text="${post.owner?.displayName ?: '作者'}"></span>
             <span class="text-white/75 text-xs tabular-nums"
-                  th:text="${#temporals.format(post.spec.publishTime, theme.config.post?.date_format ?: 'yyyy-MM-dd')}"></span>
+                  th:text="${#temporals.format(post.spec?.publishTime, theme.config.post?.date_format ?: 'yyyy-MM-dd')}"></span>
           </div>
           <div class="absolute top-2.5 left-2.5 flex gap-1.5 flex-wrap" th:if="${post.categories != null and #lists.size(post.categories) > 0}">
             <span th:each="cat,catStat : ${post.categories}"
                   th:if="${catStat.index < 2}"
-                  th:text="${cat.spec.displayName}"
+                  th:text="${cat.spec?.displayName}"
                   class="home-post-category px-2 py-0.5 text-xs font-medium rounded-full"></span>
           </div>
         </div>
@@ -320,13 +320,13 @@
           <div class="home-post-card-meta">
             <span th:text="${post.owner?.displayName ?: '作者'}">作者</span>
             <span>·</span>
-            <time th:text="${#temporals.format(post.spec.publishTime, theme.config.post?.date_format ?: 'yyyy-MM-dd')}">2026-04-26</time>
+            <time th:text="${#temporals.format(post.spec?.publishTime, theme.config.post?.date_format ?: 'yyyy-MM-dd')}">2026-04-26</time>
           </div>
           <h3 class="home-post-card-title font-semibold theme-text-strong accent-text-hover transition-colors line-clamp-2"
-              th:text="${post.spec.title}"></h3>
+              th:text="${post.spec?.title}"></h3>
           <p class="home-post-card-excerpt text-sm line-clamp-2 leading-relaxed flex-1"
-             th:if="${post.status.excerpt != null and !#strings.isEmpty(post.status.excerpt)}"
-             th:text="${post.status.excerpt}"></p>
+             th:if="${post.status?.excerpt != null and !#strings.isEmpty(post.status?.excerpt)}"
+             th:text="${post.status?.excerpt}"></p>
           <div class="home-post-card-stats flex items-center justify-between text-xs theme-text-soft"
                th:if="${theme.config.home?.show_post_stats != false}">
             <div class="flex items-center gap-3">

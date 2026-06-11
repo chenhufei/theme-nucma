@@ -16,14 +16,14 @@
   <!-- 有数据：按分组展示 -->
   <div th:if="${groups != null and !#lists.isEmpty(groups)}" class="space-y-10">
     <div th:each="group : ${groups}" class="theme-layout-group theme-section-stack reveal member-group">
-      <div class="flex items-center gap-3 mb-5" th:if="${group.spec.displayName != null}">
+      <div class="flex items-center gap-3 mb-5" th:if="${group.spec?.displayName != null}">
         <div class="nucma-section-badge">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
         </div>
         <h2 class="theme-text-muted text-base font-semibold"
-            th:text="${group.spec.displayName}"></h2>
+            th:text="${group.spec?.displayName}"></h2>
         <span class="theme-count-chip text-xs px-2 py-0.5 rounded-full"
               th:text="${#lists.size(group.members)}"></span>
       </div>
@@ -33,22 +33,22 @@
         <th:block th:each="member : ${group.members}">
 
         <!-- 有链接：可点击 -->
-        <a th:if="${member.spec.qqFriendLink != null and !member.spec.qqFriendLink.isEmpty()}"
-           th:href="${member.spec.qqFriendLink}" target="_blank" rel="noopener noreferrer"
+        <a th:if="${member.spec?.qqFriendLink != null and !member.spec?.qqFriendLink.isEmpty()}"
+           th:href="${member.spec?.qqFriendLink}" target="_blank" rel="noopener noreferrer"
            class="link-card group member-card"
-           th:attr="data-qq-link=${member.spec.qqFriendLink}">
+           th:attr="data-qq-link=${member.spec?.qqFriendLink}">
           <div class="link-card-logo">
-            <img th:if="${member.spec.avatar != null and !member.spec.avatar.isEmpty()}"
-                 th:src="${#strings.replace(member.spec.avatar, 'http://', 'https://')}" th:alt="${member.spec.displayName}"
+            <img th:if="${member.spec?.avatar != null and !member.spec?.avatar.isEmpty()}"
+                 th:src="${#strings.replace(member.spec?.avatar, 'http://', 'https://')}" th:alt="${member.spec?.displayName}"
                   class="theme-media-48" loading="lazy" />
-            <svg th:style="${member.spec.avatar != null and !member.spec.avatar.isEmpty() ? 'display:none' : 'display:block'}"
+            <svg th:style="${member.spec?.avatar != null and !member.spec?.avatar.isEmpty() ? 'display:none' : 'display:block'}"
                  class="theme-placeholder-icon" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
             </svg>
           </div>
           <div class="link-card-body">
-            <div class="link-card-name" th:text="${member.spec.displayName}"></div>
-            <div class="link-card-desc" th:text="${member.spec.school ?: '成员单位'}"></div>
+            <div class="link-card-name" th:text="${member.spec?.displayName}"></div>
+            <div class="link-card-desc" th:text="${member.spec?.school ?: '成员单位'}"></div>
           </div>
           <svg class="link-card-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -56,20 +56,20 @@
         </a>
 
         <!-- 无链接：不可点击 -->
-        <div th:unless="${member.spec.qqFriendLink != null and !member.spec.qqFriendLink.isEmpty()}"
+        <div th:unless="${member.spec?.qqFriendLink != null and !member.spec?.qqFriendLink.isEmpty()}"
              class="link-card member-card">
           <div class="link-card-logo">
-            <img th:if="${member.spec.avatar != null and !member.spec.avatar.isEmpty()}"
-                 th:src="${#strings.replace(member.spec.avatar, 'http://', 'https://')}" th:alt="${member.spec.displayName}"
+            <img th:if="${member.spec?.avatar != null and !member.spec?.avatar.isEmpty()}"
+                 th:src="${#strings.replace(member.spec?.avatar, 'http://', 'https://')}" th:alt="${member.spec?.displayName}"
                   class="theme-media-48" loading="lazy" />
-            <svg th:style="${member.spec.avatar != null and !member.spec.avatar.isEmpty() ? 'display:none' : 'display:block'}"
+            <svg th:style="${member.spec?.avatar != null and !member.spec?.avatar.isEmpty() ? 'display:none' : 'display:block'}"
                  class="theme-placeholder-icon" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
             </svg>
           </div>
           <div class="link-card-body">
-            <div class="link-card-name" th:text="${member.spec.displayName}"></div>
-            <div class="link-card-desc" th:text="${member.spec.school ?: '成员单位'}"></div>
+            <div class="link-card-name" th:text="${member.spec?.displayName}"></div>
+            <div class="link-card-desc" th:text="${member.spec?.school ?: '成员单位'}"></div>
           </div>
         </div>
 

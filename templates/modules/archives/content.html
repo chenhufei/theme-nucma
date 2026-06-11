@@ -60,12 +60,12 @@
 
               <div class="pl-4 space-y-2">
                 <a th:each="post : ${monthData.posts}"
-                   th:href="${post.status.permalink}"
+                   th:href="${post.status?.permalink}"
                    class="archive-entry group flex items-center gap-4 py-2.5 px-3 rounded-xl border border-transparent transition-colors duration-150">
                   <time class="shrink-0 w-12 text-xs theme-text-soft tabular-nums text-right"
-                        th:text="${#temporals.format(post.spec.publishTime, 'MM-dd')}"></time>
+                        th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}"></time>
                   <h3 class="flex-1 min-w-0 text-sm font-medium theme-text-muted accent-text-hover transition-colors line-clamp-1"
-                      th:text="${post.spec.title}"></h3>
+                      th:text="${post.spec?.title}"></h3>
                   <svg class="theme-arrow-icon shrink-0 w-3.5 h-3.5 accent-text-hover transition-colors duration-150"
                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>

@@ -16,14 +16,14 @@
   <!-- 有数据：按分组展示 -->
   <div th:if="${groups != null and !#lists.isEmpty(groups)}" class="space-y-10">
     <div th:each="group : ${groups}" class="theme-layout-group theme-section-stack reveal">
-      <div class="flex items-center gap-3 mb-5" th:if="${group.spec.displayName != null}">
+      <div class="flex items-center gap-3 mb-5" th:if="${group.spec?.displayName != null}">
         <div class="nucma-section-badge">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
           </svg>
         </div>
         <h2 class="theme-text-muted text-base font-semibold"
-            th:text="${group.spec.displayName}"></h2>
+            th:text="${group.spec?.displayName}"></h2>
         <span class="theme-count-chip text-xs px-2 py-0.5 rounded-full"
               th:text="${group.links != null ? #lists.size(group.links) : 0}"></span>
       </div>
@@ -31,15 +31,15 @@
       <!-- 链接卡片 -->
       <div class="theme-card-grid">
         <a th:each="link : ${group.links}"
-           th:href="${link.spec.url}" target="_blank" rel="noopener noreferrer"
+           th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer"
            class="link-card">
           <!-- Logo 容器：固定 48x48 -->
           <div class="link-card-logo">
-            <img th:if="${link.spec.logo != null and !link.spec.logo.isEmpty()}"
-                 th:src="${link.spec.logo}" th:alt="${link.spec.displayName}"
+            <img th:if="${link.spec?.logo != null and !link.spec?.logo.isEmpty()}"
+                 th:src="${link.spec?.logo}" th:alt="${link.spec?.displayName}"
                   class="theme-media-48"
                   loading="lazy" />
-            <svg th:style="${link.spec.logo != null and !link.spec.logo.isEmpty() ? 'display:none' : 'display:block'}"
+            <svg th:style="${link.spec?.logo != null and !link.spec?.logo.isEmpty() ? 'display:none' : 'display:block'}"
                  class="theme-placeholder-icon"
                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/>
@@ -47,8 +47,8 @@
           </div>
           <!-- 信息 -->
           <div class="link-card-body">
-            <div class="link-card-name" th:text="${link.spec.displayName}"></div>
-            <div class="link-card-desc" th:text="${link.spec.description ?: '校园媒体伙伴'}"></div>
+            <div class="link-card-name" th:text="${link.spec?.displayName}"></div>
+            <div class="link-card-desc" th:text="${link.spec?.description ?: '校园媒体伙伴'}"></div>
           </div>
           <!-- 箭头 -->
           <svg class="link-card-arrow"
@@ -160,7 +160,7 @@
           <select name="groupName"
             class="nucma-form-control">
             <option value="">请选择分组（可选）</option>
-            <option th:each="group : ${groups}" th:value="${group.metadata.name}" th:text="${group.spec.displayName}"></option>
+            <option th:each="group : ${groups}" th:value="${group.metadata.name}" th:text="${group.spec?.displayName}"></option>
           </select>
         </div>
 

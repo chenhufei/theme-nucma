@@ -1,7 +1,7 @@
 <article class="page-shell mx-auto px-5 sm:px-6 pt-8 pb-16" style="max-width:var(--container-max-w);">
   <header class="theme-page-intro reveal">
     <h1 class="page-headline theme-page-title mb-0"
-        th:text="${page.spec.title ?: '页面'}"></h1>
+        th:text="${page.spec?.title ?: '页面'}"></h1>
   </header>
   <div class="page-prose-shell theme-surface-panel rounded-[2rem] px-6 py-6 sm:px-8 sm:py-8">
     <div class="prose dark:prose-invert max-w-none"

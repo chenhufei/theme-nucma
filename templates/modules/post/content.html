@@ -182,29 +182,29 @@
 <section th:if="${theme.config.post?.show_cover != false}"
          class="post-hero-full"
          th:style="${'--post-hero-height:' + (theme.config.post?.post_cover_height_preset == 'small' ? '320px' : theme.config.post?.post_cover_height_preset == 'large' ? 'clamp(420px,62vh,760px)' : theme.config.post?.post_cover_height_preset == 'fullscreen' ? '100svh' : theme.config.post?.post_cover_height_preset == 'custom' ? (theme.config.post?.post_cover_height_custom ?: 'clamp(360px,52vh,620px)') : 'clamp(360px,52vh,620px)') + ';'}">
-  <img th:if="${post.spec.cover != null and !#strings.isEmpty(post.spec.cover) and (#strings.startsWith(post.spec.cover,'http://') or #strings.startsWith(post.spec.cover,'https://') or #strings.startsWith(post.spec.cover,'/'))}"
-       th:src="${#strings.replace(post.spec.cover, 'http://', 'https://')}"
-       th:alt="${post.spec.title}"
+  <img th:if="${post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover) and (#strings.startsWith(post.spec?.cover,'http://') or #strings.startsWith(post.spec?.cover,'https://') or #strings.startsWith(post.spec?.cover,'/'))}"
+       th:src="${#strings.replace(post.spec?.cover, 'http://', 'https://')}"
+       th:alt="${post.spec?.title}"
        class="post-hero-image"
        loading="eager" fetchpriority="high" />
-  <img th:if="${(post.spec.cover == null or #strings.isEmpty(post.spec.cover)) and theme.config.post?.default_cover_image != null and !#strings.isEmpty(theme.config.post.default_cover_image) and (#strings.startsWith(theme.config.post.default_cover_image,'http://') or #strings.startsWith(theme.config.post.default_cover_image,'https://') or #strings.startsWith(theme.config.post.default_cover_image,'/'))}"
+  <img th:if="${(post.spec?.cover == null or #strings.isEmpty(post.spec?.cover)) and theme.config.post?.default_cover_image != null and !#strings.isEmpty(theme.config.post.default_cover_image) and (#strings.startsWith(theme.config.post.default_cover_image,'http://') or #strings.startsWith(theme.config.post.default_cover_image,'https://') or #strings.startsWith(theme.config.post.default_cover_image,'/'))}"
        th:src="${#strings.replace(theme.config.post.default_cover_image, 'http://', 'https://')}"
-       th:alt="${post.spec.title}"
+       th:alt="${post.spec?.title}"
        class="post-hero-image"
        loading="eager" fetchpriority="high" />
   <div class="post-hero-fallback"
-       th:unless="${(post.spec.cover != null and !#strings.isEmpty(post.spec.cover) and (#strings.startsWith(post.spec.cover,'http://') or #strings.startsWith(post.spec.cover,'https://') or #strings.startsWith(post.spec.cover,'/'))) or ((post.spec.cover == null or #strings.isEmpty(post.spec.cover)) and theme.config.post?.default_cover_image != null and !#strings.isEmpty(theme.config.post.default_cover_image) and (#strings.startsWith(theme.config.post.default_cover_image,'http://') or #strings.startsWith(theme.config.post.default_cover_image,'https://') or #strings.startsWith(theme.config.post.default_cover_image,'/')))}"></div>
+       th:unless="${(post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover) and (#strings.startsWith(post.spec?.cover,'http://') or #strings.startsWith(post.spec?.cover,'https://') or #strings.startsWith(post.spec?.cover,'/'))) or ((post.spec?.cover == null or #strings.isEmpty(post.spec?.cover)) and theme.config.post?.default_cover_image != null and !#strings.isEmpty(theme.config.post.default_cover_image) and (#strings.startsWith(theme.config.post.default_cover_image,'http://') or #strings.startsWith(theme.config.post.default_cover_image,'https://') or #strings.startsWith(theme.config.post.default_cover_image,'/')))}"></div>
   <div class="post-hero-gradient"></div>
   <header class="post-hero-content">
     <div class="post-hero-categories" th:if="${post.categories != null and !post.categories.isEmpty()}">
       <span th:each="cat : ${post.categories}"
-            th:text="${cat.spec.displayName}"
+            th:text="${cat.spec?.displayName}"
             class="post-category-chip"></span>
     </div>
-    <h1 class="post-hero-title" th:text="${post.spec.title}">文章标题</h1>
-    <p th:if="${theme.config.post?.show_excerpt != false and post.status.excerpt != null and !#strings.isEmpty(post.status.excerpt)}"
+    <h1 class="post-hero-title" th:text="${post.spec?.title}">文章标题</h1>
+    <p th:if="${theme.config.post?.show_excerpt != false and post.status?.excerpt != null and !#strings.isEmpty(post.status?.excerpt)}"
        class="post-hero-excerpt"
-       th:text="${post.status.excerpt}"></p>
+       th:text="${post.status?.excerpt}"></p>
   </header>
 </section>
 
@@ -212,13 +212,13 @@
         class="post-plain-header">
   <div class="post-hero-categories" th:if="${post.categories != null and !post.categories.isEmpty()}">
     <span th:each="cat : ${post.categories}"
-          th:text="${cat.spec.displayName}"
+          th:text="${cat.spec?.displayName}"
           class="post-category-chip"></span>
   </div>
-  <h1 class="post-hero-title" th:text="${post.spec.title}">文章标题</h1>
-  <p th:if="${theme.config.post?.show_excerpt != false and post.status.excerpt != null and !#strings.isEmpty(post.status.excerpt)}"
+  <h1 class="post-hero-title" th:text="${post.spec?.title}">文章标题</h1>
+  <p th:if="${theme.config.post?.show_excerpt != false and post.status?.excerpt != null and !#strings.isEmpty(post.status?.excerpt)}"
      class="post-hero-excerpt"
-     th:text="${post.status.excerpt}"></p>
+     th:text="${post.status?.excerpt}"></p>
 </header>
 
 <div class="post-page-grid">
@@ -229,7 +229,7 @@
          th:style="${'--tw-prose-links:rgb(var(--color-accent));--tw-prose-quotes:rgb(var(--color-text));--tw-prose-quote-borders:rgb(var(--color-accent));--tw-prose-code:rgb(var(--color-accent));' + (theme.config.post?.paragraph_indent != false ? 'text-indent:2em;' : '')}"
          th:utext="${post.content.content}"></div>
 
-    <section th:if="${haloCommentEnabled and (post.spec.allowComment == null or post.spec.allowComment != false)}"
+    <section th:if="${haloCommentEnabled and (post.spec?.allowComment == null or post.spec?.allowComment != false)}"
              class="post-comments-shell theme-border-softer mt-10 pt-8 border-t">
       <halo:comment group="content.halo.run"
                     kind="Post"
@@ -240,16 +240,16 @@
   <aside class="post-sidebar">
     <div th:if="${theme.config.post?.show_author_card != false and post.owner != null}"
          class="post-sidebar-card post-author-card">
-      <img th:src="${post.owner.avatar != null and (#strings.startsWith(post.owner.avatar,'http://') or #strings.startsWith(post.owner.avatar,'https://') or #strings.startsWith(post.owner.avatar,'/')) ? #strings.replace(post.owner.avatar, 'http://', 'https://') : '/themes/theme-nucma/assets/default-avatar.svg'}"
-           th:alt="${post.owner.displayName}"
+      <img th:src="${post.owner?.avatar != null and (#strings.startsWith(post.owner?.avatar,'http://') or #strings.startsWith(post.owner?.avatar,'https://') or #strings.startsWith(post.owner?.avatar,'/')) ? #strings.replace(post.owner?.avatar, 'http://', 'https://') : '/themes/theme-nucma/assets/default-avatar.svg'}"
+           th:alt="${post.owner?.displayName}"
            class="post-author-avatar"
            loading="lazy" />
       <div class="min-w-0">
         <p class="post-sidebar-label">作者</p>
-        <strong class="post-sidebar-title" th:text="${post.owner.displayName}">作者</strong>
-        <p th:if="${post.owner.bio != null and !post.owner.bio.isEmpty()}"
+        <strong class="post-sidebar-title" th:text="${post.owner?.displayName}">作者</strong>
+        <p th:if="${post.owner?.bio != null and !post.owner?.bio.isEmpty()}"
            class="post-sidebar-desc"
-           th:text="${post.owner.bio}"></p>
+           th:text="${post.owner?.bio}"></p>
       </div>
     </div>
 
@@ -258,7 +258,7 @@
       <div class="post-sidebar-meta">
         <time>
           <span>发布</span>
-          <strong th:text="${#temporals.format(post.spec.publishTime, theme.config.post?.date_format ?: 'yyyy年MM月dd日')}"></strong>
+          <strong th:text="${#temporals.format(post.spec?.publishTime, theme.config.post?.date_format ?: 'yyyy年MM月dd日')}"></strong>
         </time>
         <span th:if="${theme.config.post?.show_views != false and post.stats != null}">
           <span>阅读</span>
@@ -279,7 +279,7 @@
       <p class="post-sidebar-label">标签</p>
       <div class="post-chip-list">
         <span th:each="tag : ${post.tags}" class="post-category-chip">
-          #<span th:text="${tag.spec.displayName}"></span>
+          #<span th:text="${tag.spec?.displayName}"></span>
         </span>
       </div>
     </div>
