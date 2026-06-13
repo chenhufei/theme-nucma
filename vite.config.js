@@ -27,7 +27,11 @@ export default defineConfig({
 
           return '[name].[ext]';
         },
-        manualChunks: {}
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
       },
       treeshake: true
     },

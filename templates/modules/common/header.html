@@ -76,25 +76,25 @@
          th:with="primaryMenu=${menuFinder.getByName('primary')}">
       <th:block th:if="${primaryMenu != null}" th:each="menuItem : ${primaryMenu.menuItems}">
         <div th:if="${menuItem.children != null and !menuItem.children.isEmpty()}" class="site-header__group">
-          <a th:href="@{${menuItem.status.href}}" class="site-header__nav-link site-header__toggle">
-            <span th:text="${menuItem.status.displayName}">菜单</span>
+          <a th:href="@{${menuItem.status?.href}}" class="site-header__nav-link site-header__toggle">
+            <span th:text="${menuItem.status?.displayName}">菜单</span>
             <svg class="site-header__toggle-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
             </svg>
           </a>
           <div class="site-header__menu">
             <a th:each="child : ${menuItem.children}"
-               th:href="@{${child.status.href}}"
-               th:target="${child.spec.target?.value}"
-               th:text="${child.status.displayName}"
+               th:href="@{${child.status?.href}}"
+               th:target="${child.spec?.target?.value}"
+               th:text="${child.status?.displayName}"
                class="site-header__menu-link">子菜单</a>
           </div>
         </div>
 
         <a th:unless="${menuItem.children != null and !menuItem.children.isEmpty()}"
-           th:href="@{${menuItem.status.href}}"
-           th:target="${menuItem.spec.target?.value}"
-           th:text="${menuItem.status.displayName}"
+           th:href="@{${menuItem.status?.href}}"
+           th:target="${menuItem.spec?.target?.value}"
+           th:text="${menuItem.status?.displayName}"
            class="site-header__nav-link">菜单</a>
       </th:block>
       <th:block th:if="${promoLinks != null and !#lists.isEmpty(promoLinks)}">

@@ -166,7 +166,6 @@ class PluginAdapter {
       container.dataset.pluginInitialized = 'true';
     } catch (error) {
       this.requestCache.delete(cacheKey);
-      console.error(`Plugin init failed: ${normalizedName}`, error);
       container.innerHTML = createEmpty('内容加载失败');
       container.dataset.pluginInitialized = 'failed';
     }

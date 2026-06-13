@@ -853,6 +853,8 @@
       const openBody = (instant = false) => {
         button.setAttribute('aria-expanded', 'true');
         item?.classList.add('active');
+        body.style.setProperty('--faq-body-visibility', 'visible');
+        body.style.setProperty('--faq-body-opacity', '1');
         body.hidden = false;
         setBodyHeight();
 
@@ -866,12 +868,11 @@
       const closeBody = (instant = false) => {
         button.setAttribute('aria-expanded', 'false');
         item?.classList.remove('active');
-        body.hidden = false;
-        setBodyHeight();
+        body.style.setProperty('--faq-body-opacity', '0');
 
         if (instant || prefersReducedMotion()) {
-          body.hidden = true;
           body.style.setProperty('--faq-body-height', '0px');
+          body.hidden = true;
           return;
         }
 
@@ -880,6 +881,7 @@
         });
         body.addEventListener('transitionend', () => {
           if (button.getAttribute('aria-expanded') === 'false') {
+            body.style.setProperty('--faq-body-visibility', 'hidden');
             body.hidden = true;
           }
         }, { once: true });

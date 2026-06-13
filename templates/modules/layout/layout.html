@@ -12,12 +12,12 @@
   <title th:text="${title} ?: ${site.title}">[[${site.title}]]</title>
   <meta name="description" th:content="${site.subtitle}" />
 
-  <meta name="author" th:content="${site.title}" />
+  <meta name="author" th:content="${site.title ?: 'Nucma'}" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" th:href="${#httpServletRequest.getRequestURL()}" />
 
   <meta property="og:type" content="website" />
-  <meta property="og:site_name" th:content="${site.title}" />
+  <meta property="og:site_name" th:content="${site.title ?: 'Nucma'}" />
   <meta property="og:title" th:content="${title} ?: ${site.title}" />
   <meta property="og:description" th:content="${site.subtitle}" />
   <meta property="og:url" th:content="${#httpServletRequest.getRequestURL()}" />

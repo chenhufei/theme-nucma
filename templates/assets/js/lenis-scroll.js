@@ -33,8 +33,6 @@ class SmoothScroll {
         this.setupEventListeners();
       }
     }).catch(err => {
-      console.warn('Lenis 加载失败,使用原生滚动:', err);
-    });
   }
 
   // 动态加载 Lenis 库

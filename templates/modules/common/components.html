@@ -36,7 +36,7 @@
     <div class="flex flex-col h-full">
       <!-- 菜单头部 -->
       <div class="flex items-center justify-between px-4 h-14 border-b theme-border-soft shrink-0">
-        <span class="font-bold text-lg theme-text-strong" th:text="${site.title}">菜单</span>
+        <span class="font-bold text-lg theme-text-strong" th:text="${site.title ?: 'Nucma'}">菜单</span>
         <button class="theme-icon-button p-2 rounded-full transition-colors"
                 aria-label="关闭菜单" data-mobile-menu-close>
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,16 +47,16 @@
       <!-- 菜单内容 -->
       <div class="flex-1 overflow-y-auto px-4 py-4">
         <th:block th:if="${primaryMenu != null}" th:each="menuItem : ${primaryMenu.menuItems}">
-          <a th:href="@{${menuItem.status.href}}"
-             th:target="${menuItem.spec.target?.value}"
-             th:text="${menuItem.status.displayName}"
+          <a th:href="@{${menuItem.status?.href}}"
+             th:target="${menuItem.spec?.target?.value}"
+             th:text="${menuItem.status?.displayName}"
              data-mobile-menu-close
              class="block py-3 text-sm font-medium theme-text-muted accent-text-hover border-b theme-border-softer transition-colors"></a>
           <th:block th:if="${menuItem.children != null and !menuItem.children.isEmpty()}">
             <a th:each="child : ${menuItem.children}"
-               th:href="@{${child.status.href}}"
-               th:target="${child.spec.target?.value}"
-               th:text="${child.status.displayName}"
+               th:href="@{${child.status?.href}}"
+               th:target="${child.spec?.target?.value}"
+               th:text="${child.status?.displayName}"
                data-mobile-menu-close
                class="block py-2.5 pl-4 text-sm theme-text-soft accent-text-hover transition-colors"></a>
           </th:block>

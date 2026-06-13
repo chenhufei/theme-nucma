@@ -27,7 +27,7 @@
                loading="lazy"
                />
           <img th:if="${(theme.config.about?.avatar == null or #strings.isEmpty(theme.config.about?.avatar) or !(#strings.startsWith(theme.config.about.avatar,'http://') or #strings.startsWith(theme.config.about.avatar,'https://') or #strings.startsWith(theme.config.about.avatar,'/'))) and site.logo != null and !#strings.isEmpty(site.logo) and (#strings.startsWith(site.logo,'http://') or #strings.startsWith(site.logo,'https://') or #strings.startsWith(site.logo,'/'))}"
-               th:src="${#strings.replace(site.logo, 'http://', 'https://')}" th:alt="${site.title}"
+               th:src="${#strings.replace(site.logo, 'http://', 'https://')}" th:alt="${site.title ?: 'Nucma'}"
                loading="lazy"
                />
           <div th:if="${(theme.config.about?.avatar == null or #strings.isEmpty(theme.config.about?.avatar) or !(#strings.startsWith(theme.config.about.avatar,'http://') or #strings.startsWith(theme.config.about.avatar,'https://') or #strings.startsWith(theme.config.about.avatar,'/'))) and (site.logo == null or #strings.isEmpty(site.logo) or !(#strings.startsWith(site.logo,'http://') or #strings.startsWith(site.logo,'https://') or #strings.startsWith(site.logo,'/')))}"
@@ -219,7 +219,7 @@
             </th:block>
             <!-- 内联 SVG 类型 -->
             <th:block th:if="${contact.icon_type == 'svg' and contact.icon_svg != null and !#strings.isEmpty(contact.icon_svg)}">
-              <span class="w-4 h-4 flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4" th:utext="${contact.icon_svg}"></span>
+              <span class="w-4 h-4 flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4" th:utext="${contact.icon_svg != null and #strings.contains(contact.icon_svg, '<svg') ? contact.icon_svg : ''}"></span>
             </th:block>
             <!-- 预设图标（兼容旧数据） -->
             <th:block th:if="${contact.icon_type == null or contact.icon_type == '' or contact.icon_type == 'preset'}">

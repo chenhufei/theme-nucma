@@ -1,7 +1,7 @@
 {
   "name": "theme-nucma",
   "type": "module",
-  "version": "1.0.4",
+  "version": "1.0.14",
   "description": "面向全国高校自媒体联盟的 Halo 主题，聚焦组织公示、校园资讯与成员展示",
   "license": "MIT",
   "scripts": {

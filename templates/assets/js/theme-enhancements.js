@@ -136,7 +136,6 @@
     }
 
     init() {
-      this.initFaq();
       this.initImageLightbox();
       this.initCodeCopy();
       this.initExternalLinks();
@@ -155,17 +154,6 @@
       if (typeof window.showThemeToast === 'function') {
         window.showThemeToast(message, type);
       }
-    }
-
-    initFaq() {
-      const faqList = document.getElementById('faqList');
-      if (!faqList) return;
-
-      faqList.addEventListener('click', (event) => {
-        const button = event.target.closest('.faq-btn');
-        if (!button || typeof window.toggleFaq !== 'function') return;
-        window.toggleFaq(button);
-      });
     }
 
     initImageLightbox() {
@@ -261,7 +249,6 @@
               button.style.borderColor = '';
             }, 2000);
           } catch (error) {
-            console.error('copy failed:', error);
             this.showToast('\u590d\u5236\u5931\u8d25', 'error');
           }
         });
@@ -279,7 +266,6 @@
             link.rel = 'noopener noreferrer';
           }
         } catch (error) {
-          console.error('external link handling failed:', error);
         }
       });
     }

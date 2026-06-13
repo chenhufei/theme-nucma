@@ -36,7 +36,7 @@
             <time class="theme-text-soft text-xs"
                   th:text="${#temporals.format(moment.spec.releaseTime ?: moment.metadata.creationTimestamp, 'yyyy-MM-dd HH:mm')}">2026-05-14 12:00</time>
           </div>
-          <div th:with="content=${moment.spec.content}" class="mt-4">
+          <div th:with="content=${moment.spec?.content}" class="mt-4">
             <div th:if="${content != null and content.html != null and !#strings.isEmpty(content.html)}"
                  class="plugin-richtext"
                  th:utext="${content.html}"></div>
@@ -69,8 +69,8 @@
           </div>
 
           <div class="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t theme-border-soft">
-            <div class="plugin-chip-list" th:if="${moment.spec.tags != null and !#lists.isEmpty(moment.spec.tags)}">
-              <span th:each="tag : ${moment.spec.tags}"
+            <div class="plugin-chip-list" th:if="${moment.spec?.tags != null and !#lists.isEmpty(moment.spec.tags)}">
+              <span th:each="tag : ${moment.spec?.tags}"
                     class="plugin-chip">
                 <span th:text="${tag}">标签</span>
               </span>

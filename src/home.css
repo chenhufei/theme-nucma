@@ -788,8 +788,11 @@
     margin-bottom: clamp(1.15rem, 2.6vw, 2rem);
   }
 
-  .home-section-heading .nucma-section-subtitle {
-    max-width: 34rem;
+  .command-hero-copy {
+    max-width: 48rem;
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   .home-section-actions {
@@ -1061,7 +1064,7 @@
   }
 
   .faq-body {
-    display: grid;
+    display: grid !important;
     grid-template-rows: 0fr;
     opacity: 0;
     transition: grid-template-rows 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;

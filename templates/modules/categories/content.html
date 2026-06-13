@@ -7,7 +7,7 @@
 
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" th:if="${categories != null and categories.items != null}">
     <a th:each="category : ${categories.items}"
-       th:href="@{${category.status.permalink}}"
+       th:href="@{${category.status?.permalink}}"
        class="taxonomy-card theme-surface-panel group flex items-center gap-4 p-5 rounded-2xl accent-border-hover transition-colors duration-150 reveal">
       <div class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-xl accent-soft-bg">
         <svg class="w-5 h-5 accent-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -16,9 +16,9 @@
       </div>
       <div class="flex-1 min-w-0">
         <h3 class="font-semibold theme-text-strong accent-text-hover transition-colors line-clamp-1"
-            th:text="${category.spec.displayName}"></h3>
+            th:text="${category.spec?.displayName}"></h3>
         <p class="text-xs theme-text-soft mt-0.5 line-clamp-1"
-           th:text="${category.spec.description ?: '点击浏览文章'}"></p>
+           th:text="${category.spec?.description ?: '点击浏览文章'}"></p>
       </div>
       <svg class="theme-arrow-icon w-4 h-4 accent-text-hover shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>

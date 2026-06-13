@@ -37,13 +37,13 @@
                     <span class="auth-orb-glow"></span>
                     <img th:if="${site.logo != null and !#strings.isEmpty(site.logo)}"
                          th:src="${site.logo}"
-                         th:alt="${site.title}" />
+                         th:alt="${site.title ?: 'Nucma'}" />
                     <span th:unless="${site.logo != null and !#strings.isEmpty(site.logo)}"
                           th:text="${#strings.substring(site.title ?: 'N', 0, 1)}">N</span>
                 </div>
             </div>
             <div class="brand-text">
-                <h1 th:text="${site.title}">Site</h1>
+                <h1 th:text="${site.title ?: 'Nucma'}">Site</h1>
                 <p>探索、记录、分享</p>
             </div>
         </div>
@@ -54,7 +54,7 @@
             </div>
             <div class="auth-copyright">
                 <span>&copy;</span>
-                <a href="/" class="ml-1" th:text="${site.title}">Site</a>
+                <a href="/" class="ml-1" th:text="${site.title ?: 'Nucma'}">Site</a>
             </div>
         </main>
     </div>

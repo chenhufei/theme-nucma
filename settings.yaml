@@ -4,6 +4,7 @@ metadata:
   name: theme-nucma-setting
 spec:
   forms:
+
   - group: appearance
     label: 外观样式
     formSchema:
@@ -261,6 +262,7 @@ spec:
             value: balanced
           - label: 厚重
             value: solid
+
   - group: header
     label: 导航栏
     formSchema:
@@ -338,6 +340,7 @@ spec:
         name: open_in_new
         label: 新窗口打开
         value: true
+
   - group: home
     label: 首页设置
     formSchema:
@@ -966,8 +969,9 @@ spec:
             - $formkit: text
               name: school
               label: 学校/机构
-  - group: reviews
-    label: 校园反馈
+
+  - group: page_content
+    label: 首页内容
     formSchema:
     - $el: div
       attrs:
@@ -1025,8 +1029,6 @@ spec:
               name: role
               label: 作者身份
               placeholder: 例：在校学生
-  - group: faq
-    label: 常见问题
     formSchema:
     - $el: div
       attrs:
@@ -1073,7 +1075,8 @@ spec:
               label: 答案
               rows: 3
               validation: required
-  - group: post
+
+  - group: post_settings
     label: 文章页
     formSchema:
     - $el: div
@@ -1236,6 +1239,69 @@ spec:
           label: 段落首行缩进
           value: true
           help: 中文排版习惯
+    formSchema:
+    - $el: div
+      attrs:
+        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
+      children:
+      - $el: div
+        attrs:
+          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+        children:
+        - $formkit: checkbox
+          name: enable_code_copy
+          label: 代码块复制按钮
+          value: true
+      - $el: div
+        attrs:
+          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+        children:
+        - $formkit: checkbox
+          name: enable_image_lightbox
+          label: 图片灯箱效果
+          value: true
+      - $el: div
+        attrs:
+          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+        children:
+        - $formkit: select
+          name: mobile_toc_behavior
+          label: 移动端目录行为
+          value: global
+          options:
+          - label: 全局启用
+            value: global
+          - label: 全局禁用
+            value: disabled
+          - label: 长文自动显示
+            value: auto
+      - $el: div
+        attrs:
+          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+        children:
+        - $formkit: text
+          name: mobile_toc_min_headings
+          label: 自动显示最小标题数
+          value: 5
+          help: 长文自动显示时生效
+      - $el: div
+        attrs:
+          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+        children:
+        - $formkit: checkbox
+          name: enable_external_link_icon
+          label: 外链标识
+          value: true
+      - $el: div
+        attrs:
+          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+        children:
+        - $formkit: checkbox
+          name: enable_reading_progress
+          label: 阅读进度条
+          value: true
+          help: 长页面顶部显示轻量进度条
+
   - group: about
     label: 关于页
     formSchema:
@@ -1562,7 +1628,8 @@ spec:
               rows: 3
               placeholder: <svg viewBox="0 0 24 24" ...>...</svg>
               help: SVG 类型生效
-  - group: footer
+
+  - group: footer_settings
     label: 页脚设置
     formSchema:
     - $el: div
@@ -1947,153 +2014,6 @@ spec:
           value: ''
           placeholder: '11010802012345'
           help: 用于生成备案链接
-  - group: interaction
-    label: 互动弹窗
-    formSchema:
-    - $formkit: array
-      name: site_popups
-      label: 网站公共弹窗
-      help: 打开网站后自动弹出；可配置多条，但前台只展示第一条启用项，避免打扰用户。
-      value: []
-      itemLabels:
-      - type: text
-        label: $value.title
-      - type: text
-        label: $value.id
-      addLabel: 添加弹窗
-      emptyText: 暂无公共弹窗
-      children:
-      - $formkit: checkbox
-        name: enabled
-        label: 启用
-        value: true
-      - $formkit: text
-        name: id
-        label: 弹窗标识
-        placeholder: campus-notice-2026
-        help: 用于记住用户是否关闭；修改标识后会重新弹出。
-      - $formkit: text
-        name: eyebrow
-        label: 小标签
-        placeholder: 联盟公告
-      - $formkit: text
-        name: title
-        label: 标题
-        validation: required
-      - $formkit: textarea
-        name: content
-        label: 正文
-        rows: 4
-      - $formkit: attachment
-        name: image
-        label: 弹窗图片
-        help: 可直接上传图片；留空则为纯文字弹窗。
-      - $formkit: select
-        name: size
-        label: 弹窗尺寸
-        value: medium
-        options:
-        - label: 标准
-          value: medium
-        - label: 宽版
-          value: large
-      - $formkit: select
-        name: frequency
-        label: 弹出频率
-        value: session
-        options:
-        - label: 每次打开都弹
-          value: every
-        - label: 每个会话一次
-          value: session
-        - label: 用户关闭后不再弹
-          value: once
-      - $formkit: text
-        name: delay
-        label: 延迟秒数
-        value: '0.8'
-      - $formkit: text
-        name: primary_text
-        label: 主按钮文字
-        placeholder: 立即查看
-      - $formkit: text
-        name: primary_url
-        label: 主按钮链接
-        placeholder: /archives
-      - $formkit: checkbox
-        name: primary_new_window
-        label: 主按钮新窗口打开
-        value: true
-      - $formkit: text
-        name: secondary_text
-        label: 关闭按钮文字
-        value: 我知道了
-  - group: advanced
-    label: 功能增强
-    formSchema:
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_code_copy
-          label: 代码块复制按钮
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_image_lightbox
-          label: 图片灯箱效果
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: mobile_toc_behavior
-          label: 移动端目录行为
-          value: global
-          options:
-          - label: 全局启用
-            value: global
-          - label: 全局禁用
-            value: disabled
-          - label: 长文自动显示
-            value: auto
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: mobile_toc_min_headings
-          label: 自动显示最小标题数
-          value: 5
-          help: 长文自动显示时生效
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_external_link_icon
-          label: 外链标识
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_reading_progress
-          label: 阅读进度条
-          value: true
-          help: 长页面顶部显示轻量进度条
-  - group: performance
-    label: 性能优化
     formSchema:
     - $el: div
       attrs:
@@ -2117,9 +2037,15 @@ spec:
           label: 关闭图片懒加载
           value: false
           help: 仅在排查图片延迟显示问题时开启，正常情况下建议关闭
-  - group: plugin-widgets
-    label: 文章组件
+
+  - group: plugins
+    label: 插件增强
     formSchema:
+    # 文章组件
+    - $el: h3
+      attrs:
+        style: font-size:1.05rem;font-weight:700;margin:1.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:1px solid rgba(var(--color-text),.1);
+      children: 文章组件
     - $el: div
       attrs:
         style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
@@ -2142,18 +2068,11 @@ spec:
           label: 启用加密文章提示
           value: true
           help: 启用后为加密文章显示 Nucma 风格的玻璃态加密提示卡片
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_share_card
-          label: 启用社交分享卡片
-          value: true
-          help: 自动注入 og/twitter/meta 标签，复用 Nucma Logo 和品牌色，优化微信/QQ 分享预览效果
-  - group: plugin-online-display
-    label: 在线显示
-    formSchema:
+    # 在线显示
+    - $el: h3
+      attrs:
+        style: font-size:1.05rem;font-weight:700;margin:1.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:1px solid rgba(var(--color-text),.1);
+      children: 在线人数
     - $el: div
       attrs:
         style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
@@ -2176,9 +2095,11 @@ spec:
             label: 在线人数标签
             value: 当前在线
             placeholder: 显示在在线人数旁的文字
-  - group: plugin-share-card
-    label: 社交分享
-    formSchema:
+    # 社交分享
+    - $el: h3
+      attrs:
+        style: font-size:1.05rem;font-weight:700;margin:1.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:1px solid rgba(var(--color-text),.1);
+      children: 社交分享卡片
     - $el: div
       attrs:
         style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
@@ -2187,11 +2108,20 @@ spec:
         attrs:
           style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
         children:
-        - $formkit: text
-          name: share_card_title
-          label: 分享标题
-          value: ''
-          help: 留空则使用文章标题
+        - $formkit: checkbox
+          name: enable_share_card
+          label: 启用社交分享卡片
+          value: true
+          help: 自动注入 og/twitter/meta 标签，复用 Nucma Logo 和品牌色，优化微信/QQ 分享预览效果
+        - $el: div
+          attrs:
+            style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
+          children:
+          - $formkit: text
+            name: share_card_title
+            label: 分享标题
+            value: ''
+            help: 留空则使用文章标题
         - $el: div
           attrs:
             style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;

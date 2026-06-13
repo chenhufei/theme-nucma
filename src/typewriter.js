@@ -10,7 +10,6 @@ class Typewriter {
       : element;
 
     if (!this.element) {
-      console.error('Typewriter: 元素不存在');
       return;
     }
 

@@ -8,14 +8,9 @@
  */
 const Logger = {
   log: (...args) => {
-    if (window.DEBUG) console.log(...args);
-  },
   error: (...args) => {
-    console.error(...args);
   },
   warn: (...args) => {
-    if (window.DEBUG) console.warn(...args);
-  }
 };
 
 /**

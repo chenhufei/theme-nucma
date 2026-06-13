@@ -492,8 +492,8 @@
   }
 
   button:focus-visible {
-    outline: 3px solid rgb(var(--color-accent));
-    outline-offset: 3px;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
     border-radius: inherit;
   }
 
@@ -596,8 +596,8 @@
   }
 
   input:focus, textarea:focus, select:focus {
-    outline: 2px solid rgb(var(--color-accent));
-    outline-offset: 2px;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
     border-color: transparent;
   }
 
@@ -1023,8 +1023,8 @@
   button.group:focus-visible,
   a.group:focus-visible,
   [tabindex].group:focus-visible {
-    outline: 2px solid rgb(var(--color-accent));
-    outline-offset: 2px;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
     border-radius: inherit;
   }
 
