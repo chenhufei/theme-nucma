@@ -1,8 +1,184 @@
 <!DOCTYPE html>
-<html lang="zh-CN" xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/post/layout :: html(content = ~{::content})}">
-
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${post?.spec?.title}, content=~{::content})}">
 <th:block th:fragment="content">
-  <th:block th:replace="~{modules/post/content}" />
-</th:block>
+  <div class="post-layout">
+    <!-- 左侧：文章内容 -->
+    <article class="post-main">
+      <!-- 文章头部 -->
+      <header class="post-header">
+        <div class="post-meta">
+          <span class="post-category" th:each="cat : ${post.categories}"
+                th:text="${cat.spec?.displayName}"></span>
+          <time th:text="${#temporals.format(post.spec?.publishTime, 'yyyy年MM月dd日')}"></time>
+          <span th:if="${theme.config.post?.show_views != false and post.stats?.visit != null}" 
+                th:text="${post.stats?.visit + ' 次阅读'}"></span>
+        </div>
+        <h1 class="post-title" th:text="${post.spec?.title}"></h1>
+        <div class="post-author" th:if="${post.owner != null}">
+          <img th:if="${post.owner?.avatar != null and !#strings.isEmpty(post.owner?.avatar)}"
+               th:src="${post.owner?.avatar}" th:alt="${post.owner?.displayName}" class="author-avatar" />
+          <span th:text="${post.owner?.displayName}"></span>
+        </div>
+      </header>
 
+      <!-- 文章封面 -->
+      <div class="post-cover" th:if="${theme.config.post?.show_cover != false and post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}">
+        <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}" />
+      </div>
+
+      <!-- 文章内容 -->
+      <div class="post-content prose" th:utext="${post.content?.content}"></div>
+
+      <!-- 标签 -->
+      <div class="post-tags" th:if="${theme.config.post?.show_tags != false and post.tags != null and !post.tags.isEmpty()}">
+        <a th:each="tag : ${post.tags}" th:href="@{|/tags/${tag.metadata.name}|}"
+           class="tag" th:text="'#' + ${tag.spec?.displayName}"></a>
+      </div>
+
+      <!-- 上一篇/下一篇 -->
+      <div class="post-nav" th:with="cursor = ${postFinder.cursor(post.metadata.name)}">
+        <a th:if="${cursor.hasPrevious()}" th:href="@{${cursor.previous.status?.permalink}}" class="post-nav-item prev">
+          <span class="post-nav-label">上一篇</span>
+          <span class="post-nav-title" th:text="${cursor.previous.spec?.title}"></span>
+        </a>
+        <a th:if="${cursor.hasNext()}" th:href="@{${cursor.next.status?.permalink}}" class="post-nav-item next">
+          <span class="post-nav-label">下一篇</span>
+          <span class="post-nav-title" th:text="${cursor.next.spec?.title}"></span>
+        </a>
+      </div>
+
+      <!-- 评论区 -->
+      <section th:if="${haloCommentEnabled and theme.config.content?.enable_post_comment != false}" class="post-comments">
+        <halo:comment group="content.halo.run" kind="Post" th:attr="name=${post.metadata.name}" />
+      </section>
+    </article>
+
+    <!-- 右侧：侧边栏 -->
+    <aside class="post-sidebar">
+      <!-- 自定义菜单 -->
+      <th:block th:with="sidebarMenuName = ${theme.config.navigation?.sidebar_menu ?: ''}">
+        <div class="sidebar-card"
+             th:if="${!#strings.isEmpty(sidebarMenuName)}"
+             th:with="menu = ${menuFinder.getByName(sidebarMenuName)}">
+          <h3 class="sidebar-title">快捷导航</h3>
+          <nav class="sidebar-nav" th:if="${menu != null and menu.menuItems != null}">
+            <a th:each="item : ${menu.menuItems}"
+               th:href="@{${item.status?.href}}"
+               th:text="${item.status?.displayName}"
+               th:target="${item.spec?.target?.value}"></a>
+          </nav>
+        </div>
+      </th:block>
+
+      <!-- 文章信息 -->
+      <div class="sidebar-card">
+        <h3 class="sidebar-title">文章信息</h3>
+        <div class="sidebar-info">
+          <div class="info-item">
+            <span class="info-label">发布于</span>
+            <span th:text="${#temporals.format(post.spec?.publishTime, 'yyyy-MM-dd')}"></span>
+          </div>
+          <div class="info-item" th:if="${post.stats?.visit != null}">
+            <span class="info-label">阅读量</span>
+            <span th:text="${post.stats?.visit}"></span>
+          </div>
+          <div class="info-item" th:if="${post.stats?.upvote != null}">
+            <span class="info-label">点赞数</span>
+            <span th:text="${post.stats?.upvote}"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 作者信息 -->
+      <div class="sidebar-card" th:if="${post.owner != null}"
+           th:with="authorPosts = ${postFinder.list({page: 1, size: 1, ownerName: post.owner?.metadata?.name})}">
+        <h3 class="sidebar-title">作者</h3>
+        <div class="author-info">
+          <img th:if="${post.owner?.avatar != null and !#strings.isEmpty(post.owner?.avatar)}"
+               th:src="${post.owner?.avatar}" th:alt="${post.owner?.displayName}" class="author-avatar-lg" />
+          <span class="author-name" th:text="${post.owner?.displayName}"></span>
+          <p class="author-bio" th:if="${post.owner?.bio != null and !#strings.isEmpty(post.owner?.bio)}"
+             th:text="${post.owner?.bio}"></p>
+          <div class="author-stats">
+            <div class="author-stat-item">
+              <span class="author-stat-number" th:text="${authorPosts?.total ?: 0}"></span>
+              <span class="author-stat-label">文章</span>
+            </div>
+            <div class="author-stat-item">
+              <span class="author-stat-number" th:text="${post.stats?.comment ?: 0}"></span>
+              <span class="author-stat-label">评论</span>
+            </div>
+            <div class="author-stat-item">
+              <span class="author-stat-number" th:text="${post.stats?.upvote ?: 0}"></span>
+              <span class="author-stat-label">点赞</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 最近文章（归档区块） -->
+      <div class="sidebar-card"
+           th:with="recentPosts = ${postFinder.list({page: 1, size: 5})}">
+        <h3 class="sidebar-title">最近文章</h3>
+        <ul class="sidebar-post-list" th:if="${recentPosts != null and recentPosts.items != null and !recentPosts.items.isEmpty()}">
+          <li th:each="rp : ${recentPosts.items}" th:if="${rp.metadata.name != post.metadata.name}">
+            <a th:href="@{${rp.status?.permalink}}" th:text="${rp.spec?.title}" class="sidebar-post-link"></a>
+            <time th:text="${#temporals.format(rp.spec?.publishTime, 'MM-dd')}" class="sidebar-post-date"></time>
+          </li>
+        </ul>
+        <p class="sidebar-empty" th:if="${recentPosts == null or recentPosts.items == null or recentPosts.items.isEmpty()}">暂无其他文章</p>
+      </div>
+
+      <!-- 目录 -->
+      <div class="sidebar-card toc-card" id="tocCard">
+        <h3 class="sidebar-title">目录</h3>
+        <nav class="toc" id="toc"></nav>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 目录生成脚本 -->
+  <script>
+    (function() {
+      var toc = document.getElementById('toc');
+      var content = document.querySelector('.post-content');
+      if (!toc || !content) return;
+      
+      var headings = content.querySelectorAll('h1, h2, h3, h4');
+      if (!headings.length) {
+        document.getElementById('tocCard').style.display = 'none';
+        return;
+      }
+      
+      var html = '<ul>';
+      headings.forEach(function(h, i) {
+        var id = 'heading-' + i;
+        h.id = id;
+        var level = parseInt(h.tagName.charAt(1));
+        var indent = (level - 1) * 12;
+        html += '<li style="padding-left:' + indent + 'px"><a href="#' + id + '">' + h.textContent + '</a></li>';
+      });
+      html += '</ul>';
+      toc.innerHTML = html;
+      
+      // 高亮当前标题
+      var links = toc.querySelectorAll('a');
+      window.addEventListener('scroll', function() {
+        var current = null;
+        headings.forEach(function(h) {
+          if (window.scrollY >= h.offsetTop - 100) {
+            current = h;
+          }
+        });
+        links.forEach(function(link) {
+          link.classList.remove('active');
+          if (current && link.getAttribute('href') === '#' + current.id) {
+            link.classList.add('active');
+          }
+        });
+      });
+    })();
+  </script>
+</th:block>
 </html>

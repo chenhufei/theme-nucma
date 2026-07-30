@@ -7,24 +7,20 @@ spec:
   author:
     name: NUCMA
     website: https://nucma.cn
-  description: 面向全国高校自媒体联盟官网的 Halo 主题，聚焦公告公示、组织介绍与成员展示
-  logo: "/themes/theme-nucma/assets/avatar-nucma.svg"
-  homepage: "https://nucma.cn"
-  repo: "https://github.com/chenhufei/theme-nucma"
-  issues: "https://github.com/chenhufei/theme-nucma/issues"
-  version: "1.0.14"
+  description: 简约政府风格的 Halo 主题，适合校园官方站点使用
+  logo: /themes/theme-nucma/assets/avatar-nucma.svg
+  homepage: https://nucma.cn
+  repo: https://github.com/chenhufei/theme-nucma
+  issues: https://qm.qq.com/q/YEqkx4fa0M
+  version: "3.21.0"
   requires: ">=2.0.0"
   settingName: theme-nucma-setting
   configMapName: theme-nucma-config
+  license:
+    - name: "MIT"
+      url: "https://github.com/chenhufei/theme-nucma/blob/main/LICENSE"
   customTemplates:
-    category:
-      - name: category
-        description: 分类页
-        file: categories.html
     page:
-      - name: page
-        description: 独立页面
-        file: page.html
       - name: page_about
         description: 关于页
         file: page_about.html

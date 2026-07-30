@@ -1,8 +1,20 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/categories/layout :: html(content = ~{::content})}">
-
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title='分类 - ' + ${site.title}, content=~{::content})}">
 <th:block th:fragment="content">
-  <th:block th:replace="~{modules/categories/content}" />
+  <div class="page-header">
+    <h1 class="page-title">分类</h1>
+  </div>
+  
+  <div class="category-grid" th:if="${categories != null and !categories.isEmpty()}">
+    <a th:each="cat : ${categories}" th:href="@{|/categories/${cat.metadata.name}|}" class="category-card">
+      <h3 th:text="${cat.spec?.displayName}"></h3>
+      <p th:text="${cat.status?.postCount ?: 0} + ' 篇文章'"></p>
+    </a>
+  </div>
+  
+  <div class="empty-state" th:unless="${categories != null and !categories.isEmpty()}">
+    <p>暂无分类</p>
+  </div>
 </th:block>
-
 </html>

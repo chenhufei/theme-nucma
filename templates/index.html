@@ -1,8 +1,335 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/index/layout :: html(content = ~{::content})}">
-
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${site.title}, content=~{::content})}">
 <th:block th:fragment="content">
-  <th:block th:replace="~{modules/index/content}" />
-</th:block>
+  <!-- Banner - 校园风格 -->
+  <section class="banner" th:if="${theme.config.hero?.show_hero != false}"
+           th:with="hasBg = ${theme.config.hero?.hero_background != null and !#strings.isEmpty(theme.config.hero.hero_background)},
+                    carousel = ${theme.config.hero?.hero_backgrounds != null and !#lists.isEmpty(theme.config.hero.hero_backgrounds) and #lists.size(theme.config.hero.hero_backgrounds) > 1},
+                    backgrounds = ${theme.config.hero?.hero_backgrounds},
+                    bgInterval = ${theme.config.hero?.hero_bg_interval ?: 5000},
+                    fullW = ${theme.config.hero?.hero_full_width == true},
+                    overlay = ${theme.config.hero?.hero_overlay != null and !#strings.isEmpty(theme.config.hero.hero_overlay) ? theme.config.hero.hero_overlay : 'medium'},
+                    heroH = ${theme.config.hero?.hero_height}"
+           th:classappend="${(hasBg or carousel) ? 'has-custom-bg' : ''} + ' ' + ${fullW ? 'full-width' : ''} + ' overlay-' + ${overlay} + ${carousel ? ' has-bg-carousel' : ''}"
+           th:style="${heroH != null} ? 'min-height:' + ${heroH} + 'px' : ''"
+           th:data-bg-interval="${carousel} ? ${bgInterval} : null">
+    <!-- 单背景 -->
+    <th:block th:if="${!carousel}">
+      <div class="banner-bg"
+           th:style="${hasBg} ? 'background-image: url(' + ${theme.config.hero.hero_background} + ')' : ''"></div>
+    </th:block>
+    <!-- 多背景轮播 -->
+    <th:block th:if="${carousel}">
+      <div class="banner-bg-stage" aria-hidden="true">
+        <div th:each="bg, bgStat : ${backgrounds}"
+             class="banner-bg-slide"
+             th:classappend="${bgStat.index == 0} ? 'is-active' : ''"
+             th:style="${bg.url != null and !#strings.isEmpty(bg.url)} ? 'background-image: url(' + ${bg.url} + ')' : ''"></div>
+      </div>
+      <!-- 条形指示线 -->
+      <div class="banner-bg-indicators" role="tablist" aria-label="背景图轮播指示">
+        <button th:each="bg, bgStat : ${backgrounds}"
+                type="button"
+                class="banner-bg-indicator"
+                th:classappend="${bgStat.index == 0} ? 'is-active' : ''"
+                th:attr="data-index=${bgStat.index}, aria-label=${bg.caption != null and !#strings.isEmpty(bg.caption) ? bg.caption : ('背景图 ' + (bgStat.index + 1))}, role='tab'"></button>
+      </div>
+    </th:block>
+    <div class="banner-content">
+      <div class="banner-logos">
+        <div class="banner-logo-item">
+          <div class="banner-logo-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18L19.18 8 12 11.82 4.82 8 12 4.18zM4 9.64l7 3.5V19.5l-7-3.5V9.64zm9 3.5l7 3.5V9.64l-7 3.5v3.5z"/>
+            </svg>
+          </div>
+          <div class="banner-logo-text">
+            <strong>NUCMA</strong>
+            <span>全国高校自媒体联盟</span>
+          </div>
+        </div>
+      </div>
+      <h1 class="banner-title" th:text="${site.title}"></h1>
+      <p class="banner-subtitle" th:text="${site.subtitle}"></p>
+    </div>
+  </section>
 
+  <!-- 信息公告 -->
+  <section class="section" th:if="${posts != null and posts.items != null and !posts.items.isEmpty()}">
+    <div class="section-container">
+      <div class="section-header-bar">
+        <h2 class="section-title-bar">信息公告</h2>
+        <a th:href="@{/archives}" class="more-link">更多</a>
+      </div>
+      <div class="news-list">
+        <a th:each="post, iter : ${posts.items}" th:if="${iter.index < (theme.config.home_stats?.posts_per_page ?: 8)}"
+           th:href="@{${post.status?.permalink}}" class="news-item">
+          <span class="news-date" th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}"></span>
+          <span class="news-title" th:text="${post.spec?.title}"></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 组织介绍 -->
+  <section class="section section-gray">
+    <div class="section-container">
+      <div class="section-header-bar">
+        <h2 class="section-title-bar">组织介绍</h2>
+      </div>
+      <div class="intro-content">
+        <p th:text="${site.subtitle} ?: '全国高校自媒体联盟致力于促进校园自媒体规范运营，为校园群体提供更便捷的沟通平台。'"></p>
+        <div class="intro-stats"
+             th:with="stats = ${siteStatsFinder.getStats()},
+                     memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null},
+                     hasCustomStats = ${theme.config.home_stats?.intro_stats_items != null and !#lists.isEmpty(theme.config.home_stats.intro_stats_items)}">
+
+          <!-- 后台有自定义统计项时：按配置渲染 -->
+          <th:block th:if="${hasCustomStats}">
+            <th:block th:each="item : ${theme.config.home_stats.intro_stats_items}">
+              <div class="intro-stat"
+                   th:if="${item.enabled != false}">
+                <!-- 类型：发布文章数 -->
+                <th:block th:if="${item.type == 'post'}">
+                  <span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '发布文章数'"></span>
+                </th:block>
+                <!-- 类型：内容分类数 -->
+                <th:block th:if="${item.type == 'category'}">
+                  <span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '内容分类数'"></span>
+                </th:block>
+                <!-- 类型：用户评论数 -->
+                <th:block th:if="${item.type == 'comment'}">
+                  <span class="intro-stat-number" th:text="${stats?.comment ?: 0}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '用户评论数'"></span>
+                </th:block>
+                <!-- 类型：点赞数 -->
+                <th:block th:if="${item.type == 'upvote'}">
+                  <span class="intro-stat-number" th:text="${stats?.upvote ?: 0}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '点赞数'"></span>
+                </th:block>
+                <!-- 类型：成员数量 -->
+                <th:block th:if="${item.type == 'member' and memberGroups != null and memberGroups.items != null}">
+                  <span class="intro-stat-number" th:text="${#lists.size(memberGroups.items)}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '成员数量'"></span>
+                </th:block>
+                <!-- 类型：自定义数值 -->
+                <th:block th:if="${item.type == 'custom' and item.custom_number != null and !#strings.isEmpty(item.custom_number)}">
+                  <span class="intro-stat-number" th:text="${item.custom_number}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '自定义数值'"></span>
+                </th:block>
+              </div>
+            </th:block>
+          </th:block>
+
+          <!-- 后台无自定义统计项时：使用默认四项 -->
+          <th:block th:unless="${hasCustomStats}">
+            <div class="intro-stat">
+              <span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span>
+              <span class="intro-stat-label">发布文章</span>
+            </div>
+            <div class="intro-stat">
+              <span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span>
+              <span class="intro-stat-label">内容分类</span>
+            </div>
+            <div class="intro-stat">
+              <span class="intro-stat-number" th:text="${stats?.comment ?: 0}"></span>
+              <span class="intro-stat-label">用户评论</span>
+            </div>
+            <div class="intro-stat" th:if="${memberGroups != null and memberGroups.items != null}">
+              <span class="intro-stat-number" th:text="${#lists.size(memberGroups.items)}"></span>
+              <span class="intro-stat-label">成员数量</span>
+            </div>
+          </th:block>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 成员公示 -->
+  <section class="section" th:if="${pluginFinder.available('PluginMembers')}">
+    <div class="section-container">
+      <div class="section-header-bar">
+        <h2 class="section-title-bar">成员公示</h2>
+        <a th:href="@{/members}" class="more-link">更多</a>
+      </div>
+      <th:block th:with="groupsResult = ${memberFinder.listApprovedMembers()}">
+        <div class="member-grid" th:if="${groupsResult != null and groupsResult.items != null and !#lists.isEmpty(groupsResult.items)}"
+             th:attr="data-limit=${theme.config.home_stats?.members_count ?: 6},
+                      data-pinned-ids=${#lists.isEmpty(theme.config.home_stats?.members_pinned_ids) ? '' : #strings.listJoin(theme.config.home_stats?.members_pinned_ids, ',')}">
+          <th:block th:each="group : ${groupsResult.items}">
+            <th:block th:each="member : ${group.members}">
+              <div class="member-card" th:attr="data-id=${member.metadata?.name ?: ''},data-priority=${member.spec?.priority ?: 0}">
+                <div class="member-avatar">
+                  <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                       th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" />
+                  <svg th:unless="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                       fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                  </svg>
+                </div>
+                <div class="member-info">
+                  <div class="member-name" th:text="${member.spec.displayName}">名称</div>
+                  <div class="member-school" th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
+                       th:text="${member.spec.school}">学校</div>
+                  <div class="member-school member-school-empty" th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}">暂无简介</div>
+                </div>
+              </div>
+            </th:block>
+          </th:block>
+        </div>
+      </th:block>
+    </div>
+  </section>
+
+  <!-- 友情链接 -->
+  <section class="section section-gray" th:if="${pluginFinder.available('PluginLinks')}">
+    <div class="section-container">
+      <div class="section-header-bar">
+        <h2 class="section-title-bar">友情链接</h2>
+        <a th:href="@{/links}" class="more-link">更多</a>
+      </div>
+      <th:block th:with="linkGroups = ${linkFinder?.groupBy()}">
+        <div class="link-grid" th:if="${linkGroups != null and !#lists.isEmpty(linkGroups)}"
+             th:attr="data-limit=${theme.config.home_stats?.links_count ?: 8},
+                      data-pinned-ids=${#lists.isEmpty(theme.config.home_stats?.links_pinned_ids) ? '' : #strings.listJoin(theme.config.home_stats?.links_pinned_ids, ',')}">
+          <th:block th:each="group : ${linkGroups}">
+            <th:block th:each="link : ${group?.links}">
+              <a th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer"
+                 class="link-card" th:title="${link.spec?.description}"
+                 th:attr="data-id=${link.metadata?.name ?: ''}">
+                <div class="link-logo">
+                  <img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec?.logo)}"
+                       th:src="${link.spec?.logo}" th:alt="${link.spec?.displayName}" loading="lazy" />
+                  <span th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec?.logo)}"
+                        class="link-logo-text"
+                        th:text="${link.spec?.displayName != null ? #strings.substring(link.spec?.displayName, 0, 1) : '?'}"></span>
+                </div>
+                <div class="link-body">
+                  <div class="link-name" th:text="${link.spec?.displayName}"></div>
+                </div>
+              </a>
+            </th:block>
+          </th:block>
+        </div>
+        <div th:if="${linkGroups == null or #lists.isEmpty(linkGroups)}" class="empty-state">
+          <div class="empty-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+          </div>
+          <p class="empty-text">暂无友链</p>
+          <p class="empty-sub">请在后台链接管理中添加友链</p>
+        </div>
+      </th:block>
+    </div>
+  </section>
+
+  <!-- 常见问题 -->
+  <section class="section" th:if="${theme.config.page_content?.faq_items != null and !#lists.isEmpty(theme.config.page_content?.faq_items)}">
+    <div class="section-container">
+      <div class="section-header-bar">
+        <h2 class="section-title-bar">常见问题</h2>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item" th:each="item, iter : ${theme.config.page_content?.faq_items}">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span th:text="${item.question}"></span>
+            <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            <p th:text="${item.answer}"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- 常见问题兜底示例（后台未配置时默认显示） -->
+  <section class="section" th:unless="${theme.config.page_content?.faq_items != null and !#lists.isEmpty(theme.config.page_content?.faq_items)}">
+    <div class="section-container">
+      <div class="section-header-bar">
+        <h2 class="section-title-bar">常见问题</h2>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>如何加入我们？</span>
+            <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            <p>点击页面右上角「加入我们」或成员公示栏旁的申请入口，按提示填写信息即可。提交后我们会在 1-3 个工作日内审核。</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>如何提交友情链接？</span>
+            <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            <p>在友情链接区域点击「提交友链」，填写您的站点名称、链接地址、站点描述与 LOGO 图片后提交即可，审核通过后自动上架。</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>忘记密码怎么办？</span>
+            <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            <p>点击登录入口，在登录窗口选择「忘记密码」，通过绑定的邮箱或手机号验证后重置密码。若未绑定请联系管理员处理。</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>文章投稿有哪些要求？</span>
+            <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            <p>投稿内容需与校园或自媒体主题相关，原创优先、排版整洁、配图清晰；不得含违规、虚假或广告内容。审核通过后会在 48 小时内发布。</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>如何联系官方管理员？</span>
+            <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            <p>可通过站点底部「联系我们」菜单、加入官方 QQ 群，或直接邮件发送至联盟官方邮箱，我们会在工作日 24 小时内回复。</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>账号被拉黑如何申诉？</span>
+            <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            <p>黑名单管理页公示违规原因。若存在误封可提交申诉说明并附证据，管理员审核后会在 3 个工作日内处理并给出结果。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 分页 -->
+  <nav class="pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext())}">
+    <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="page-btn">上一页</a>
+    <span class="page-info" th:text="${posts.page} + ' / ' + ${posts.totalPages}"></span>
+    <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="page-btn">下一页</a>
+  </nav>
+</th:block>
 </html>

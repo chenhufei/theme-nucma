@@ -4,2142 +4,445 @@ metadata:
   name: theme-nucma-setting
 spec:
   forms:
+    - group: navigation
+      label: 导航栏设置
+      formSchema:
+        - $formkit: select
+          name: nav_align
+          label: 导航菜单对齐方式
+          value: center
+          help: header 内菜单与自定义链接的水平对齐
+          options:
+            - label: 居中对齐
+              value: center
+            - label: 左侧对齐
+              value: left
+            - label: 右侧对齐
+              value: right
+        - $formkit: menuSelect
+          name: header_menu
+          label: Header 菜单
+          clearable: true
+          help: 选择 Header 顶部导航使用的菜单（从 Halo 后台已创建的菜单中选择），清空则不显示主菜单
+        - $formkit: menuSelect
+          name: footer_menu
+          label: Footer 菜单
+          clearable: true
+          help: 选择 Footer 页脚快捷导航使用的菜单，清空则不显示
+        - $formkit: menuSelect
+          name: sidebar_menu
+          label: 文章侧边栏菜单
+          clearable: true
+          help: 选择文章页侧边栏显示的菜单，清空则不显示
+        - $formkit: checkbox
+          name: show_login_btn
+          label: 显示登录入口
+          value: true
+          help: 右上角显示登录按钮，已登录用户显示头像
+        - $formkit: number
+          name: header_links_interval
+          label: 自定义链接轮播停留时长（毫秒）
+          value: 3500
+          min: 1500
+          max: 10000
+          step: 500
+          help: 当自定义链接超过 1 个时会自动上下滚动轮播，此处设置每个链接在导航栏上的停留显示时间，单位毫秒，默认 3500ms
+        - $formkit: array
+          name: header_links
+          label: 导航栏自定义链接
+          addLabel: 添加链接
+          emptyText: 暂无自定义链接
+          help: 在导航菜单右侧显示自定义链接，可选择图片或文字样式
+          itemLabels:
+            - type: text
+              label: "$value.text ? $value.text : ($value.image ? '[图片链接]' : $value.url)"
+          children:
+            - $formkit: text
+              name: text
+              label: 链接文字
+              placeholder: 如：加入我们（不填则显示图片或URL）
+            - $formkit: text
+              name: url
+              label: 链接地址
+              placeholder: https://
+              validation: required
+            - $formkit: attachment
+              name: image
+              label: 链接图片
+              accepts: ["image/*"]
+              help: 从媒体库选择图片，设置后将显示为图片按钮
+            - $formkit: select
+              name: target
+              label: 打开方式
+              value: _blank
+              options:
+                - label: 新标签页
+                  value: _blank
+                - label: 当前页
+                  value: _self
 
-  - group: appearance
-    label: 外观样式
-    formSchema:
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: default_theme_mode
-          label: 默认配色模式
-          value: system
-          options:
-          - label: 跟随系统
-            value: system
-          - label: 浅色
-            value: light
-          - label: 深色
-            value: dark
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: card_radius
-          label: 卡片圆角
-          value: xl
-          options:
-          - label: 小（8px）
-            value: sm
-          - label: 中（12px）
-            value: md
-          - label: 大（16px）
-            value: xl
-          - label: 超大（24px）
-            value: 2xl
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: body_font
-          label: 正文字体
-          value: system
-          options:
-          - label: 系统默认
-            value: system
-          - label: 霞鹜文楷
-            value: lxgw-wenkai
-          - label: MiSans
-            value: misans
-          - label: 自定义
-            value: custom
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: misans_weight
-          label: MiSans 字重
-          value: medium
-          help: 仅 MiSans 字体生效
-          options:
-          - label: Regular（细）
-            value: regular
-          - label: Medium（中）
-            value: medium
-          - label: Bold（粗）
-            value: bold
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: attachment
-          name: custom_font_url
-          label: 自定义字体 CSS 链接
-          placeholder: https://fonts.googleapis.com/css2?family=...
-          help: 可上传字体 CSS 文件，也可粘贴外部 CSS 链接
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: custom_font_family
-          label: 自定义字体名称
-          placeholder: '''MyFont'', sans-serif'
-          help: 自定义字体生效
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_animations
-          label: 启用滚动动效
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_smooth_scroll
-          label: 启用平滑滚动
-          value: false
-          help: 默认关闭以保证性能；开启后使用 Lenis 平滑滚动。
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_back_to_top
-          label: 显示返回顶部按钮
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_login_style
-          label: 启用登录/注册页美化
-          value: true
-          help: 关闭后使用 Halo 默认样式
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_profile_style
-          label: 启用用户中心页美化
-          value: true
-          help: 关闭后尽量保留 Halo 默认用户中心样式
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_console_style
-          label: 启用后台美化辅助样式
-          value: true
-          help: 主题能影响的后台/网关页面将应用轻量玻璃背景
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: background_mode
-          label: 全局背景模式
-          value: mesh
-          options:
-          - label: 柔和渐变
-            value: mesh
-          - label: 极光流彩
-            value: aurora
-          - label: 校园网格
-            value: campus-grid
-          - label: 纸感微纹
-            value: paper
-          - label: 光谱棱镜
-            value: prism
-          - label: 夜幕星点
-            value: night
-          - label: 纯净浅底
-            value: plain
-          - label: 自定义图片
-            value: image
-          - label: 关闭背景
-            value: none
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: attachment
-          name: background_image
-          label: 自定义背景图片
-          value: ''
-          placeholder: https://.../background.jpg
-          help: 背景模式选择“自定义图片”时生效
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: background_position
-          label: 背景图片位置
-          value: center center
-          options:
-          - label: 居中
-            value: center center
-          - label: 顶部居中
-            value: center top
-          - label: 底部居中
-            value: center bottom
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: background_image_opacity
-          label: 背景图片强度
-          value: '0.28'
-          help: 建议 0.12 - 0.45，越高图片越明显
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: background_pattern_opacity
-          label: 背景纹理强度
-          value: '0.52'
-          help: 建议 0 - 0.8，影响网格/光纹可见度
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: glass_strength
-          label: 液态玻璃强度
-          value: standard
-          options:
-          - label: 轻量
-            value: soft
-          - label: 标准
-            value: standard
-          - label: 强化
-            value: strong
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: glass_refraction
-          label: 液态折射效果
-          value: adaptive
-          options:
-          - label: 自适应
-            value: adaptive
-          - label: 始终开启
-            value: 'on'
-          - label: 关闭折射
-            value: 'off'
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: glass_density
-          label: 玻璃表面密度
-          value: balanced
-          options:
-          - label: 通透
-            value: airy
-          - label: 均衡
-            value: balanced
-          - label: 厚重
-            value: solid
-
-  - group: header
-    label: 导航栏
-    formSchema:
-    - $formkit: text
-      name: site_title
-      label: Header 网站标题
-      placeholder: 留空使用站点标题
-    - $formkit: attachment
-      name: logo_image
-      label: Header Logo
-      placeholder: 留空使用站点 Logo
-    - $formkit: select
-      name: menu_align
-      label: 菜单位置
-      value: center
-      options:
-      - label: 居左
-        value: left
-      - label: 居中
-        value: center
-      - label: 居右
-        value: right
-    - $formkit: select
-      name: search_expand_mode
-      label: 搜索展开方式
-      value: hover
-      options:
-      - label: 鼠标放置自动展开
-        value: hover
-      - label: 点击展开/再次点击外部收起
-        value: click
-    - $formkit: checkbox
-      name: show_search
-      label: 显示搜索入口
-      value: true
-    - $formkit: checkbox
-      name: show_theme_toggle
-      label: 显示主题切换按钮
-      value: true
-    - $formkit: checkbox
-      name: show_user_avatar
-      label: 显示用户头像/登录按钮
-      value: true
-    - $formkit: array
-      name: promo_links
-      label: Header 活动图片链接
-      help: 可用于限时活动、专题入口；支持上传外显图片。
-      value: []
-      itemLabels:
-      - type: text
-        label: $value.label
-      addLabel: 添加活动入口
-      emptyText: 暂无活动入口
-      children:
-      - $formkit: checkbox
-        name: enabled
-        label: 启用
-        value: true
-      - $formkit: text
-        name: label
-        label: 名称
-        validation: required
-      - $formkit: attachment
-        name: image
-        label: 外显图片
-      - $formkit: text
-        name: text
-        label: 无图片时显示文字
-        placeholder: 活动
-      - $formkit: text
-        name: url
-        label: 链接地址
-        validation: required
-      - $formkit: checkbox
-        name: open_in_new
-        label: 新窗口打开
-        value: true
-
-  - group: home
-    label: 首页设置
-    formSchema:
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
+    - group: hero
+      label: 首页 Hero 设置
+      formSchema:
         - $formkit: checkbox
           name: show_hero
           label: 显示 Hero 区块
           value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: hero_show_badge
-          label: 显示 Hero 徽标
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: hero_badge_text
-          label: Hero 徽标文字
-          value: National University Campus Media Alliance
-          placeholder: 留空使用默认英文徽标
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: home_subtitle
-          label: 首页副标题
-          value: 互动宣教，多元交流
-          placeholder: 覆盖站点副标题，留空使用默认
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: hero_motto
-          label: Hero 宗旨
-          value: 看见你，看见我们！
-          help: 留空则不显示
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
         - $formkit: attachment
-          name: hero_panel_logo
-          label: Hero 右侧服务台 Logo
-          placeholder: 可上传图片，留空使用站点 Logo 或字母 N
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: hero_panel_kicker
-          label: Hero 右侧服务台小标题
-          value: NUCMA Campus Desk
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: hero_panel_title
-          label: Hero 右侧服务台标题
-          value: 校园协作服务台
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
+          name: hero_background
+          label: Hero 背景图片（单图）
+          accepts: ["image/*"]
+          help: 从媒体库选择一张背景图片。如需轮播多图请使用下方「多背景轮播图」设置，留空使用默认渐变背景。
+        - $formkit: array
+          name: hero_backgrounds
+          label: 多背景轮播图
+          addLabel: 添加背景图
+          emptyText: 请先添加至少 2 张轮播图
+          help: 添加多张图（超过1张）会自动轮播，底部显示条形指示线，建议尺寸一致（1920x600 以上）。
+          itemLabels:
+            - type: text
+              label: "$value.caption ? $value.caption : $value.url"
+          children:
+            - $formkit: attachment
+              name: url
+              label: 背景图片
+              accepts: ["image/*"]
+              validation: required
+            - $formkit: text
+              name: caption
+              label: 图片说明（可选）
+              placeholder: 如：春日校园
+        - $formkit: number
+          name: hero_bg_interval
+          label: 轮播间隔（毫秒）
+          value: 5000
+          min: 2500
+          max: 15000
+          step: 500
+          help: 每张图停留显示的时间，单位毫秒，默认 5000ms
         - $formkit: select
-          name: hero_subtitle_size
-          label: Hero 副标题字号
-          value: xl
+          name: hero_overlay
+          label: Hero 遮罩强度
+          value: medium
+          help: 自定义背景图片的遮罩强度，影响文字可读性
           options:
-          - label: 小
-            value: sm
-          - label: 中
-            value: md
-          - label: 大
-            value: lg
-          - label: 超大
-            value: xl
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: hero_motto_size
-          label: Hero 宗旨字号
-          value: md
-          options:
-          - label: 小
-            value: sm
-          - label: 中
-            value: md
-          - label: 大
-            value: lg
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
+            - label: 无遮罩
+              value: none
+            - label: 轻度
+              value: light
+            - label: 中度（推荐）
+              value: medium
+            - label: 重度
+              value: dark
         - $formkit: checkbox
-          name: hero_show_scroll_hint
-          label: 显示滚动提示
-          value: true
-      - $formkit: array
-        name: section_order_items
-        label: 首页区块配置（排序/内容/启用）
-        help: 拖动条目调整首页区块顺序；关闭启用可隐藏区块；标题和副标题会在前台自动应用。
-        value:
-        - section_key: hero
-          section_label: Hero
-          enabled: true
-        - section_key: about-alliance
-          section_label: 组织介绍
-          enabled: true
-          eyebrow: 组织介绍
-          title: 把“校园墙”从信息流，升级为可信赖的协作网络
-          description: 全国高校自媒体联盟（NUCMA）由校园墙组织共同发起，关注校园自媒体的规范运营、信息互助与青年表达。
-          quote: 互动为主，宣教为辅；交流为主，多元互促。
-        - section_key: service-directions
-          section_label: 服务方向
-          enabled: true
-          eyebrow: 服务方向
-          title: 四个稳定场景，支撑一个长期门户
-          subtitle: 每个入口都对应真实页面或已适配插件，减少无效跳转。
-        - section_key: site-portal
-          section_label: 功能入口
-          enabled: true
-          eyebrow: 功能入口
-          title: 为 Halo 生态预留的扩展底座
-          subtitle: 基础能力直接可用；搜索、友链、图库、瞬间按插件可用性输出，不制造空入口。
-        - section_key: posts
-          section_label: 文章区块
-          enabled: true
-          eyebrow: 信息流
-          title: 最新公告
-          subtitle: 用清晰卡片承载公开通知、活动记录和组织动态。
-        - section_key: links
-          section_label: 友情链接
-          enabled: true
-          title: 友情链接
-          subtitle: 协同传播的校园伙伴
-        - section_key: members
-          section_label: 成员公示
-          enabled: true
-          title: 成员公示
-          subtitle: 共同维护校园沟通秩序
-        - section_key: reviews
-          section_label: 校园反馈
-          enabled: true
-          title: 校园反馈
-          subtitle: 来自校园群体的真实体验
-        - section_key: faq
-          section_label: FAQ
-          enabled: true
-          title: 常见问题
-          subtitle: 常见问题解答
-        itemLabels:
-        - type: text
-          label: $value.section_label
-        - type: text
-          label: $value.section_key
-        addLabel: 添加首页区块
-        emptyText: 暂无首页区块
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
-          children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: select
-              name: section_key
-              label: 区块标识
-              validation: required
-              options:
-              - label: Hero
-                value: hero
-              - label: 组织介绍
-                value: about-alliance
-              - label: 服务方向
-                value: service-directions
-              - label: 功能入口
-                value: site-portal
-              - label: 文章区块
-                value: posts
-              - label: 友情链接
-                value: links
-              - label: 成员公示
-                value: members
-              - label: 校园反馈
-                value: reviews
-              - label: FAQ
-                value: faq
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: section_label
-              label: 后台显示名称
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: checkbox
-              name: enabled
-              label: 启用该区块
-              value: true
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: eyebrow
-              label: 小标签/分类文字
-              placeholder: 留空则使用模板默认值
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: title
-              label: 区块标题
-              placeholder: 留空则使用模板默认值
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: textarea
-              name: subtitle
-              label: 区块副标题/说明
-              rows: 2
-              placeholder: 留空则使用模板默认值
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: textarea
-              name: description
-              label: 组织介绍详细说明
-              rows: 3
-              placeholder: 留空则使用模板默认值
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: quote
-              label: 组织原则引语
-              placeholder: 留空则使用模板默认值
-      - $formkit: array
-        name: alliance_principles
-        label: 组织介绍原则卡片
-        help: 用数组统一管理组织介绍中的原则卡片，可拖动排序。
-        value:
-        - index: '01'
-          title: 公开
-          description: 用公示、归档和成员名录建立基本信任。
-        - index: '02'
-          title: 响应
-          description: 把投稿、咨询和协作事项导向明确入口。
-        - index: '03'
-          title: 沉淀
-          description: 让公告、活动图文和重要记录可追溯。
-        - index: '04'
-          title: 连接
-          description: 连接高校媒体、校园用户和合作伙伴。
-        itemLabels:
-        - type: text
-          label: $value.title
-        - type: text
-          label: $value.index
-        addLabel: 添加原则卡片
-        emptyText: 暂无原则卡片
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
-          children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: index
-              label: 序号
-              placeholder: '01'
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: title
-              label: 卡片标题
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: textarea
-              name: description
-              label: 卡片说明
-              rows: 2
-              validation: required
-      - $formkit: array
-        name: service_cards
-        label: 服务方向卡片
-        help: 首页服务方向区块的卡片数组；可设置插件依赖，插件不可用时自动隐藏。
-        value:
-        - title: 公开发布
-          description: 联盟建设、成员扶持、阶段安排和重要名单统一归档。
-          url: /archives
-          enabled: true
-        - title: 组织说明
-          description: 清晰展示联盟定位、发源脉络、联系邮箱和协作边界。
-          url: /about
-          enabled: true
-        - title: 校园影像
-          description: 接入图库插件后承载活动照片、专题影像和视觉资料。
-          url: /photos
-          plugin_key: PluginPhotos
-          plugin_alt_key: PluginGallery
-          enabled: true
-        - title: 成员公示
-          description: 公开成员单位和相关名单，帮助用户识别可靠校园渠道。
-          url: '#members'
-          enabled: true
-        itemLabels:
-        - type: text
-          label: $value.title
-        - type: text
-          label: $value.url
-        addLabel: 添加服务卡片
-        emptyText: 暂无服务卡片
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
-          children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: checkbox
-              name: enabled
-              label: 启用卡片
-              value: true
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: title
-              label: 卡片标题
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: textarea
-              name: description
-              label: 卡片说明
-              rows: 2
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: url
-              label: 跳转链接
-              value: /
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: plugin_key
-              label: 插件依赖
-              placeholder: PluginPhotos
-              help: 留空则始终显示；填写后仅在该插件可用时显示。
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: plugin_alt_key
-              label: 备用插件依赖
-              placeholder: PluginGallery
-      - $formkit: array
-        name: portal_items
-        label: 功能入口卡片
-        help: 首页功能入口区块的卡片数组；支持搜索按钮和普通链接。
-        value:
-        - tag: 搜索
-          title: 全站搜索
-          description: 接入 Halo 搜索组件后，可快速检索文章、页面和插件同步内容。
-          action: search
-          plugin_key: PluginSearchWidget
-          enabled: true
-        - tag: 协作
-          title: 友情链接
-          description: 适配链接管理插件，用分组方式展示校园媒体与合作伙伴。
-          url: /links
-          plugin_key: PluginLinks
-          enabled: true
-        - tag: 影像
-          title: 校园图库
-          description: 适配图库管理插件，承载活动照片、视觉资料和专题影像。
-          url: /photos
-          plugin_key: PluginPhotos
-          plugin_alt_key: PluginGallery
-          enabled: true
-        - tag: 动态
-          title: 校园瞬间
-          description: 适配瞬间插件，用轻量动态承接活动现场和即时信息。
-          url: /moments
-          plugin_key: PluginMoments
-          enabled: true
-        itemLabels:
-        - type: text
-          label: $value.title
-        - type: text
-          label: $value.tag
-        addLabel: 添加入口卡片
-        emptyText: 暂无入口卡片
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
-          children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: checkbox
-              name: enabled
-              label: 启用卡片
-              value: true
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: tag
-              label: 卡片标签
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: title
-              label: 卡片标题
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: textarea
-              name: description
-              label: 卡片说明
-              rows: 2
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: select
-              name: action
-              label: 行为类型
-              value: link
-              options:
-              - label: 普通链接
-                value: link
-              - label: 打开搜索
-                value: search
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: url
-              label: 跳转链接
-              value: /
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: plugin_key
-              label: 插件依赖
-              placeholder: PluginSearchWidget
-              help: 留空则始终显示；填写后仅在该插件可用时显示。
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: plugin_alt_key
-              label: 备用插件依赖
-              placeholder: PluginGallery
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
+          name: hero_full_width
+          label: Hero 全宽显示
+          value: false
+          help: 开启后 Hero 区域顶到页面边缘和 header，不留容器边距
+        - $formkit: range
+          name: hero_height
+          label: Hero 区块高度（像素）
+          value: 320
+          min: 200
+          max: 800
+          step: 10
+          help: 通过拖动条调节 Hero 区域最小高度（当前值会实时显示在右侧输入框中，默认 320px）
+
+    - group: home_stats
+      label: 首页统计
+      formSchema:
         - $formkit: select
           name: posts_per_page
           label: 首页文章数
           value: 8
           options:
-          - label: 4 篇
-            value: 4
-          - label: 6 篇
-            value: 6
-          - label: 8 篇
-            value: 8
-          - label: 12 篇
-            value: 12
-          - label: 16 篇
-            value: 16
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
+            - label: 4 篇
+              value: 4
+            - label: 6 篇
+              value: 6
+            - label: 8 篇
+              value: 8
+            - label: 10 篇
+              value: 10
+            - label: 12 篇
+              value: 12
         - $formkit: select
-          name: post_cover_ratio
-          label: 首页文章封面比例
-          value: 16/9
+          name: members_count
+          label: 首页成员展示数
+          value: 6
           options:
-          - label: '16:9'
-            value: 16/9
-          - label: '3:2'
-            value: 3/2
-          - label: '4:3'
-            value: 4/3
-          - label: '1:1'
-            value: 1/1
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_post_stats
-          label: 显示文章统计（阅读/点赞）
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: featured_link_ids
-          label: 友链筛选 ID
-          value: ''
-          placeholder: 1,2,3
-          help: 逗号分隔，留空显示全部
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: featured_member_ids
-          label: 成员筛选 ID
-          value: ''
-          placeholder: 1,2,3
-          help: 逗号分隔，留空显示全部
-    - $el: div
-      attrs:
-        style: width:min(100%,1280px);max-width:100%;margin:0 0 16px;
-      children:
-      - $formkit: array
-        name: static_members
-        label: 静态成员列表
-        help: 手动配置成员，优先级高于插件
-        itemLabels:
-        - type: text
-          label: $value.displayName
-        - type: text
-          label: $value.school
-        addLabel: 添加静态成员
-        emptyText: 暂无静态成员
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
+            - label: 4 个
+              value: 4
+            - label: 6 个
+              value: 6
+            - label: 8 个
+              value: 8
+            - label: 10 个
+              value: 10
+            - label: 12 个
+              value: 12
+        - $formkit: select
+          name: members_pinned_ids
+          label: 固定显示的成员（优先）
+          multiple: true
+          clearable: true
+          searchable: true
+          help: 选中的成员将优先排在首页成员列表最前面，不受数量限制影响。需启用 PluginMembers 并已有成员数据。
+          action: /apis/member.plugin.halo.run/v1alpha1/members
+          requestOption:
+            method: GET
+            itemsField: items
+            labelField: spec.displayName
+            valueField: metadata.name
+        - $formkit: select
+          name: links_count
+          label: 首页友链展示数
+          value: 8
+          options:
+            - label: 4 个
+              value: 4
+            - label: 6 个
+              value: 6
+            - label: 8 个
+              value: 8
+            - label: 10 个
+              value: 10
+            - label: 12 个
+              value: 12
+        - $formkit: select
+          name: links_pinned_ids
+          label: 固定显示的友链（优先）
+          multiple: true
+          clearable: true
+          searchable: true
+          help: 选中的友链将优先排在首页友链列表最前面，不受数量限制影响。需启用 PluginLinks 并已有友链数据。
+          action: /apis/core.halo.run/v1alpha1/links
+          requestOption:
+            method: GET
+            itemsField: items
+            labelField: spec.displayName
+            valueField: metadata.name
+        - $formkit: array
+          name: intro_stats_items
+          label: 统计项列表
+          addLabel: 添加统计项
+          emptyText: 暂无统计项（将使用默认：文章数、分类数、评论数、成员数）
+          help: 自由添加或排序统计项，可选预设类型或自定义数值名称
+          itemLabels:
+            - type: text
+              label: "$value.label ? $value.label : (#{$value.type == 'post' ? '发布文章数' : ($value.type == 'category' ? '内容分类数' : ($value.type == 'comment' ? '用户评论数' : ($value.type == 'upvote' ? '点赞数' : ($value.type == 'member' ? '成员数量' : ($value.type == 'custom' ? '自定义数值' : $value.type))))))"
           children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: displayName
-              label: 姓名
+            - $formkit: select
+              name: type
+              label: 统计类型
+              value: post
+              options:
+                - label: 发布文章数
+                  value: post
+                - label: 内容分类数
+                  value: category
+                - label: 用户评论数
+                  value: comment
+                - label: 点赞数
+                  value: upvote
+                - label: 成员数量（需启用成员插件）
+                  value: member
+                - label: 自定义数值
+                  value: custom
               validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: attachment
-              name: avatar
-              label: 头像链接
-              placeholder: https://...
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
             - $formkit: text
-              name: bio
-              label: 简介
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
+              name: custom_number
+              label: 自定义数值
+              placeholder: 仅类型为「自定义数值」时生效，如：2018
+              help: 当类型选择为自定义数值时，在此填写数字内容
             - $formkit: text
-              name: school
-              label: 学校/机构
+              name: label
+              label: 覆盖显示名称（可选）
+              placeholder: 留空则使用预设名称，如：成立年份
+              help: 可替换预设的名称显示，自定义项建议填写显示名称
+            - $formkit: checkbox
+              name: enabled
+              label: 启用此项
+              value: true
+              help: 临时隐藏可取消勾选，不必删除条目
 
-  - group: page_content
-    label: 首页内容
-    formSchema:
-    - $el: div
-      attrs:
-        style: width:min(100%,1280px);max-width:100%;margin:0 0 16px;
-      children:
-      - $formkit: array
-        name: review_items
-        label: 反馈列表
-        value:
-        - content: 匿名投稿和失物招领响应很及时，很多校园里的小问题能被更快看见。
-          author: 校园用户
-          role: 在校学生
-        - content: 成员公示和运营规范清楚，方便大家了解校园墙背后的组织边界。
-          author: 成员单位
-          role: 校园墙运营者
-        - content: 组织资讯集中发布，重要名单和指导意见检索起来更方便。
-          author: 关注者
-          role: 校园媒体读者
-        - content: 互动宣教和多元交流不是口号，平台确实帮助同学们找到回应。
-          author: 投稿用户
-          role: 校园互助参与者
-        itemLabels:
-        - type: text
-          label: $value.author
-        - type: text
-          label: $value.role
-        addLabel: 添加评价
-        emptyText: 暂无评价
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
+    - group: appearance
+      label: 外观设置
+      formSchema:
+        - $formkit: select
+          name: default_theme_mode
+          label: 默认配色模式
+          value: system
+          options:
+            - label: 跟随系统
+              value: system
+            - label: 浅色
+              value: light
+            - label: 深色
+              value: dark
+        - $formkit: color
+          name: primary_color
+          label: 主色调
+          value: "#D13E43"
+        - $formkit: checkbox
+          name: enable_back_to_top
+          label: 显示返回顶部按钮
+          value: true
+
+    - group: content
+      label: 内容设置
+      formSchema:
+        - $formkit: select
+          name: date_format
+          label: 日期格式
+          value: YYYY-MM-DD
+          options:
+            - label: 2024-01-01
+              value: YYYY-MM-DD
+            - label: 2024年1月1日
+              value: YYYY年MM月DD日
+            - label: 01/01/2024
+              value: MM/DD/YYYY
+            - label: 01-01
+              value: MM-DD
+        - $formkit: checkbox
+          name: enable_search
+          label: 启用搜索功能
+          value: true
+        - $formkit: checkbox
+          name: enable_theme_toggle
+          label: 显示主题切换按钮
+          value: true
+        - $formkit: checkbox
+          name: enable_post_comment
+          label: 文章页评论区
+          value: true
+          help: 开启后文章页底部显示评论区
+        - $formkit: checkbox
+          name: enable_page_comment
+          label: 自定义页评论区
+          value: true
+          help: 开启后自定义页面底部显示评论区
+        - $formkit: checkbox
+          name: enable_links_comment
+          label: 友链页评论区
+          value: false
+          help: 开启后友链页底部显示评论区
+        - $formkit: checkbox
+          name: enable_members_comment
+          label: 成员页评论区
+          value: false
+          help: 开启后成员页底部显示评论区
+        - $formkit: textarea
+          name: custom_css
+          label: 自定义 CSS
+          placeholder: 直接输入 CSS 代码，无需 <style> 标签
+          rows: 8
+        - $formkit: textarea
+          name: custom_js
+          label: 自定义 JS
+          placeholder: 直接输入 JavaScript 代码，无需 <script> 标签
+          rows: 8
+
+    - group: page_content
+      label: 首页内容
+      formSchema:
+        - $formkit: array
+          name: faq_items
+          label: 常见问题列表
+          addLabel: 添加问题
+          value:
+            - question: 如何加入成员公示？
+              answer: 请在成员公示页面点击右下角悬浮按钮，填写账号名称、邮箱、学校和 QQ 号等信息提交申请，管理员审核通过后即可加入成员公示。
+            - question: 如何申请友链？
+              answer: 请在友情链接页面点击"申请友链"按钮，填写网址、网站标题、Logo 和描述等信息提交申请，审核通过后将在友链页面展示。
+            - question: 网站内容可以转载吗？
+              answer: 本站原创内容版权归原作者所有，转载请联系站长获取授权，并注明来源链接。合作媒体请注明出处。
+            - question: 如何联系站长？
+              answer: 可通过页脚底部的联系方式（如微信公众号、QQ群）与站长取得联系，也可在成员公示页找到相关成员信息。
+            - question: 成员公示的优先级如何设置？
+              answer: 管理员可在 Halo 后台「成员管理」中编辑成员信息，通过设置「优先级」数值来控制排序。数值越大，排序越靠前。
+            - question: 友链显示顺序是怎么决定的？
+              answer: 友链的显示顺序由后台设置的「优先级」数值决定，数值越大排序越靠前。同时可在主题设置中勾选固定显示的友链，优先排在最前面。
+            - question: 提交友链后多久能审核通过？
+              answer: 通常在 1-3 个工作日内完成审核。审核结果将通过您填写的邮箱通知，请留意查收邮件。
+            - question: 可以修改已提交的成员或友链信息吗？
+              answer: 如需修改已提交的信息，请通过页脚联系方式联系管理员，或在相关页面重新提交申请并备注说明需要更新原有信息。
+          emptyText: 暂无常见问题（首页将不显示该区块）
+          help: 添加后将显示在首页底部，留空则不显示常见问题区块
+          itemLabels:
+            - type: text
+              label: $value.question
           children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: content
-              label: 反馈内容
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: author
-              label: 作者名
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: role
-              label: 作者身份
-              placeholder: 例：在校学生
-    formSchema:
-    - $el: div
-      attrs:
-        style: width:min(100%,1280px);max-width:100%;margin:0 0 16px;
-      children:
-      - $formkit: array
-        name: faq_items
-        label: FAQ 列表
-        value:
-        - question: 全国高校自媒体联盟是什么？
-          answer: 全国高校自媒体联盟（NUCMA）是由校园墙组织共同发起的第三方校园媒体协作组织，关注校园墙规范运营、校园信息互助与青年表达。
-        - question: 重庆校墙联和全国校墙联是什么关系？
-          answer: 重庆校墙联是全国校墙联的发源地，成立于 2021 年 7 月，是全国高校自媒体联盟发展脉络中的重要起点。
-        - question: 联盟宗旨是什么？
-          answer: 宗旨目标为“互动宣教，多元交流”。互动为主、宣教为辅，交流为主、多元互促。
-        - question: 如何联系联盟？
-          answer: 如有组织咨询、成员信息或技术支持问题，可通过 support@nucma.cn 联系，我们会尽快处理。
-        itemLabels:
-        - type: text
-          label: $value.question
-        - type: text
-          label: $value.answer
-        addLabel: 添加 FAQ
-        emptyText: 暂无 FAQ
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
-          children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
             - $formkit: text
               name: question
               label: 问题
+              placeholder: 如：如何加入成员公示？
               validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
             - $formkit: textarea
               name: answer
-              label: 答案
+              label: 回答
+              placeholder: 请输入问题的详细回答
               rows: 3
               validation: required
 
-  - group: post_settings
-    label: 文章页
-    formSchema:
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: attachment
-          name: default_cover_image
-          label: 默认封面图
-          value: ''
-          placeholder: https://example.com/cover.jpg
-          help: 文章无封面时使用，留空使用随机图片
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: date_format
-          label: 日期格式
-          value: yyyy年MM月dd日
-          placeholder: yyyy年MM月dd日
-          help: 如 yyyy-MM-dd、dd/MM/yyyy
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_cover
-          label: 显示文章封面图
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: post_cover_height_preset
-          label: 文章封面高度
-          value: default
-          options:
-          - label: 默认
-            value: default
-          - label: 紧凑
-            value: small
-          - label: 宽阔
-            value: large
-          - label: 全屏
-            value: fullscreen
-          - label: 自定义
-            value: custom
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: post_cover_height_custom
-          label: 自定义封面高度
-          value: clamp(300px,45vh,520px)
-          help: 选择“自定义”时生效，例如 420px 或 clamp(300px,45vh,520px)。
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_excerpt
-          label: 显示文章摘要
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_reading_time
-          label: 显示预计阅读时间
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_views
-          label: 显示阅读量
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_upvote
-          label: 显示点赞数
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_tags
-          label: 显示标签
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_author_card
-          label: 显示作者卡片
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: prose_size
-          label: 正文字号
-          value: base
-          options:
-          - label: 小（14px）
-            value: sm
-          - label: 标准（16px）
-            value: base
-          - label: 大（18px）
-            value: lg
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: content_font
-          label: 文章正文字体
-          value: body
-          options:
-          - label: 跟随全站正文
-            value: body
-          - label: 系统无衬线
-            value: system
-          - label: 宋体/衬线
-            value: serif
-          - label: 楷体/霞鹜文楷
-            value: kai
-          - label: 自定义字体名
-            value: custom
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: content_font_family
-          label: 文章自定义字体名
-          placeholder: '''My Article Font'', serif'
-          help: 仅在「文章正文字体」选择自定义时生效；字体文件可继续使用外观里的自定义字体 CSS。
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: paragraph_indent
-          label: 段落首行缩进
-          value: true
-          help: 中文排版习惯
-    formSchema:
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_code_copy
-          label: 代码块复制按钮
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_image_lightbox
-          label: 图片灯箱效果
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: mobile_toc_behavior
-          label: 移动端目录行为
-          value: global
-          options:
-          - label: 全局启用
-            value: global
-          - label: 全局禁用
-            value: disabled
-          - label: 长文自动显示
-            value: auto
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: mobile_toc_min_headings
-          label: 自动显示最小标题数
-          value: 5
-          help: 长文自动显示时生效
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_external_link_icon
-          label: 外链标识
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_reading_progress
-          label: 阅读进度条
-          value: true
-          help: 长页面顶部显示轻量进度条
-
-  - group: about
-    label: 关于页
-    formSchema:
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: name
-          label: 姓名 / 昵称
-          value: 全国高校自媒体联盟
-          placeholder: 例：张三
-          validation: required
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: attachment
-          name: avatar
-          label: 头像链接
-          value: ''
-          placeholder: https://...
-          help: 留空使用站点 Logo
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;grid-column:1/-1;
-        children:
+    - group: footer
+      label: 页脚设置
+      formSchema:
         - $formkit: textarea
-          name: bio
-          label: 组织简介
-          value: 全国高校自媒体联盟（NUCMA）由校园墙组织共同发起，致力于促进校园自媒体规范运营，为校园群体提供更便捷的沟通平台。
-          rows: 3
-          placeholder: 简短介绍自己，支持换行
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: location
-          label: 所在地
-          value: 重庆，中国
-          placeholder: 例：北京，中国
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: job_title
-          label: 职位 / 身份
-          value: 第三方校园媒体协作组织
-          placeholder: 例：全栈工程师
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_stats
-          label: 显示站点统计
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_skills
-          label: 显示技能标签
-          value: true
-    - $el: div
-      attrs:
-        style: width:min(100%,1280px);max-width:100%;margin:0 0 16px;
-      children:
-      - $formkit: array
-        name: skills
-        label: 方向标签
-        value:
-        - name: 校园墙运营
-          color: '#d3373f'
-        - name: 成员公示
-          color: '#b4232b'
-        - name: 校园互助
-          color: '#2563eb'
-        - name: 组织咨询
-          color: '#0f766e'
-        - name: 青年表达
-          color: '#7c3aed'
-        itemLabels:
-        - type: text
-          label: $value.name
-        - type: text
-          label: $value.color
-        addLabel: 添加方向标签
-        emptyText: 暂无方向标签
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
-          children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: name
-              label: 技能名称
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: color
-              label: 标签颜色
-              placeholder: '#6366f1'
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_timeline
-          label: 显示时间线
-          value: true
-    - $el: div
-      attrs:
-        style: width:min(100%,1280px);max-width:100%;margin:0 0 16px;
-      children:
-      - $formkit: array
-        name: timeline
-        label: 时间线
-        value:
-        - year: '2024'
-          title: 第四期成员公示
-          desc: 持续推动成员扶持、公示与校园自媒体规范运营。
-        - year: '2023'
-          title: 推进成员建设
-          desc: 围绕校园墙运营、活动图文和组织咨询完善协作机制。
-        - year: '2021'
-          title: 重庆校墙联成立
-          desc: 重庆校墙联作为全国校墙联发源地，开启校园墙组织协作。
-        help: 按时间倒序排列
-        itemLabels:
-        - type: text
-          label: $value.year
-        - type: text
-          label: $value.title
-        addLabel: 添加时间线
-        emptyText: 暂无时间线
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
-          children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: year
-              label: 年份
-              placeholder: 例：2024
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: title
-              label: 标题
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: desc
-              label: 描述
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_contact
-          label: 显示联系方式
-          value: true
-    - $el: div
-      attrs:
-        style: width:min(100%,1280px);max-width:100%;margin:0 0 16px;
-      children:
-      - $formkit: array
-        name: contacts
-        label: 联系方式
-        value:
-        - label: 邮件
-          value: support@nucma.cn
-          icon_type: preset
-          icon: email
-          url: mailto:support@nucma.cn
-        - label: 官网
-          value: nucma.cn
-          icon_type: preset
-          icon: link
-          url: https://nucma.cn
-        itemLabels:
-        - type: text
-          label: $value.label
-        - type: text
-          label: $value.value
-        addLabel: 添加联系方式
-        emptyText: 暂无联系方式
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
-          children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: label
-              label: 名称
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: value
-              label: 显示文字
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: url
-              label: 链接地址
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: select
-              name: icon_type
-              label: 图标类型
-              value: preset
-              options:
-              - label: 预设图标
-                value: preset
-              - label: 图片链接
-                value: image
-              - label: 内联 SVG
-                value: svg
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: select
-              name: icon
-              label: 预设图标
-              value: link
-              help: 预设图标类型生效
-              options:
-              - label: 通用链接
-                value: link
-              - label: 邮件
-                value: email
-              - label: GitHub
-                value: github
-              - label: 微博
-                value: weibo
-              - label: Bilibili
-                value: bilibili
-              - label: 微信
-                value: wechat
-              - label: QQ
-                value: qq
-              - label: 知乎
-                value: zhihu
-              - label: 抖音
-                value: douyin
-              - label: 小红书
-                value: xiaohongshu
-              - label: 掘金
-                value: juejin
-              - label: CSDN
-                value: csdn
-              - label: 豆瓣
-                value: douban
-              - label: Steam
-                value: steam
-              - label: YouTube
-                value: youtube
-              - label: Instagram
-                value: instagram
-              - label: RSS
-                value: rss
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: attachment
-              name: icon_image
-              label: 图标图片链接
-              placeholder: https://...
-              help: 图片类型生效
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: textarea
-              name: icon_svg
-              label: SVG 图标代码
-              rows: 3
-              placeholder: <svg viewBox="0 0 24 24" ...>...</svg>
-              help: SVG 类型生效
-
-  - group: footer_settings
-    label: 页脚设置
-    formSchema:
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
-          name: site_desc
-          label: 站点描述
-          value: 全国高校自媒体联盟 - 互动宣教，多元交流
-          placeholder: 留空使用站点副标题
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_social
-          label: 显示社交图标
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: show_brand
-          label: 显示页脚品牌区
-          value: true
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: select
-          name: footer_layout
-          label: 页脚布局
-          value: balanced
-          options:
-          - label: 均衡横向
-            value: balanced
-          - label: 紧凑单行
-            value: compact
-          - label: 宽屏展开
-            value: wide
-    - $el: div
-      attrs:
-        style: width:min(100%,1280px);max-width:100%;margin:0 0 16px;
-      children:
-      - $formkit: array
-        name: social_links
-        label: 社交链接列表
-        value:
-        - name: 邮件
-          url: mailto:support@nucma.cn
-          icon_type: preset
-          icon: email
-        - name: RSS
-          url: /rss.xml
-          icon_type: preset
-          icon: rss
-        itemLabels:
-        - type: text
-          label: $value.name
-        - type: text
-          label: $value.url
-        addLabel: 添加社交链接
-        emptyText: 暂无社交链接
-        help: 需开启「显示社交图标」
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
-          children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: name
-              label: 名称
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: url
-              label: 链接地址
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: select
-              name: icon_type
-              label: 图标类型
-              value: preset
-              options:
-              - label: 预设图标
-                value: preset
-              - label: 图片链接
-                value: image
-              - label: 内联 SVG
-                value: svg
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: select
-              name: icon
-              label: 预设图标
-              value: link
-              help: 预设图标类型生效
-              options:
-              - label: 通用链接
-                value: link
-              - label: 邮件
-                value: email
-              - label: GitHub
-                value: github
-              - label: 微博
-                value: weibo
-              - label: Bilibili
-                value: bilibili
-              - label: 微信
-                value: wechat
-              - label: QQ
-                value: qq
-              - label: 知乎
-                value: zhihu
-              - label: 抖音
-                value: douyin
-              - label: 小红书
-                value: xiaohongshu
-              - label: 掘金
-                value: juejin
-              - label: CSDN
-                value: csdn
-              - label: 豆瓣
-                value: douban
-              - label: Steam
-                value: steam
-              - label: YouTube
-                value: youtube
-              - label: Instagram
-                value: instagram
-              - label: Twitter/X
-                value: twitter
-              - label: RSS
-                value: rss
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: attachment
-              name: icon_image
-              label: 图标图片链接
-              placeholder: https://...
-              help: 图片类型生效
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: textarea
-              name: icon_svg
-              label: SVG 图标代码
-              rows: 3
-              placeholder: <svg viewBox="0 0 24 24" ...>...</svg>
-              help: SVG 类型生效
-    - $el: div
-      attrs:
-        style: width:min(100%,1280px);max-width:100%;margin:0 0 16px;
-      children:
-      - $formkit: array
-        name: footer_columns
-        label: 页脚栏目配置
-        help: 用栏目数组统一管理页脚菜单；栏目可拖动排序，链接可配置悬浮二维码图片/SVG/文字。
-        value:
-        - column_key: primary-menu
-          title: 导航
-          enabled: true
-          column_type: menu
-          links: []
-        - column_key: about-links
-          title: 关于
-          enabled: true
-          column_type: links
-          links:
-          - text: 关于联盟
-            url: /about
-          - text: 成员列表
-            url: /members
-          - text: 友情链接
-            url: /links
-          - text: 组织资讯
-            url: /archives
-        - column_key: taxonomy-links
-          title: 发现
-          enabled: true
-          column_type: links
-          links:
-          - text: 分类
-            url: /categories
-          - text: 标签
-            url: /tags
-          - text: RSS
-            url: /rss.xml
-        itemLabels:
-        - type: text
-          label: $value.title
-        - type: text
-          label: $value.column_key
-        addLabel: 添加页脚栏目
-        emptyText: 暂无页脚栏目
-        children:
-        - $el: div
-          attrs:
-            style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
-          children:
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: column_key
-              label: 栏目标识
-              validation: required
-              placeholder: about-links
-              help: 用于区分栏目，建议使用英文短横线。
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: text
-              name: title
-              label: 栏目标题
-              validation: required
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: checkbox
-              name: enabled
-              label: 启用栏目
-              value: true
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: select
-              name: column_type
-              label: 栏目类型
-              value: links
-              options:
-              - label: 站点主菜单
-                value: menu
-              - label: 自定义链接
-                value: links
-          - $el: div
-            attrs:
-              style: min-width:0;align-self:start;width:100%;
-            children:
-            - $formkit: array
-              name: links
-              label: 栏目链接
-              help: 栏目类型为“自定义链接”时显示；悬浮二维码支持图片、SVG 或文字提示。
-              itemLabels:
-              - type: text
-                label: $value.text
-              - type: text
-                label: $value.url
-              addLabel: 添加栏目链接
-              emptyText: 暂无栏目链接
-              children:
-              - $el: div
-                attrs:
-                  style: display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;
-                children:
-                - $el: div
-                  attrs:
-                    style: min-width:0;align-self:start;width:100%;
-                  children:
-                  - $formkit: text
-                    name: text
-                    label: 链接文字
-                    validation: required
-                - $el: div
-                  attrs:
-                    style: min-width:0;align-self:start;width:100%;
-                  children:
-                  - $formkit: text
-                    name: url
-                    label: 链接地址
-                    value: /
-                - $el: div
-                  attrs:
-                    style: min-width:0;align-self:start;width:100%;
-                  children:
-                  - $formkit: attachment
-                    name: qr_image
-                    label: 悬浮二维码图片
-                    placeholder: https://.../qrcode.png
-                    help: 留空则不显示二维码图片。
-                - $el: div
-                  attrs:
-                    style: min-width:0;align-self:start;width:100%;
-                  children:
-                  - $formkit: textarea
-                    name: qr_svg
-                    label: 悬浮二维码 SVG
-                    rows: 3
-                    placeholder: <svg viewBox="0 0 128 128">...</svg>
-                    help: 优先级低于图片。
-                - $el: div
-                  attrs:
-                    style: min-width:0;align-self:start;width:100%;
-                  children:
-                  - $formkit: text
-                    name: qr_text
-                    label: 悬浮提示文字
-                    placeholder: 扫码联系 / 微信号
-                    help: 未填写图片或 SVG 时显示文字提示。
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: theme_credit
-          label: 显示技术署名
-          value: false
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: text
           name: copyright
-          label: 自定义版权文字
-          value: ''
-          placeholder: 例：© 2025 MyBlog. All rights reserved.
-          help: 支持 HTML，留空使用默认格式
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
+          label: 版权信息
+          placeholder: 留空使用默认格式（© 年份 站点名称）
+          rows: 2
+        - $formkit: text
+          name: custom_title
+          label: 自定义栏目标题
+          placeholder: 如：关注我们、联系方式
+          help: 留空时默认显示"关注我们"
+        - $formkit: array
+          name: custom_items
+          label: 自定义栏目内容
+          addLabel: 添加项目
+          emptyText: 暂无内容
+          help: 添加图片或文字链接，支持简单的可视化排版
+          itemLabels:
+            - type: text
+              label: $value.title
+          children:
+            - $formkit: text
+              name: title
+              label: 标题/文字
+              placeholder: 如：微信公众号
+            - $formkit: attachment
+              name: image
+              label: 图片
+              accepts: ["image/*"]
+              help: 从媒体库选择图片，如二维码、Logo 等
+            - $formkit: text
+              name: url
+              label: 链接地址
+              placeholder: https://（可选，留空则不可点击）
+            - $formkit: select
+              name: target
+              label: 打开方式
+              value: _blank
+              options:
+                - label: 新标签页
+                  value: _blank
+                - label: 当前页
+                  value: _self
         - $formkit: text
           name: icp_number
           label: ICP 备案号
-          value: ''
           placeholder: 京ICP备XXXXXXXX号
-          help: 留空不显示
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
         - $formkit: text
           name: icp_link
           label: ICP 备案链接
           value: https://beian.miit.gov.cn/
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
         - $formkit: text
           name: police_number
           label: 公安备案号
-          value: ''
-          placeholder: 京公网安备 XXXXXXXXXXXXXX 号
-          help: 留空不显示
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
+          placeholder: 京公网安备XXXXXXXXXXXXXX号
         - $formkit: text
           name: police_record_code
-          label: 公安备案编号
-          value: ''
-          placeholder: '11010802012345'
-          help: 用于生成备案链接
-    formSchema:
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: disable_large_animations
-          label: 降低大型动画强度
-          value: false
-          help: 降低 Hero 和首页大型背景动画的强度，提升低性能设备流畅度
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: disable_image_lazy
-          label: 关闭图片懒加载
-          value: false
-          help: 仅在排查图片延迟显示问题时开启，正常情况下建议关闭
-
-  - group: plugins
-    label: 插件增强
-    formSchema:
-    # 文章组件
-    - $el: h3
-      attrs:
-        style: font-size:1.05rem;font-weight:700;margin:1.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:1px solid rgba(var(--color-text),.1);
-      children: 文章组件
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_content_widgets
-          label: 启用文章组件
-          value: true
-          help: 启用后文章正文可渲染文章组件插件的富文本组件（提示框、标签页、折叠面板、聊天气泡、时间线、步骤等）
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_article_encryption_notice
-          label: 启用加密文章提示
-          value: true
-          help: 启用后为加密文章显示 Nucma 风格的玻璃态加密提示卡片
-    # 在线显示
-    - $el: h3
-      attrs:
-        style: font-size:1.05rem;font-weight:700;margin:1.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:1px solid rgba(var(--color-text),.1);
-      children: 在线人数
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_online_count
-          label: 显示在线人数
-          value: false
-          help: 在页脚显示当前在线人数（需配合 Halo 在线显示插件）
-        - $el: div
-          attrs:
-            style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-          children:
-          - $formkit: text
-            name: online_count_label
-            label: 在线人数标签
-            value: 当前在线
-            placeholder: 显示在在线人数旁的文字
-    # 社交分享
-    - $el: h3
-      attrs:
-        style: font-size:1.05rem;font-weight:700;margin:1.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:1px solid rgba(var(--color-text),.1);
-      children: 社交分享卡片
-    - $el: div
-      attrs:
-        style: width:100%;max-width:920px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;margin:0 0 18px;
-      children:
-      - $el: div
-        attrs:
-          style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-        children:
-        - $formkit: checkbox
-          name: enable_share_card
-          label: 启用社交分享卡片
-          value: true
-          help: 自动注入 og/twitter/meta 标签，复用 Nucma Logo 和品牌色，优化微信/QQ 分享预览效果
-        - $el: div
-          attrs:
-            style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-          children:
-          - $formkit: text
-            name: share_card_title
-            label: 分享标题
-            value: ''
-            help: 留空则使用文章标题
-        - $el: div
-          attrs:
-            style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-          children:
-          - $formkit: textarea
-            name: share_card_description
-            label: 分享描述
-            rows: 3
-            value: ''
-            placeholder: 分享卡片描述文字
-            help: 留空则使用文章摘要
-        - $el: div
-          attrs:
-            style: min-width:0;align-self:start;width:100%;display:flex;flex-direction:column;
-          children:
-          - $formkit: text
-            name: share_card_cover
-            label: 分享封面图
-            value: ''
-            placeholder: https://...
-            help: 留空则使用文章封面图；若文章也无封面则使用站 Logo
+          label: 公安备案验证码

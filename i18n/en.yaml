@@ -5,6 +5,8 @@ common:
   comment: Comment
   previous: Previous
   next: Next
+  previousPage: Previous
+  nextPage: Next
   relatedPosts: Related Posts
   toc: Table of Contents
   backToTop: Back to top
@@ -13,16 +15,78 @@ common:
   close: Close
   loading: Loading...
   noResults: No results found
+  author: Author
+  tags: Tags
+  categories: Categories
+  copyLink: Copy link
+  linkCopied: Link copied
+  anonymousUser: Anonymous
+  untitled: Untitled
+  viewAll: View all
+  page: Page
+  of: of
 
 home:
   heroTitle: National University Campus Media Alliance
   heroSubtitle: Interaction, guidance and diverse communication
   heroMotto: See you, see us.
+  heroBadge: National University Campus Media Alliance
+  heroPanelTitle: Campus Collaboration Desk
+  heroPanelKicker: NUCMA Campus Desk
+  heroOnline: Online
+  heroScrollHint: Scroll down
   recentPosts: Latest Notices
+  latestPosts: Latest Notices
   reviews: Campus Feedback
   faq: FAQ
+  faqTitle: FAQ
+  faqSubtitle: Frequently Asked Questions
   members: Member Notices
+  membersSubtitle: Maintaining campus communication order together
   links: Partner Links
+  linksSubtitle: Campus media partners for collaborative outreach
+  postStats: Information Feed
+  postStatsSubtitle: Clear cards for public notices, event records, and organizational updates.
+  viewAllPosts: View all notices
+  aboutAlliance: About the Alliance
+  aboutTitle: Upgrading "Campus Walls" from information feeds to a trusted collaboration network
+  aboutDescription: NUCMA (National University Campus Media Alliance) is jointly initiated by campus wall organizations, focusing on standardized operations, information mutual aid, and youth expression. Chongqing Campus Wall Alliance is the birthplace of the national alliance.
+  aboutQuote: Interaction first, guidance supplementary; communication first, diversity mutual promotion.
+  principlePublic: Public
+  principlePublicDesc: Build basic trust through public disclosure, archiving, and member directories.
+  principleResponse: Responsive
+  principleResponseDesc: Direct submissions, inquiries, and collaboration items to clear entry points.
+  principleArchive: Archive
+  principleArchiveDesc: Make announcements, event media, and important records traceable.
+  principleConnect: Connect
+  principleConnectDesc: Connect campus media, campus users, and partners.
+  serviceDirections: Service Directions
+  serviceTitle: Four stable scenarios supporting a long-term portal
+  serviceSubtitle: Each entry corresponds to a real page or adapted plugin, no empty links.
+  servicePublish: Public Publishing
+  servicePublishDesc: Alliance building, member support, phase arrangements, and important lists unified archiving.
+  serviceAbout: About the Organization
+  serviceAboutDesc: Clear display of alliance positioning, origin, contact email, and collaboration boundaries.
+  servicePhotos: Campus Gallery
+  servicePhotosDesc: After integrating the gallery plugin, it hosts event photos, themed media, and visual materials.
+  serviceMembers: Member Notices
+  serviceMembersDesc: Publicly list member units and related lists to help users identify reliable campus channels.
+  portalTitle: Feature Portal
+  portalSubtitle: Extension foundation reserved for the Halo ecosystem
+  portalDescription: Core capabilities ready to use; search, links, gallery, moments adapt to plugin availability without empty entries.
+  portalSearch: Site Search
+  portalSearchDesc: After integrating Halo search widget, quickly search articles, pages, and plugin-synced content.
+  portalLinks: Partner Links
+  portalLinksDesc: Adapted link management plugin, displaying campus media and partners by groups.
+  portalGallery: Campus Gallery
+  portalGalleryDesc: Adapted gallery plugin, hosting event photos, visual materials, and themed media.
+  portalMoments: Campus Moments
+  portalMomentsDesc: Adapted moments plugin, lightweight updates for event scenes and instant information.
+  tagSearch: Search
+  tagCollab: Collab
+  tagImage: Gallery
+  tagDynamic: Moments
+  alliancePrinciples: Alliance Principles
 
 post:
   readTime: Reading time
@@ -38,11 +102,25 @@ post:
   share: Share post
   copyLink: Copy link
   linkCopied: Link copied
+  articleTitle: Article title
+  articleInfo: Article info
+  publish: Published
+  year: ""
+  month: ""
+  day: ""
+  readCount: " reads"
+  estimatedRead: Est.
 
 footer:
   allRightsReserved: All rights reserved
   poweredByHalo: Powered by Halo
   themeByNucma: NUCMA Theme
+  navigation: Navigation
+  onlineCount: Currently online
+  icpRecord: ICP Record
+  policeRecord: Police Record
+  customCopyright: Custom copyright
+  allRights: All rights reserved.
 
 theme:
   light: Light mode
@@ -50,3 +128,194 @@ theme:
   system: Follow system
   switchTheme: Switch theme
   accentColor: Accent color
+  colorScheme: Color scheme
+  defaultMode: Default mode
+
+search:
+  title: Search
+  placeholder: Search articles, pages...
+  searching: Searching...
+  hint: Enter keywords to start searching
+  noResults: No results found
+  navigate: ↑↓ Navigate
+  open: ↵ Open
+  close: Close
+  resultsTitle: Search results
+  keyword: Keyword
+  foundResults: Found {count} results
+  tryOther: Please try other keywords
+
+archives:
+  title: Organization News
+  count: "{count} years of publication records"
+  month: ""
+  articleCount: " articles)"
+  empty: No publication records yet
+
+categories:
+  title: Categories
+  subtitle: Browse alliance notices and organization news by topic
+  clickToBrowse: Click to browse articles
+  empty: No categories yet
+
+tags:
+  title: Tags
+  subtitle: Search notices, publicity, and campus news by tags
+  empty: No tags yet
+
+links:
+  title: Partner Links
+  subtitle: Campus media partners for collaborative outreach
+  apply: Apply for link exchange
+  groupName: Campus media partners
+  empty: No partner links yet
+  emptyDescription: Partner information is being organized and will be displayed here when ready.
+  applyTitle: Submit link application
+  submitApplying: Submitting...
+  submitSuccess: Application submitted successfully!
+  submitFailed: Submission failed
+  submitRetry: Submission failed, please try again later
+  submitButton: Submit application
+  siteName: Website name
+  siteNamePlaceholder: e.g., Campus Media Partner
+  siteUrl: Website URL
+  logoUrl: Logo URL
+  siteDescription: Website description
+  siteDescriptionPlaceholder: Briefly describe the campus media or collaboration direction
+  applyGroup: Apply for group
+  applyGroupPlaceholder: Select a group (optional)
+  submitApplication: Submit application
+  scanToVisit: Scan to visit
+
+members:
+  title: Member Notices
+  subtitle: Maintaining campus communication order together
+  apply: Apply to join
+  groupName: Member units
+  empty: No member information yet
+  emptyDescription: Member information is being organized and will be displayed here after publicity.
+  applyTitle: Submit membership application
+  submitApplying: Submitting...
+  submitSuccess: Application submitted successfully!
+  submitFailed: Submission failed
+  submitRetry: Submission failed, please try again later
+  submitButton: Submit application
+  qqNumber: QQ number
+  qqPlaceholder: Used to fetch avatar and nickname
+  accountName: Account name
+  accountPlaceholder: e.g., XX University Campus Wall
+  school: School
+  schoolPlaceholder: e.g., Tsinghua University
+  qqFriendLink: QQ friend link
+  qqFriendPlaceholder: Enter QQ friend link
+  uploadQr: Upload QR code
+  email: Email
+  emailPlaceholder: Used to receive review notifications
+  emailHint: Enter QQ email
+  applyGroup: Apply for group
+  applyGroupPlaceholder: Select a group (optional)
+  invalidQq: Please enter a valid QQ number first
+  emailFilled: QQ email filled
+  parsing: Parsing...
+  qrParseFailed: QR code parsing failed
+  qrNotLoaded: QR code library not loaded
+  qrSuccess: QR code parsed successfully!
+  qrNotQqLink: QR code recognized but not a QQ friend link
+  qrUnreadable: Cannot recognize QR code, please ensure the image is clear
+  qqNicknameGot: QQ nickname fetched
+  qqNicknameFailed: Cannot fetch QQ nickname, please fill in manually
+
+friends:
+  title: Partner Updates
+  subtitle: Sync latest content from partner sites for campus media updates.
+  pagination: "Page {current} of {total} articles"
+  untitled: Untitled
+  noExcerpt: No excerpt available.
+  unknownAuthor: Unknown author
+  readMore: Read more
+  empty: No partner updates yet
+  emptyDescription: Updates from partners will be displayed here after the plugin syncs content.
+  page: Page {page}
+
+moments:
+  title: Campus Moments
+  subtitle: Record campus mutual aid, event scenes, and organizational updates.
+  count: "{count} public posts"
+  all: All
+  anonymous: Anonymous
+  relatedPost: Related post
+  postLink: Post link
+  likes: Likes
+  comments: Comments
+  viewDetail: View detail
+  empty: No campus moments yet
+  emptyDescription: New moments will be displayed here after publishing.
+  page: Page {page}
+
+moment:
+  backToList: Back to moments
+  anonymous: Anonymous
+  dynamicDetail: Moment detail
+  authorBio: About the author
+  relatedPost: Related post
+  postLink: Post link
+  visibility: Visibility
+
+photos:
+  title: Campus Gallery
+  subtitle: Browse organizational events and campus media by groups.
+  pagination: "Page {current} of {total} photos"
+  groups: Photo groups
+  all: All
+  group: Group
+  untitled: Untitled photo
+  noDescription: No description
+  empty: No photos in current group
+  emptyDescription: Photos will be displayed here after uploading event or campus media.
+  page: Page {page}
+
+photo:
+  backToList: Back to gallery
+  position: "Photo {index}"
+  imageDetail: Image details
+  ungrouped: Ungrouped
+  untitled: Untitled photo
+  description: Description
+  tags: Tags
+  createdAt: Created at
+  resolution: Resolution
+  device: Device
+  deviceInfo: Device info
+  lens: Lens
+  lensInfo: Lens info
+  aperture: Aperture
+  shutter: Shutter
+  focalLength: Focal length
+  nearbyPhotos: Nearby photos
+  previousPhoto: Previous
+  nextPhoto: Next
+
+about:
+  orgName: National University Campus Media Alliance
+  jobTitle: Third-party campus media collaboration organization
+  location: Chongqing, China
+  bio: NUCMA (National University Campus Media Alliance) is jointly initiated by campus wall organizations, focusing on standardized operations, information mutual aid, and youth expression.
+  articles: Articles
+  categoryCount: Categories
+  tagCount: Tags
+  serviceDirection: Service Directions
+  campusWallOps: Campus Wall Operations
+  memberPublicity: Member Publicity
+  campusMutual: Campus Mutual Aid
+  orgConsult: Organization Consultation
+  youthExpression: Youth Expression
+  developmentTimeline: Development Timeline
+  memberPublicityPhase4: Phase 4 Member Publicity
+  memberBuilding: Member Building Progress
+  cqWallFounded: Chongqing Campus Wall Alliance Founded
+  contactTitle: Contact the Alliance
+  email: Email
+  website: Website
+
+page:
+  title: Page

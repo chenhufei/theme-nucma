@@ -1,8 +1,18 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/tags/layout :: html(content = ~{::content})}">
-
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title='标签 - ' + ${site.title}, content=~{::content})}">
 <th:block th:fragment="content">
-  <th:block th:replace="~{modules/tags/content}" />
+  <div class="page-header">
+    <h1 class="page-title">标签</h1>
+  </div>
+  
+  <div class="tag-cloud" th:if="${tags != null and !tags.isEmpty()}">
+    <a th:each="tag : ${tags}" th:href="@{|/tags/${tag.metadata.name}|}" class="tag-item"
+       th:text="${tag.spec?.displayName}"></a>
+  </div>
+  
+  <div class="empty-state" th:unless="${tags != null and !tags.isEmpty()}">
+    <p>暂无标签</p>
+  </div>
 </th:block>
-
 </html>

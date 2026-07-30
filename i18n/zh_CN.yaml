@@ -5,6 +5,8 @@ common:
   comment: 评论
   previous: 上一篇
   next: 下一篇
+  previousPage: 上一页
+  nextPage: 下一页
   relatedPosts: 相关文章
   toc: 目录
   backToTop: 返回顶部
@@ -13,16 +15,78 @@ common:
   close: 关闭
   loading: 加载中...
   noResults: 没有找到结果
+  author: 作者
+  tags: 标签
+  categories: 分类
+  copyLink: 复制链接
+  linkCopied: 链接已复制
+  anonymousUser: 匿名用户
+  untitled: 无标题
+  viewAll: 查看全部
+  page: 页
+  of: 共
 
 home:
   heroTitle: 全国高校自媒体联盟
   heroSubtitle: 互动宣教，多元交流
   heroMotto: 看见你，看见我们！
+  heroBadge: National University Campus Media Alliance
+  heroPanelTitle: 校园协作服务台
+  heroPanelKicker: NUCMA Campus Desk
+  heroOnline: 在线
+  heroScrollHint: 向下滚动
   recentPosts: 最新公告
+  latestPosts: 最新公告
   reviews: 校园反馈
   faq: 常见问题
+  faqTitle: 常见问题
+  faqSubtitle: 常见问题解答
   members: 成员公示
+  membersSubtitle: 共同维护校园沟通秩序
   links: 友情链接
+  linksSubtitle: 协同传播的校园伙伴
+  postStats: 信息流
+  postStatsSubtitle: 用清晰卡片承载公开通知、活动记录和组织动态。
+  viewAllPosts: 查看全部公告
+  aboutAlliance: 组织介绍
+  aboutTitle: 把"校园墙"从信息流，升级为可信赖的协作网络
+  aboutDescription: 全国高校自媒体联盟（NUCMA）由校园墙组织共同发起，关注校园自媒体的规范运营、信息互助与青年表达。重庆校墙联是全国校墙联的发源地，自 2021 年 7 月成立以来，持续为校园群体提供更便捷的沟通平台。
+  aboutQuote: 互动为主，宣教为辅；交流为主，多元互促。
+  principlePublic: 公开
+  principlePublicDesc: 用公示、归档和成员名录建立基本信任。
+  principleResponse: 响应
+  principleResponseDesc: 把投稿、咨询和协作事项导向明确入口。
+  principleArchive: 沉淀
+  principleArchiveDesc: 让公告、活动图文和重要记录可追溯。
+  principleConnect: 连接
+  principleConnectDesc: 连接高校媒体、校园用户和合作伙伴。
+  serviceDirections: 服务方向
+  serviceTitle: 四个稳定场景，支撑一个长期门户
+  serviceSubtitle: 每个入口都对应真实页面或已适配插件，减少无效跳转。
+  servicePublish: 公开发布
+  servicePublishDesc: 联盟建设、成员扶持、阶段安排和重要名单统一归档。
+  serviceAbout: 组织说明
+  serviceAboutDesc: 清晰展示联盟定位、发源脉络、联系邮箱和协作边界。
+  servicePhotos: 校园影像
+  servicePhotosDesc: 接入图库插件后承载活动照片、专题影像和视觉资料。
+  serviceMembers: 成员公示
+  serviceMembersDesc: 公开成员单位和相关名单，帮助用户识别可靠校园渠道。
+  portalTitle: 功能入口
+  portalSubtitle: 为 Halo 生态预留的扩展底座
+  portalDescription: 基础能力直接可用；搜索、友链、图库、瞬间按插件可用性输出，不制造空入口。
+  portalSearch: 全站搜索
+  portalSearchDesc: 接入 Halo 搜索组件后，可快速检索文章、页面和插件同步内容。
+  portalLinks: 友情链接
+  portalLinksDesc: 适配链接管理插件，用分组方式展示校园媒体与合作伙伴。
+  portalGallery: 校园图库
+  portalGalleryDesc: 适配图库管理插件，承载活动照片、视觉资料和专题影像。
+  portalMoments: 校园瞬间
+  portalMomentsDesc: 适配瞬间插件，用轻量动态承接活动现场和即时信息。
+  tagSearch: 搜索
+  tagCollab: 协作
+  tagImage: 影像
+  tagDynamic: 动态
+  alliancePrinciples: 组织原则
 
 post:
   readTime: 阅读时间
@@ -38,11 +102,25 @@ post:
   share: 分享文章
   copyLink: 复制链接
   linkCopied: 链接已复制
+  articleTitle: 文章标题
+  articleInfo: 文章信息
+  publish: 发布
+  year: 年
+  month: 月
+  day: 日
+  readCount: 次
+  estimatedRead: 预计
 
 footer:
   allRightsReserved: 版权所有
   poweredByHalo: 基于 Halo 搭建
   themeByNucma: NUCMA 主题
+  navigation: 导航
+  onlineCount: 当前在线
+  icpRecord: ICP备案号
+  policeRecord: 公安备案号
+  customCopyright: 自定义版权
+  allRights: 保留所有权利。
 
 theme:
   light: 浅色模式
@@ -50,3 +128,194 @@ theme:
   system: 跟随系统
   switchTheme: 切换主题
   accentColor: 主题色
+  colorScheme: 配色模式
+  defaultMode: 默认模式
+
+search:
+  title: 搜索
+  placeholder: 搜索文章、页面...
+  searching: 搜索中...
+  hint: 输入关键词开始搜索
+  noResults: 未找到相关结果
+  navigate: ↑↓ 导航
+  open: ↵ 打开
+  close: 关闭
+  resultsTitle: 搜索结果
+  keyword: 关键词
+  foundResults: 共找到 {count} 条结果
+  tryOther: 请尝试其他关键词
+
+archives:
+  title: 组织资讯
+  count: 共 {count} 个年份的发布记录
+  month: 月
+  articleCount: " 篇)"
+  empty: 暂无发布记录
+
+categories:
+  title: 内容分类
+  subtitle: 按主题浏览联盟公告与组织资讯
+  clickToBrowse: 点击浏览文章
+  empty: 暂无内容分类
+
+tags:
+  title: 内容标签
+  subtitle: 按标签检索公告、公示与校园资讯
+  empty: 暂无内容标签
+
+links:
+  title: 友情链接
+  subtitle: 协同传播的校园媒体伙伴
+  apply: 申请友链
+  groupName: 校园媒体伙伴
+  empty: 暂无友情链接
+  emptyDescription: 相关伙伴信息整理中，完成后将在这里展示。
+  applyTitle: 提交友链申请
+  submitApplying: 提交中...
+  submitSuccess: 申请提交成功！
+  submitFailed: 提交失败
+  submitRetry: 提交失败，请稍后重试
+  submitButton: 提交申请
+  siteName: 网站名称
+  siteNamePlaceholder: 例如：校园媒体伙伴
+  siteUrl: 网站地址
+  logoUrl: Logo 地址
+  siteDescription: 网站描述
+  siteDescriptionPlaceholder: 简单介绍一下校园媒体或协作方向
+  applyGroup: 申请分组
+  applyGroupPlaceholder: 请选择分组（可选）
+  submitApplication: 提交申请
+  scanToVisit: 扫码访问
+
+members:
+  title: 成员公示
+  subtitle: 共同维护校园沟通秩序
+  apply: 申请加入
+  groupName: 成员单位
+  empty: 暂无成员信息
+  emptyDescription: 成员信息整理中，公示后将在这里展示。
+  applyTitle: 提交成员申请
+  submitApplying: 提交中...
+  submitSuccess: 申请提交成功！
+  submitFailed: 提交失败
+  submitRetry: 提交失败，请稍后重试
+  submitButton: 提交申请
+  qqNumber: QQ号
+  qqPlaceholder: 用来获取头像和昵称
+  accountName: 账号名称
+  accountPlaceholder: 例如：某某大学校园墙
+  school: 所属学校
+  schoolPlaceholder: 例如：清华大学
+  qqFriendLink: QQ加好友链接
+  qqFriendPlaceholder: 输入QQ加好友链接
+  uploadQr: 上传二维码
+  email: 邮箱
+  emailPlaceholder: 用于接收审核通知
+  emailHint: 填入QQ邮箱
+  applyGroup: 申请分组
+  applyGroupPlaceholder: 请选择分组（可选）
+  invalidQq: 请先输入有效的QQ号
+  emailFilled: 已填入QQ邮箱：
+  parsing: 解析中...
+  qrParseFailed: 二维码解析失败
+  qrNotLoaded: 二维码库未加载
+  qrSuccess: 二维码解析成功！
+  qrNotQqLink: 识别到二维码，但不是QQ加好友链接
+  qrUnreadable: 无法识别二维码，请确保图片清晰
+  qqNicknameGot: 已获取QQ昵称：
+  qqNicknameFailed: 无法获取QQ昵称，请手动填写
+
+friends:
+  title: 伙伴动态
+  subtitle: 同步协作伙伴站点的最新内容，便于关注校园媒体动态。
+  pagination: "当前页 {current} 共 {total} 篇文章"
+  untitled: 未命名文章
+  noExcerpt: 这篇文章暂时没有摘要。
+  unknownAuthor: 未知作者
+  readMore: 阅读全文
+  empty: 暂未同步伙伴动态
+  emptyDescription: 等待插件抓取完成后，这里会自动展示协作伙伴更新。
+  page: 第 {page} 页
+
+moments:
+  title: 校园动态
+  subtitle: 记录校园互助、活动现场与组织动态。
+  count: "共 {count} 条公开内容"
+  all: 全部
+  anonymous: 匿名用户
+  relatedPost: 关联文章
+  postLink: 文章链接
+  likes: 点赞
+  comments: 评论
+  viewDetail: 查看详情
+  empty: 暂无校园动态
+  emptyDescription: 发布新的动态后会显示在这里。
+  page: 第 {page} 页
+
+moment:
+  backToList: 返回校园动态
+  anonymous: 匿名用户
+  dynamicDetail: 动态详情
+  authorBio: 作者简介
+  relatedPost: 关联文章
+  postLink: 文章链接
+  visibility: 可见性
+
+photos:
+  title: 校园影像
+  subtitle: 按分组浏览组织活动与校园图文资料。
+  pagination: "当前页 {current} 共 {total} 张"
+  groups: 影像分组
+  all: 全部
+  group: 分组
+  untitled: 未命名图片
+  noDescription: 暂无说明
+  empty: 当前分组暂无图片资料
+  emptyDescription: 上传组织活动或校园图文后，这里会自动展示。
+  page: 第 {page} 页
+
+photo:
+  backToList: 返回校园影像
+  position: "第 {index} 张"
+  imageDetail: 图片详情
+  ungrouped: 未分组
+  untitled: 未命名图片
+  description: 图片描述
+  tags: 标签
+  createdAt: 创建时间
+  resolution: 分辨率
+  device: 设备
+  deviceInfo: 设备信息
+  lens: 镜头
+  lensInfo: 镜头信息
+  aperture: 光圈
+  shutter: 快门
+  focalLength: 焦距
+  nearbyPhotos: 邻近图片
+  previousPhoto: 上一张
+  nextPhoto: 下一张
+
+about:
+  orgName: 全国高校自媒体联盟
+  jobTitle: 第三方校园媒体协作组织
+  location: 重庆，中国
+  bio: 全国高校自媒体联盟（NUCMA）由校园墙组织共同发起，关注校园自媒体的规范运营、信息互助与青年表达。重庆校墙联是全国校墙联的发源地，自 2021 年 7 月成立以来，持续为校园群体提供更便捷的沟通平台。
+  articles: 文章
+  categoryCount: 分类
+  tagCount: 标签
+  serviceDirection: 服务方向
+  campusWallOps: 校园墙运营
+  memberPublicity: 成员公示
+  campusMutual: 校园互助
+  orgConsult: 组织咨询
+  youthExpression: 青年表达
+  developmentTimeline: 发展脉络
+  memberPublicityPhase4: 第四期成员公示
+  memberBuilding: 推进成员建设
+  cqWallFounded: 重庆校墙联成立
+  contactTitle: 联系联盟
+  email: 邮件
+  website: 官网
+
+page:
+  title: 页面

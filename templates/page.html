@@ -1,8 +1,17 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/page/layout :: html(content = ~{::content})}">
-
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${singlePage?.spec?.title}, content=~{::content})}">
 <th:block th:fragment="content">
-  <th:block th:replace="~{modules/page/content}" />
+  <article class="page">
+    <header class="page-header">
+      <h1 class="page-title" th:text="${singlePage?.spec?.title}"></h1>
+    </header>
+    <div class="page-content prose" th:utext="${singlePage?.content?.content}"></div>
+    
+    <!-- 评论区 -->
+    <section th:if="${haloCommentEnabled and theme.config.content?.enable_page_comment != false}" class="page-comments">
+      <halo:comment group="content.halo.run" kind="SinglePage" th:attr="name=${singlePage.metadata.name}" />
+    </section>
+  </article>
 </th:block>
-
 </html>

@@ -1,6 +1,67 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/plugin/layout :: html(title=${title ?: '校园影像'}, content = ~{::content})}">
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${title} + ' - ' + ${site.title}, content=~{::content})}">
 <th:block th:fragment="content">
-  <th:block th:replace="~{modules/photos/content}" />
+
+  <div class="page-header">
+    <h1 class="page-title" th:text="${title} ?: '图库'">图库</h1>
+    <p class="page-desc">校园影像记录</p>
+  </div>
+
+  <!-- 分组筛选 -->
+  <div class="photo-filters" th:if="${groups != null and !#lists.isEmpty(groups)}">
+    <a th:href="@{${photoUrl.list()}}"
+       class="photo-filter-item"
+       th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active' : ''">
+      全部
+    </a>
+    <a th:each="g : ${groups}"
+       th:href="@{${photoUrl.list(g.metadata.name)}}"
+       class="photo-filter-item"
+       th:classappend="${group != null and group == g.metadata.name} ? 'is-active' : ''">
+      <span th:text="${g.spec?.displayName}">分组</span>
+      <span class="photo-filter-count" th:if="${g.status?.photoCount != null}"
+            th:text="${g.status?.photoCount}">0</span>
+    </a>
+  </div>
+
+  <!-- 图片网格 -->
+  <div class="photo-grid"
+       th:if="${photos != null and photos.items != null and !#lists.isEmpty(photos.items)}">
+    <a th:each="photo : ${photos.items}"
+       th:href="@{${photoUrl.detail(photo)}}"
+       class="photo-item"
+       th:title="${photo.spec?.displayName}">
+      <img th:src="${photo.spec?.cover ?: photo.spec?.url}"
+           th:alt="${photo.spec?.displayName}"
+           loading="lazy" />
+      <div class="photo-overlay">
+        <span class="photo-name" th:text="${photo.spec?.displayName}"></span>
+        <span class="photo-desc" th:if="${photo.spec?.description != null and !#strings.isEmpty(photo.spec?.description)}"
+              th:text="${photo.spec?.description}"></span>
+      </div>
+    </a>
+  </div>
+
+  <!-- 空状态 -->
+  <div class="empty-state" th:if="${photos == null or photos.items == null or #lists.isEmpty(photos.items)}">
+    <div class="empty-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+    </div>
+    <p class="empty-text">暂无照片</p>
+    <p class="empty-sub">请在后台图库中添加照片</p>
+  </div>
+
+  <!-- 分页 -->
+  <nav class="pagination"
+       th:if="${photos != null and (photos.hasPrevious() or photos.hasNext())}">
+    <a th:if="${photos.hasPrevious()}" th:href="@{${photos.prevUrl}}" class="page-btn">上一页</a>
+    <span class="page-info" th:text="${photos.page} + ' / ' + ${photos.totalPages}"></span>
+    <a th:if="${photos.hasNext()}" th:href="@{${photos.nextUrl}}" class="page-btn">下一页</a>
+  </nav>
+
 </th:block>
 </html>

@@ -1,8 +1,39 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/archives/layout :: html(content = ~{::content})}">
-
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title='归档 - ' + ${site.title}, content=~{::content})}">
 <th:block th:fragment="content">
-  <th:block th:replace="~{modules/archives/content}" />
-</th:block>
+  <div class="page-header">
+    <h1 class="page-title">归档</h1>
+  </div>
 
+  <div class="archives-timeline" th:with="posts = ${postFinder.list({page: 1, size: 200})}">
+    <th:block th:if="${posts != null and posts.items != null and !posts.items.isEmpty()}">
+
+      <th:block th:each="post, iter : ${posts.items}"
+                th:with="currentYear = ${#temporals.format(post.spec?.publishTime, 'yyyy')},
+                         prevYear = ${iter.index > 0 ? #temporals.format(posts.items[iter.index - 1].spec?.publishTime, 'yyyy') : ''}">
+
+        <div th:if="${iter.index == 0 or currentYear != prevYear}" class="archive-year-section">
+          <span class="archive-year-marker"></span>
+          <h2 class="archive-year-title" th:text="${currentYear}">2024</h2>
+        </div>
+
+        <div class="archive-timeline-item">
+          <time th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}">01-01</time>
+          <a th:href="@{${post.status?.permalink}}" th:text="${post.spec?.title}">文章标题</a>
+        </div>
+      </th:block>
+
+    </th:block>
+  </div>
+
+  <div class="empty-state" th:if="${posts == null or posts.items == null or posts.items.isEmpty()}">
+    <p>暂无归档内容</p>
+  </div>
+
+  <nav class="pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext())}">
+    <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="page-btn">上一页</a>
+    <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="page-btn">下一页</a>
+  </nav>
+</th:block>
 </html>

@@ -1,6 +1,157 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/links/layout :: html(content = ~{::content})}">
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${linksTitle} + ' - ' + ${site.title}, content=~{::content})}">
 <th:block th:fragment="content">
-  <th:block th:replace="~{modules/links/content}" />
+
+  <div class="page-header">
+    <div class="page-header-row">
+      <div>
+        <h1 class="page-title" th:text="${linksTitle} ?: '友情链接'">友情链接</h1>
+        <p class="page-desc">协同传播的校园伙伴</p>
+      </div>
+      <button th:if="${pluginFinder.available('link-submit-next')}"
+              type="button"
+              class="apply-btn"
+              onclick="LinkSubmitWidget.open()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M12 5v14M5 12h14"></path>
+        </svg>
+        申请友链
+      </button>
+    </div>
+  </div>
+
+  <!--
+    友链提交插件 widget 的脚本、样式与悬浮按钮均由 link-submit-next 插件在 /links 路由
+    通过 TemplateFooterProcessor 自动注入，主题不再重复引入，避免出现两个悬浮按钮重叠。
+    页头的「申请友链」按钮调用插件注入的 LinkSubmitWidget.open()。
+  -->
+
+  <th:block th:if="${pluginFinder.available('PluginLinks')}">
+
+    <!-- 分组筛选 -->
+    <nav class="link-filters"
+         th:with="allLinkGroups = ${linkFinder?.groupBy()}">
+      <a th:href="@{/links}"
+         class="link-filter-item"
+         th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active' : ''">
+        全部
+      </a>
+      <a th:each="g : ${allLinkGroups}"
+         th:if="${allLinkGroups != null}"
+         th:href="@{/links(group=${g.metadata.name})}"
+         class="link-filter-item"
+         th:classappend="${group != null and group == g.metadata.name} ? 'is-active' : ''">
+        <span th:text="${g.spec?.displayName}">分组</span>
+      </a>
+    </nav>
+
+    <!-- 按分组展示（无 group 参数时） -->
+    <div th:if="${group == null or #strings.isEmpty(group)}"
+         class="link-groups">
+
+      <th:block th:each="g : ${groups}"
+                th:if="${g.links != null and !#lists.isEmpty(g.links)}">
+        <div class="link-group">
+          <h2 class="link-group-title">
+            <span th:text="${g.spec?.displayName} ?: '未分组'">分组名</span>
+            <span class="link-group-count" th:text="${#lists.size(g.links)}">0</span>
+          </h2>
+
+          <div class="link-grid">
+            <a th:each="link : ${g.links}"
+               th:href="${link.spec.url}"
+               target="_blank" rel="noopener noreferrer"
+               class="link-card"
+               th:title="${link.spec.description}">
+              <div class="link-logo">
+                <img th:if="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
+                     th:src="${link.spec.logo}" th:alt="${link.spec.displayName}"
+                     loading="lazy" />
+                <span th:unless="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
+                      class="link-logo-text"
+                      th:text="${#strings.substring(link.spec.displayName, 0, 1)}">
+                </span>
+              </div>
+              <div class="link-body">
+                <div class="link-name" th:text="${link.spec.displayName}"></div>
+                <div class="link-desc"
+                     th:if="${link.spec.description != null and !#strings.isEmpty(link.spec.description)}"
+                     th:text="${link.spec.description}"></div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </th:block>
+
+    </div>
+
+    <!-- 单分组展示（带 group 参数时） -->
+    <div th:unless="${group == null or #strings.isEmpty(group)}"
+         class="link-grid"
+         th:if="${links != null and !#lists.isEmpty(links)}">
+      <a th:each="link : ${links}"
+         th:href="${link.spec.url}"
+         target="_blank" rel="noopener noreferrer"
+         class="link-card"
+         th:title="${link.spec.description}">
+        <div class="link-logo">
+          <img th:if="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
+               th:src="${link.spec.logo}" th:alt="${link.spec.displayName}"
+               loading="lazy" />
+          <span th:unless="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
+                class="link-logo-text"
+                th:text="${#strings.substring(link.spec.displayName, 0, 1)}">
+          </span>
+        </div>
+        <div class="link-body">
+          <div class="link-name" th:text="${link.spec.displayName}"></div>
+          <div class="link-desc"
+               th:if="${link.spec.description != null and !#strings.isEmpty(link.spec.description)}"
+               th:text="${link.spec.description}"></div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 空状态 -->
+    <div th:if="${(group == null or #strings.isEmpty(group)) and (groups == null or #lists.isEmpty(groups))}"
+         class="empty-state">
+      <div class="empty-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+        </svg>
+      </div>
+      <p class="empty-text">暂无友链</p>
+      <p class="empty-sub">请在后台链接管理中添加友链</p>
+    </div>
+
+    <div th:if="${group != null and !#strings.isEmpty(group) and (links == null or #lists.isEmpty(links))}"
+         class="empty-state">
+      <div class="empty-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+        </svg>
+      </div>
+      <p class="empty-text">该分组暂无链接</p>
+      <a th:href="@{/links}" class="more-link">查看全部</a>
+    </div>
+
+    <!-- 评论区 -->
+    <section th:if="${haloCommentEnabled and theme.config.content?.enable_links_comment == true}" class="post-comments">
+      <halo:comment group="plugin.halo.run" kind="Plugin" th:attr="name=${pluginName}" />
+    </section>
+
+  </th:block>
+
+  <div th:unless="${pluginFinder.available('PluginLinks')}" class="empty-state">
+    <div class="empty-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+      </svg>
+    </div>
+    <p class="empty-text">链接管理插件未启用</p>
+    <p class="empty-sub">请在后台安装并启用「链接管理」插件</p>
+  </div>
+
 </th:block>
 </html>

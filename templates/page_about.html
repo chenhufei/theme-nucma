@@ -1,8 +1,20 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/about/layout :: html(content = ~{::content})}">
-
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=(${singlePage.spec.title} ?: '关于') + ' - ' + ${site.title}, content=~{::content})}">
 <th:block th:fragment="content">
-  <th:block th:replace="~{modules/about/content}" />
-</th:block>
+  <article class="page">
+    <header class="page-header">
+      <h1 class="page-title" th:text="${singlePage.spec.title} ?: '关于'">关于</h1>
+      <p class="page-desc" th:if="${singlePage.spec.excerpt != null and singlePage.spec.excerpt.raw != null and !#strings.isEmpty(singlePage.spec.excerpt.raw)}" th:text="${singlePage.spec.excerpt.raw}"></p>
+    </header>
+    <!-- 优先使用后台编辑的内容，为空时使用主题设置中的默认内容 -->
+    <div class="page-content prose"
+         th:utext="${singlePage.content?.content != null and !#strings.isEmpty(singlePage.content.content) ? singlePage.content.content : (theme.config.page_content?.about_default_content ?: '')}">
+    </div>
 
+    <section th:if="${haloCommentEnabled}" class="page-comments">
+      <halo:comment group="content.halo.run" kind="SinglePage" th:attr="name=${singlePage?.metadata.name}" />
+    </section>
+  </article>
+</th:block>
 </html>

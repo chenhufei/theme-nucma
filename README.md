@@ -1,8 +1,8 @@
-﻿# NUCMA 主题
+# NUCMA 主题
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Halo Version](https://img.shields.io/badge/Halo-%3E%3D2.0-blue)](https://halo.run)
-[![Theme Version](https://img.shields.io/badge/version-1.0.58-green)](https://github.com/chenhufei/theme-nucma/releases)
+[![Theme Version](https://img.shields.io/badge/version-1.0.35-green)](https://github.com/chenhufei/theme-nucma/releases)
 
 面向全国高校自媒体联盟（NUCMA）官网的 [Halo 2.0](https://halo.run) 主题。定位为校园媒体组织的公告档案与协作门户，聚焦公告公示、成员展示、友情链接和校园内容沉淀。
 

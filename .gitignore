@@ -1,37 +1,7 @@
-# 依赖
 node_modules/
-.pnpm-store/
-package-lock.json
-
-# 构建产物
-dist/
-build/
-templates/assets/css/
-
-# Gradle
-.gradle/
-*.jar
-
-# 打包文件
-*.zip
-
-# 系统文件
+templates/
+!templates/.gitkeep
 .DS_Store
-Thumbs.db
-
-# IDE
-.idea/
-.vscode/
-*.iml
-*.swp
-*.swo
-
-# 临时文件
-*.tmp
 *.log
-temp_*
-
-# 环境变量
-.env
-.env.local
-
+dist/
+*.zip

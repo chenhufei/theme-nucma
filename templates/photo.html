@@ -1,6 +1,105 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/plugin/layout :: html(title=${title ?: (photo.spec.displayName ?: '图片详情')}, content = ~{::content})}">
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=(${title} ?: ${photo?.spec?.displayName}) + ' - 图库', content=~{::content})}">
 <th:block th:fragment="content">
-  <th:block th:replace="~{modules/photo/content}" />
+
+  <div class="page-header photo-page-header">
+    <a th:href="@{${backUrl}}" class="back-link">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      返回图库
+    </a>
+    <h1 class="page-title" th:text="${photo?.spec?.displayName}"></h1>
+    <p class="page-desc photo-position"
+       th:if="${total != null and total > 0 and position != null}"
+       th:text="'第 ' + ${position} + ' / ' + ${total} + ' 张'"></p>
+  </div>
+
+  <div class="photo-detail">
+
+    <!-- 主图 -->
+    <div class="photo-main">
+      <img th:src="${photo?.spec?.url ?: photo?.spec?.cover}"
+           th:alt="${photo?.spec?.displayName}"
+           class="photo-full" loading="lazy" />
+      <!-- 上/下一张导航按钮 -->
+      <a th:if="${prev != null}" th:href="@{${photoUrl.detail(prev)}}"
+         class="photo-nav-btn photo-nav-prev" aria-label="上一张">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <a th:if="${next != null}" th:href="@{${photoUrl.detail(next)}}"
+         class="photo-nav-btn photo-nav-next" aria-label="下一张">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+
+    <!-- 描述信息 -->
+    <div class="photo-info" th:if="${photo?.spec?.description != null and !#strings.isEmpty(photo?.spec?.description)}">
+      <h3 class="photo-info-title">描述</h3>
+      <p th:text="${photo?.spec?.description}"></p>
+    </div>
+
+    <!-- EXIF 信息 -->
+    <div class="photo-exif" th:if="${photo?.exif != null}">
+      <h3 class="photo-info-title">EXIF 信息</h3>
+      <dl class="exif-grid">
+        <div class="exif-item" th:if="${photo.exif.make != null and !#strings.isEmpty(photo.exif.make)}">
+          <dt>厂商</dt><dd th:text="${photo.exif.make}"></dd>
+        </div>
+        <div class="exif-item" th:if="${photo.exif.model != null and !#strings.isEmpty(photo.exif.model)}">
+          <dt>型号</dt><dd th:text="${photo.exif.model}"></dd>
+        </div>
+        <div class="exif-item" th:if="${photo.exif.lensModel != null and !#strings.isEmpty(photo.exif.lensModel)}">
+          <dt>镜头</dt><dd th:text="${photo.exif.lensModel}"></dd>
+        </div>
+        <div class="exif-item" th:if="${photo.exif.focalLength != null}">
+          <dt>焦距</dt><dd th:text="${photo.exif.focalLength} + ' mm'"></dd>
+        </div>
+        <div class="exif-item" th:if="${photo.exif.fNumber != null}">
+          <dt>光圈</dt><dd th:text="'f/' + ${photo.exif.fNumber}"></dd>
+        </div>
+        <div class="exif-item" th:if="${photo.exif.exposureTime != null and !#strings.isEmpty(photo.exif.exposureTime)}">
+          <dt>快门</dt><dd th:text="${photo.exif.exposureTime} + ' s'"></dd>
+        </div>
+        <div class="exif-item" th:if="${photo.exif.iso != null}">
+          <dt>ISO</dt><dd th:text="${photo.exif.iso}"></dd>
+        </div>
+        <div class="exif-item" th:if="${photo.exif.dateTimeOriginal != null}">
+          <dt>拍摄时间</dt><dd th:text="${#temporals.format(photo.exif.dateTimeOriginal, 'yyyy-MM-dd HH:mm:ss')}"></dd>
+        </div>
+        <div class="exif-item" th:if="${photo.exif.imageWidth != null and photo.exif.imageHeight != null}">
+          <dt>分辨率</dt><dd th:text="${photo.exif.imageWidth} + ' × ' + ${photo.exif.imageHeight}"></dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- 相邻图片缩略图条 -->
+    <div class="photo-neighbors" th:if="${neighbors != null and !#lists.isEmpty(neighbors)}">
+      <h3 class="photo-info-title">相邻照片</h3>
+      <div class="neighbors-list">
+        <a th:each="neighbor : ${neighbors}"
+           th:href="@{${photoUrl.detail(neighbor)}}"
+           class="neighbor-thumb"
+           th:classappend="${neighbor.metadata.name == photo.metadata.name} ? 'is-current' : ''"
+           th:title="${neighbor.spec?.displayName}">
+          <img th:src="${neighbor.spec?.cover ?: neighbor.spec?.url}"
+               th:alt="${neighbor.spec?.displayName}"
+               loading="lazy" />
+        </a>
+      </div>
+    </div>
+
+    <!-- 评论区 -->
+    <section th:if="${haloCommentEnabled}" class="post-comments photo-comments">
+      <halo:comment group="core.halo.run" kind="Photo" th:attr="name=${photo.metadata.name}" />
+    </section>
+
+  </div>
+
 </th:block>
 </html>

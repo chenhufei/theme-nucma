@@ -1,6 +1,207 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/members/layout :: html(content = ~{::content})}">
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title='成员公示 - ' + ${site.title}, content=~{::content})}">
 <th:block th:fragment="content">
-  <th:block th:replace="~{modules/members/content}" />
+
+  <div class="page-header">
+    <div class="page-header-row">
+      <div>
+        <h1 class="page-title">成员公示</h1>
+        <p class="page-desc">共同维护校园沟通秩序</p>
+      </div>
+      <button th:if="${pluginFinder.available('PluginMembers')}"
+              type="button"
+              class="apply-btn"
+              onclick="MemberApplyWidget.open()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M12 5v14M5 12h14"></path>
+        </svg>
+        申请加入
+      </button>
+    </div>
+  </div>
+
+  <!--
+    成员申请 widget 的脚本、样式与悬浮按钮均由 PluginMembers 插件在 /members 路由
+    通过 TemplateFooterProcessor 自动注入，主题不再重复引入，避免两个悬浮按钮重叠。
+    页头的「申请加入」按钮调用插件注入的 MemberApplyWidget.open()。
+  -->
+
+  <th:block th:if="${pluginFinder.available('PluginMembers')}">
+
+    <!-- 分组筛选 -->
+    <nav class="member-filters"
+         th:with="currentGroup = ${param.group != null and !#arrays.isEmpty(param.group) ? param.group[0] : null},
+                  allMemberGroups = ${memberFinder?.listApprovedMembers()?.items}">
+      <a th:href="@{/members}"
+         class="member-filter-item"
+         th:classappend="${currentGroup == null or #strings.isEmpty(currentGroup)} ? 'is-active' : ''">
+        全部
+      </a>
+      <th:block th:each="g : ${allMemberGroups}"
+                th:if="${allMemberGroups != null and g.members != null and !#lists.isEmpty(g.members)}">
+        <a th:href="@{/members(group=${g.metadata.name})}"
+           class="member-filter-item"
+           th:classappend="${currentGroup != null and currentGroup == g.metadata.name} ? 'is-active' : ''">
+          <span th:text="${g.spec.displayName}">分组</span>
+        </a>
+      </th:block>
+    </nav>
+
+    <!-- 按分组展示（无 group 参数时） -->
+    <div th:if="${currentGroup == null or #strings.isEmpty(currentGroup)}"
+         class="members-list">
+
+      <th:block th:each="group : ${groups}"
+                th:if="${group.members != null and !#lists.isEmpty(group.members)}">
+        <div class="member-group">
+          <h2 class="member-group-title">
+            <span th:text="${group.spec.displayName} ?: '未分组'">分组名</span>
+            <span class="member-group-count" th:text="${#lists.size(group.members)}">0</span>
+          </h2>
+
+          <div class="member-grid">
+            <th:block th:each="member : ${group.members}">
+              <a th:if="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
+                 th:href="${member.spec.qqFriendLink}" target="_blank" rel="noopener noreferrer"
+                 class="member-card"
+                 th:title="${member.spec.school}">
+                <div class="member-avatar">
+                  <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                       th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" />
+                  <svg th:unless="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                       fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                  </svg>
+                </div>
+                <div class="member-info">
+                  <div class="member-name" th:text="${member.spec.displayName}">名称</div>
+                  <div class="member-school"
+                       th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
+                       th:text="${member.spec.school}">学校</div>
+                  <div class="member-school member-school-empty"
+                       th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}">暂无简介</div>
+                </div>
+              </a>
+
+              <div th:unless="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
+                   class="member-card">
+                <div class="member-avatar">
+                  <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                       th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" />
+                  <svg th:unless="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                       fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                  </svg>
+                </div>
+                <div class="member-info">
+                  <div class="member-name" th:text="${member.spec.displayName}">名称</div>
+                  <div class="member-school"
+                       th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
+                       th:text="${member.spec.school}">学校</div>
+                  <div class="member-school member-school-empty"
+                       th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}">暂无简介</div>
+                </div>
+              </div>
+            </th:block>
+          </div>
+        </div>
+      </th:block>
+
+    </div>
+
+    <!-- 单分组展示（带 group 参数时） -->
+    <th:block th:unless="${currentGroup == null or #strings.isEmpty(currentGroup)}">
+      <div class="member-grid"
+           th:if="${groups != null and !#lists.isEmpty(groups)}">
+        <th:block th:each="group : ${groups}"
+                  th:if="${group.metadata.name == currentGroup and group.members != null and !#lists.isEmpty(group.members)}">
+          <th:block th:each="member : ${group.members}">
+            <a th:if="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
+               th:href="${member.spec.qqFriendLink}" target="_blank" rel="noopener noreferrer"
+               class="member-card"
+               th:title="${member.spec.school}">
+              <div class="member-avatar">
+                <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                     th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" />
+                <svg th:unless="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                     fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                </svg>
+              </div>
+              <div class="member-info">
+                <div class="member-name" th:text="${member.spec.displayName}">名称</div>
+                <div class="member-school"
+                     th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
+                     th:text="${member.spec.school}">学校</div>
+                <div class="member-school member-school-empty"
+                     th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}">暂无简介</div>
+              </div>
+            </a>
+
+            <div th:unless="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
+                 class="member-card">
+              <div class="member-avatar">
+                <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                     th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" />
+                <svg th:unless="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                     fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                </svg>
+              </div>
+              <div class="member-info">
+                <div class="member-name" th:text="${member.spec.displayName}">名称</div>
+                <div class="member-school"
+                     th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
+                     th:text="${member.spec.school}">学校</div>
+                <div class="member-school member-school-empty"
+                     th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}">暂无简介</div>
+              </div>
+            </div>
+          </th:block>
+        </th:block>
+      </div>
+
+      <!-- 空状态：该分组无成员 -->
+      <div th:if="${groups == null or #lists.isEmpty(groups)}" class="empty-state">
+        <div class="empty-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <p class="empty-text">该分组暂无成员</p>
+        <a th:href="@{/members}" class="more-link">查看全部</a>
+      </div>
+    </th:block>
+
+    <!-- 空状态：无任何分组 -->
+    <div th:if="${(currentGroup == null or #strings.isEmpty(currentGroup)) and (groups == null or #lists.isEmpty(groups))}"
+         class="empty-state">
+      <div class="empty-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <p class="empty-text">暂无成员信息</p>
+      <p class="empty-sub">请在后台添加成员并审核通过</p>
+    </div>
+
+    <!-- 评论区 -->
+    <section th:if="${haloCommentEnabled and theme.config.content?.enable_members_comment == true}" class="post-comments">
+      <halo:comment group="plugin.halo.run" kind="Plugin" th:attr="name=${pluginName}" />
+    </section>
+
+  </th:block>
+
+  <div th:unless="${pluginFinder.available('PluginMembers')}" class="empty-state">
+    <div class="empty-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+    </div>
+    <p class="empty-text">成员管理插件未启用</p>
+    <p class="empty-sub">请在后台安装并启用「成员管理」插件</p>
+  </div>
+
 </th:block>
 </html>
