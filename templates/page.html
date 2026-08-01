@@ -2,12 +2,8 @@
 <html xmlns:th="https://www.thymeleaf.org"
       th:replace="~{layout :: html(title=${singlePage?.spec?.title} + ' - ' + ${site.title}, content=~{::content}, description=${singlePage?.spec?.excerpt?.raw}, canonical=${singlePage?.status?.permalink}, image=${singlePage?.spec?.cover}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
-  <!-- 默认的 about 页面即使尚未在 Console 选择自定义模板，也使用关于页布局。 -->
-  <th:block th:if="${singlePage.spec?.slug == 'about'}">
-    <th:block th:replace="~{page_about :: content}"></th:block>
-  </th:block>
-
-  <article class="page" th:unless="${singlePage.spec?.slug == 'about'}">
+  <!-- 通用单页；关于页样式仅由后台显式选择 page_about 模板后加载。 -->
+  <article class="page">
     <header class="page-header">
       <h1 class="page-title" th:text="${singlePage?.spec?.title}"></h1>
     </header>
