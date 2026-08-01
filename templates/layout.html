@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="https://www.thymeleaf.org"
+      th:fragment="html (title, content, description, canonical, image, pageType, robots)"
+      th:with="siteBase=${#strings.endsWith(site.url, '/') ? #strings.substring(site.url, 0, #strings.length(site.url) - 1) : site.url},
+               seoDescription=${description != null and !#strings.isEmpty(description) ? description : (site.seo?.description ?: (site.subtitle ?: site.title))},
+               seoCanonical=${canonical != null ? (#strings.isEmpty(canonical) ? '' : ((#strings.startsWith(canonical, 'http://') or #strings.startsWith(canonical, 'https://')) ? canonical : siteBase + canonical)) : site.url},
+               seoImage=${image != null and !#strings.isEmpty(image) ? image : site.logo},
+               seoPageType=${pageType ?: 'website'},
+               seoRobots=${robots ?: (site.seo?.blockSpiders == true ? 'noindex, nofollow' : 'index, follow')}"
+      class="no-js"
+      data-theme="light" data-color-scheme="auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title} ?: ${site.title}"></title>
+  <meta name="description" th:content="${seoDescription}" />
+  <meta name="keywords" th:if="${site.seo?.keywords != null and !#strings.isEmpty(site.seo.keywords)}" th:content="${site.seo.keywords}" />
+  <meta name="robots" th:content="${seoRobots}" />
+  <link rel="canonical" th:if="${seoCanonical != null and !#strings.isEmpty(seoCanonical)}" th:href="${seoCanonical}" />
+  <meta property="og:site_name" th:content="${site.title}" />
+  <meta property="og:title" th:content="${title} ?: ${site.title}" />
+  <meta property="og:description" th:content="${seoDescription}" />
+  <meta property="og:type" th:content="${seoPageType}" />
+  <meta property="og:url" th:if="${seoCanonical != null and !#strings.isEmpty(seoCanonical)}" th:content="${seoCanonical}" />
+  <meta property="og:image" th:if="${seoImage != null and !#strings.isEmpty(seoImage)}" th:content="${seoImage}" />
+  <meta name="twitter:card" th:content="${seoImage != null and !#strings.isEmpty(seoImage) ? 'summary_large_image' : 'summary'}" />
+  <meta name="twitter:title" th:content="${title} ?: ${site.title}" />
+  <meta name="twitter:description" th:content="${seoDescription}" />
+  <meta name="twitter:image" th:if="${seoImage != null and !#strings.isEmpty(seoImage)}" th:content="${seoImage}" />
+  <script type="application/ld+json" th:inline="javascript">
+    {
+      "@context": "https://schema.org",
+      "@type": /*[[${seoPageType == 'article' ? 'Article' : 'WebPage'}]]*/ "WebPage",
+      "name": /*[[${title} ?: ${site.title}]]*/ "Page",
+      "description": /*[[${seoDescription}]]*/ "",
+      "url": /*[[${seoCanonical}]]*/ "",
+      "image": /*[[${seoImage}]]*/ "",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": /*[[${site.title}]]*/ "Site",
+        "url": /*[[${site.url}]]*/ ""
+      }
+    }
+  </script>
+  <th:block th:if="${site.favicon != null and !#strings.isEmpty(site.favicon)}">
+    <link rel="icon" th:href="${site.favicon}" type="image/x-icon" sizes="any" />
+  </th:block>
+  <link rel="stylesheet" th:href="@{/assets/css/main.css(v=${theme.spec.version})}" />
+  <script th:inline="javascript">
+    (function() {
+      var html = document.documentElement;
+      html.classList.remove('no-js');
+      html.classList.add('js-enabled');
+      var saved = localStorage.getItem('theme-mode') || localStorage.getItem('theme');
+      var mode = /*[[${theme.config.appearance?.default_theme_mode ?: 'system'}]]*/ 'system';
+      var resolvedMode = saved || mode;
+      var isDark = resolvedMode === 'dark'
+        || (resolvedMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var effectiveMode = isDark ? 'dark' : 'light';
+      var html = document.documentElement;
+      html.setAttribute('data-theme', effectiveMode);
+      html.setAttribute('data-color-scheme', effectiveMode);
+      html.classList.remove('light', 'dark');
+      html.classList.add(effectiveMode);
+
+      var primaryColor = /*[[${theme.config.appearance?.primary_color ?: '#D13E43'}]]*/ '#D13E43';
+      if (primaryColor && primaryColor !== '#D13E43') {
+        document.documentElement.style.setProperty('--primary', primaryColor);
+        var r = parseInt(primaryColor.slice(1,3), 16);
+        var g = parseInt(primaryColor.slice(3,5), 16);
+        var b = parseInt(primaryColor.slice(5,7), 16);
+        document.documentElement.style.setProperty('--primary-light', 'rgb(' + Math.min(255, r+30) + ',' + Math.min(255, g+30) + ',' + Math.min(255, b+30) + ')');
+        document.documentElement.style.setProperty('--primary-dark', 'rgb(' + Math.max(0, r-30) + ',' + Math.max(0, g-30) + ',' + Math.max(0, b-30) + ')');
+      }
+    })();
+  </script>
+  <!-- 引入 Alpine.js 处理交互（插件需在核心之前加载） -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <th:block th:if="${theme.config.content?.custom_css != null and !#strings.isEmpty(theme.config.content.custom_css)}">
+    <style th:utext="${theme.config.content.custom_css}"></style>
+  </th:block>
+</head>
+<body x-data="{ mobileMenuOpen: false }"
+      x-effect="document.body.classList.toggle('menu-open', mobileMenuOpen)"
+      @keydown.escape.window="mobileMenuOpen = false"
+      th:data-template="${_templateId}"
+      th:data-theme-version="${theme.spec.version}">
+  <!-- 顶部导航 -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-inner"
+           th:with="navAlign = ${theme.config.navigation?.nav_align ?: 'center'}"
+           th:classappend="${'nav-align-' + navAlign}">
+        <a th:href="@{/}" class="logo">
+          <img th:if="${site.logo != null and !#strings.isEmpty(site.logo)}"
+               th:src="${site.logo}" th:alt="${site.title}" height="32" />
+          <span th:text="${site.title}"></span>
+        </a>
+        <nav class="main-nav">
+          <!-- 主菜单（header_menu 为空则不显示） -->
+          <th:block th:if="${theme.config.navigation?.header_menu != null and !#strings.isEmpty(theme.config.navigation?.header_menu)}"
+             th:with="menu = ${menuFinder.getByName(theme.config.navigation?.header_menu)}">
+            <th:block th:if="${menu != null and menu.menuItems != null}">
+              <a th:each="item : ${menu.menuItems}"
+                 th:href="@{${item.status?.href}}"
+                 th:text="${item.status?.displayName}"
+                 th:target="${item.spec?.target?.value}"></a>
+            </th:block>
+          </th:block>
+          <!-- 自定义链接跟在菜单右侧，超过1个时自动上下滚动轮播 -->
+          <th:block th:if="${theme.config.carousel?.custom_links != null and !#lists.isEmpty(theme.config.carousel.custom_links)}">
+            <th:block th:with="carousel = ${#lists.size(theme.config.carousel.custom_links) > 1},
+                              interval = ${theme.config.carousel?.carousel_interval ?: 3500}">
+              <div class="header-links-wrap" th:classappend="${carousel ? 'is-carousel' : ''}"
+                   th:data-interval="${carousel} ? ${interval} : null">
+                <div class="header-links-track" th:if="${carousel}">
+                  <th:block th:each="link : ${theme.config.carousel.custom_links}">
+                    <div class="header-links-slide">
+                      <a th:if="${link.url != null and !#strings.isEmpty(link.url) and (link.text != null and !#strings.isEmpty(link.text) or link.image != null and !#strings.isEmpty(link.image))}"
+                         th:href="${link.url}"
+                         th:target="${link.target ?: '_blank'}"
+                         class="header-link"
+                         th:title="${link.text}"
+                         th:aria-label="${link.text}">
+                        <img th:if="${link.image != null and !#strings.isEmpty(link.image)}"
+                             th:src="${link.image}" th:alt="${link.text}" class="header-link-img" height="20" />
+                        <span th:if="${(link.image == null or #strings.isEmpty(link.image)) and link.text != null and !#strings.isEmpty(link.text)}"
+                              th:text="${link.text}"></span>
+                      </a>
+                    </div>
+                  </th:block>
+                </div>
+                <th:block th:unless="${carousel}">
+                  <th:block th:each="link : ${theme.config.carousel.custom_links}">
+                    <a th:if="${link.url != null and !#strings.isEmpty(link.url) and (link.text != null and !#strings.isEmpty(link.text) or link.image != null and !#strings.isEmpty(link.image))}"
+                       th:href="${link.url}"
+                     th:target="${link.target ?: '_blank'}"
+                     class="header-link"
+                     th:title="${link.text}"
+                     th:aria-label="${link.text}">
+                      <img th:if="${link.image != null and !#strings.isEmpty(link.image)}"
+                           th:src="${link.image}" th:alt="${link.text}" class="header-link-img" height="20" />
+                      <span th:if="${(link.image == null or #strings.isEmpty(link.image)) and link.text != null and !#strings.isEmpty(link.text)}"
+                            th:text="${link.text}"></span>
+                    </a>
+                  </th:block>
+                </th:block>
+              </div>
+            </th:block>
+          </th:block>
+        </nav>
+        <div class="header-actions">
+          <th:block th:if="${theme.config.content?.search_enabled != false}">
+            <button th:if="${pluginFinder.available('PluginSearchWidget')}"
+                    onclick="SearchWidget.open()"
+                    class="icon-btn" aria-label="搜索">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+            </button>
+          </th:block>
+          <button th:if="${theme.config.content?.theme_toggle_enabled != false}"
+                  id="themeToggle" class="icon-btn theme-toggle-btn" aria-label="切换主题">
+            <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"></circle>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 5.64l1.42-1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 18.36l1.42 1.42"></path>
+            </svg>
+            <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <!-- 登录入口（在明暗切换右侧） -->
+          <th:block th:if="${theme.config.navigation?.show_login_btn != false}">
+            <div class="login-entry-wrap" id="loginEntryWrap" x-data="{ open: false, loggedIn: false, user: null }" x-init="
+                fetch('/apis/api.console.halo.run/v1alpha1/users/-', { credentials: 'include' })
+                  .then(res => res.ok ? res.json() : null)
+                  .then(data => {
+                    if (data && data.user) {
+                      loggedIn = true;
+                      user = data.user;
+                    }
+                  }).catch(() => {})
+              " @mouseleave="if(loggedIn) open = false" @click.away="open = false" @keydown.escape.window="open = false">
+              <button id="loginEntry" class="icon-btn login-entry" type="button" :title="loggedIn ? (user.spec?.displayName || user.metadata?.name || '用户') : '登录'" :aria-label="loggedIn ? (user.spec?.displayName || user.metadata?.name || '用户') : '登录'" @click.prevent="if(!loggedIn) { window.location.href='/console' } else { open = !open }" :aria-expanded="open">
+                <template x-if="loggedIn">
+                  <div style="display:contents">
+                    <template x-if="user.spec?.avatar">
+                      <img class="login-avatar" :src="user.spec.avatar" :alt="user.spec?.displayName || '用户'" width="28" height="28" />
+                    </template>
+                    <template x-if="!user.spec?.avatar">
+                      <span class="login-avatar-placeholder" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;border:2px solid var(--bg-primary);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                      </span>
+                    </template>
+                  </div>
+                </template>
+                <template x-if="!loggedIn">
+                  <svg class="login-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                    <polyline points="10 17 15 12 10 7"></polyline>
+                    <line x1="15" y1="12" x2="3" y2="12"></line>
+                  </svg>
+                </template>
+              </button>
+              <div id="loginDropdown" class="login-dropdown" role="menu" aria-label="用户菜单" :class="{ 'is-open': open }" x-show="open" x-transition.opacity style="display: none;">
+                <!-- 未登录时显示 -->
+                <a href="/console" role="menuitem" class="login-menu-login" x-show="!loggedIn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                    <polyline points="10 17 15 12 10 7"></polyline>
+                    <line x1="15" y1="12" x2="3" y2="12"></line>
+                  </svg>
+                  <span>登录</span>
+                </a>
+                <!-- 已登录时显示 -->
+                <a href="/uc" role="menuitem" class="login-menu-uc" x-show="loggedIn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span>个人中心</span>
+                </a>
+                <a href="/logout" role="menuitem" class="login-menu-logout" x-show="loggedIn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  <span>退出登录</span>
+                </a>
+              </div>
+            </div>
+          </th:block>
+          <button @click="mobileMenuOpen = true" class="icon-btn mobile-only" aria-label="菜单" aria-controls="mobileMenu" :aria-expanded="mobileMenuOpen">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12h18M3 6h18M3 18h18"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 移动端菜单 -->
+  <div id="mobileMenu" class="mobile-menu" x-show="mobileMenuOpen" x-cloak
+       :aria-hidden="!mobileMenuOpen" x-transition.opacity.duration.260ms>
+    <div class="mobile-menu-overlay" @click="mobileMenuOpen = false"></div>
+    <div class="mobile-menu-content" @click.stop x-show="mobileMenuOpen"
+         x-transition:enter="mobile-menu-content-transition"
+         x-transition:enter-start="mobile-menu-content-enter-start"
+         x-transition:enter-end="mobile-menu-content-enter-end"
+         x-transition:leave="mobile-menu-content-transition"
+         x-transition:leave-start="mobile-menu-content-leave-start"
+         x-transition:leave-end="mobile-menu-content-leave-end">
+      <div class="mobile-menu-header">
+        <span th:text="${site.title}"></span>
+        <button @click="mobileMenuOpen = false" class="icon-btn" aria-label="关闭">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <nav class="mobile-nav">
+        <th:block th:if="${theme.config.navigation?.header_menu != null and !#strings.isEmpty(theme.config.navigation?.header_menu)}"
+                  th:with="menu = ${menuFinder.getByName(theme.config.navigation?.header_menu)}">
+          <th:block th:if="${menu != null and menu.menuItems != null}">
+            <a th:each="item : ${menu.menuItems}"
+               th:href="@{${item.status?.href}}"
+               th:text="${item.status?.displayName}"
+               th:target="${item.spec?.target?.value}"
+               @click="mobileMenuOpen = false"></a>
+          </th:block>
+        </th:block>
+        <th:block th:if="${theme.config.carousel?.custom_links != null and !#lists.isEmpty(theme.config.carousel.custom_links)}">
+          <div class="mobile-custom-links">
+            <a th:each="link : ${theme.config.carousel.custom_links}"
+               th:if="${link.url != null and !#strings.isEmpty(link.url) and (link.text != null and !#strings.isEmpty(link.text) or link.image != null and !#strings.isEmpty(link.image))}"
+               th:href="${link.url}"
+               th:target="${link.target ?: '_blank'}"
+               @click="mobileMenuOpen = false"
+               th:aria-label="${link.text}"
+               style="display: flex; align-items: center; gap: 8px;">
+              <img th:if="${link.image != null and !#strings.isEmpty(link.image)}"
+                   th:src="${link.image}" th:alt="${link.text}" width="20" height="20" style="object-fit:contain;"/>
+              <span th:if="${link.text != null and !#strings.isEmpty(link.text)}" th:text="${link.text}"></span>
+            </a>
+          </div>
+        </th:block>
+      </nav>
+    </div>
+  </div>
+
+  <!-- 主内容 -->
+  <main class="site-main">
+    <div class="container">
+      <th:block th:replace="${content}" />
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="site-footer">
+    <!-- 返回顶部山形三角（footer顶部突出，与顶线融合） -->
+    <div th:if="${theme.config.appearance?.back_to_top_enabled != false}"
+         id="backToTop" class="back-to-top-wrap" aria-label="返回顶部" role="button" tabindex="0">
+      <!-- 粒子层：粒子从此容器（三角顶边沿线）向上飞升 -->
+      <div class="bttp-particles-layer" aria-hidden="true"></div>
+      <div class="back-to-top-mountain side side-5"></div>
+      <div class="back-to-top-mountain side side-4"></div>
+      <div class="back-to-top-mountain side side-3"></div>
+      <div class="back-to-top-mountain side side-2"></div>
+      <div class="back-to-top-mountain side side-1"></div>
+      <div class="back-to-top-mountain center bttp-mountain-center" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 15l-6-6-6 6"></path>
+        </svg>
+      </div>
+      <div class="back-to-top-mountain side side-1"></div>
+      <div class="back-to-top-mountain side side-2"></div>
+      <div class="back-to-top-mountain side side-3"></div>
+      <div class="back-to-top-mountain side side-4"></div>
+      <div class="back-to-top-mountain side side-5"></div>
+    </div>
+    <div class="container">
+      <div class="footer-inner">
+        <!-- 站点信息 -->
+        <div class="footer-col">
+          <div class="footer-col-title" th:text="${site.title}">站点名称</div>
+          <div class="footer-info">
+            <p th:if="${site.subtitle != null and !#strings.isEmpty(site.subtitle)}"
+               th:text="${site.subtitle}"></p>
+            <p th:if="${theme.config.footer?.copyright != null and !#strings.isEmpty(theme.config.footer.copyright)}"
+               th:text="${theme.config.footer.copyright}"></p>
+          </div>
+        </div>
+
+        <!-- 快捷导航（使用 Halo 内置菜单） -->
+        <th:block th:with="footerMenuName = ${theme.config.navigation?.footer_menu ?: ''}">
+          <div class="footer-col"
+               th:if="${!#strings.isEmpty(footerMenuName)}"
+               th:with="menu = ${menuFinder.getByName(footerMenuName)}">
+            <div class="footer-col-title">快捷导航</div>
+            <nav class="footer-nav" th:if="${menu != null and menu.menuItems != null}">
+              <a th:each="item : ${menu.menuItems}"
+                 th:href="@{${item.status?.href}}"
+                 th:text="${item.status?.displayName}"
+                 th:target="${item.spec?.target?.value}"></a>
+            </nav>
+          </div>
+        </th:block>
+
+        <!-- 自定义内容 -->
+        <div class="footer-col" th:if="${theme.config.footer?.custom_column_items != null and !#lists.isEmpty(theme.config.footer.custom_column_items)}">
+          <div class="footer-col-title" th:text="${theme.config.footer?.custom_column_title ?: '关注我们'}">关注我们</div>
+          <div class="footer-custom-items">
+            <th:block th:each="item : ${theme.config.footer.custom_column_items}">
+              <a th:if="${item.url != null and !#strings.isEmpty(item.url)}"
+                 th:href="${item.url}"
+                 th:target="${item.target ?: '_blank'}"
+                 class="footer-custom-item">
+                <img th:if="${item.image != null and !#strings.isEmpty(item.image)}"
+                     th:src="${item.image}" th:alt="${item.title}" class="footer-custom-img" width="80" height="80" />
+                <span th:text="${item.title}" class="footer-custom-text"></span>
+              </a>
+              <div th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="footer-custom-item footer-custom-static">
+                <img th:if="${item.image != null and !#strings.isEmpty(item.image)}"
+                     th:src="${item.image}" th:alt="${item.title}" class="footer-custom-img" width="80" height="80" />
+                <span th:text="${item.title}" class="footer-custom-text"></span>
+              </div>
+            </th:block>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部版权 -->
+      <div class="footer-bottom">
+        <div class="footer-copyright">
+          <span th:if="${theme.config.footer?.copyright == null or #strings.isEmpty(theme.config.footer?.copyright)}">
+            &copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}"></span>
+            <th:block th:text="${site.title}"></th:block>
+          </span>
+        </div>
+        <div class="footer-links">
+          <span th:if="${theme.config.footer?.icp_number != null and !#strings.isEmpty(theme.config.footer.icp_number)}">
+            <a th:href="${theme.config.footer?.icp_link ?: 'https://beian.miit.gov.cn/'}"
+               target="_blank" rel="noopener noreferrer"
+               th:text="${theme.config.footer.icp_number}"></a>
+          </span>
+          <span th:if="${theme.config.footer?.police_number != null and !#strings.isEmpty(theme.config.footer.police_number)}">
+            <a th:if="${theme.config.footer?.police_record_code != null and !#strings.isEmpty(theme.config.footer.police_record_code)}"
+               th:href="'https://beian.mps.gov.cn/#/query/webSearch?code=' + ${theme.config.footer.police_record_code}"
+               target="_blank" rel="noopener noreferrer"
+               th:text="${theme.config.footer.police_number}"></a>
+            <a th:unless="${theme.config.footer?.police_record_code != null and !#strings.isEmpty(theme.config.footer.police_record_code)}"
+               href="https://beian.mps.gov.cn/"
+               target="_blank" rel="noopener noreferrer"
+               th:text="${theme.config.footer.police_number}"></a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <halo:footer />
+  <!-- GSAP 动画库（统一动画引擎） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script th:inline="javascript">
+    window.NUCMA_RUNTIME = {
+      debug: /*[[${theme.config.content?.developer_mode == true}]]*/ false,
+      version: /*[[${theme.spec.version}]]*/ "development"
+    };
+  </script>
+  <script th:src="@{/assets/js/main.js(v=${theme.spec.version})}" defer></script>
+  <th:block th:if="${theme.config.content?.custom_js != null and !#strings.isEmpty(theme.config.content.custom_js)}">
+    <script th:utext="${theme.config.content.custom_js}"></script>
+  </th:block>
+</body>
+</html>

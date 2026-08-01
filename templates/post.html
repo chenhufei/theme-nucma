@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title=${post?.spec?.title}, content=~{::content})}">
+      th:replace="~{layout :: html(title=${post?.spec?.title} + ' - ' + ${site.title}, content=~{::content}, description=${post?.spec?.excerpt?.raw}, canonical=${post?.status?.permalink}, image=${post?.spec?.cover}, pageType='article', robots=null)}">
 <th:block th:fragment="content">
   <div class="post-layout">
     <!-- 左侧：文章内容 -->
@@ -17,14 +17,14 @@
         <h1 class="post-title" th:text="${post.spec?.title}"></h1>
         <div class="post-author" th:if="${post.owner != null}">
           <img th:if="${post.owner?.avatar != null and !#strings.isEmpty(post.owner?.avatar)}"
-               th:src="${post.owner?.avatar}" th:alt="${post.owner?.displayName}" class="author-avatar" />
+               th:src="${post.owner?.avatar}" th:alt="${post.owner?.displayName}" class="author-avatar" width="26" height="26" />
           <span th:text="${post.owner?.displayName}"></span>
         </div>
       </header>
 
       <!-- 文章封面 -->
       <div class="post-cover" th:if="${theme.config.post?.show_cover != false and post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}">
-        <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}" />
+        <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}" width="16" height="9" />
       </div>
 
       <!-- 文章内容 -->
@@ -32,7 +32,7 @@
 
       <!-- 标签 -->
       <div class="post-tags" th:if="${theme.config.post?.show_tags != false and post.tags != null and !post.tags.isEmpty()}">
-        <a th:each="tag : ${post.tags}" th:href="@{|/tags/${tag.metadata.name}|}"
+        <a th:each="tag : ${post.tags}" th:href="@{${tag.status?.permalink}}"
            class="tag" th:text="'#' + ${tag.spec?.displayName}"></a>
       </div>
 
@@ -49,17 +49,18 @@
       </div>
 
       <!-- 评论区 -->
-      <section th:if="${haloCommentEnabled and theme.config.content?.enable_post_comment != false}" class="post-comments">
+      <section th:if="${haloCommentEnabled and theme.config.content?.post_comment_enabled != false}" class="post-comments">
         <halo:comment group="content.halo.run" kind="Post" th:attr="name=${post.metadata.name}" />
       </section>
     </article>
 
     <!-- 右侧：侧边栏 -->
-    <aside class="post-sidebar">
+    <aside class="post-sidebar"
+           th:data-sidebar-order="${theme.config.sidebar?.section_order != null ? #strings.listJoin(theme.config.sidebar.section_order, ',') : 'menu,info,author,recent,toc'}">
       <!-- 自定义菜单 -->
       <th:block th:with="sidebarMenuName = ${theme.config.navigation?.sidebar_menu ?: ''}">
-        <div class="sidebar-card"
-             th:if="${!#strings.isEmpty(sidebarMenuName)}"
+        <div class="sidebar-card" data-sidebar-section="menu"
+             th:if="${theme.config.sidebar?.show_menu != false and !#strings.isEmpty(sidebarMenuName)}"
              th:with="menu = ${menuFinder.getByName(sidebarMenuName)}">
           <h3 class="sidebar-title">快捷导航</h3>
           <nav class="sidebar-nav" th:if="${menu != null and menu.menuItems != null}">
@@ -72,7 +73,7 @@
       </th:block>
 
       <!-- 文章信息 -->
-      <div class="sidebar-card">
+      <div class="sidebar-card" data-sidebar-section="info" th:if="${theme.config.sidebar?.show_info != false}">
         <h3 class="sidebar-title">文章信息</h3>
         <div class="sidebar-info">
           <div class="info-item">
@@ -91,12 +92,12 @@
       </div>
 
       <!-- 作者信息 -->
-      <div class="sidebar-card" th:if="${post.owner != null}"
+      <div class="sidebar-card" data-sidebar-section="author" th:if="${theme.config.sidebar?.show_author != false and post.owner != null}"
            th:with="authorPosts = ${postFinder.list({page: 1, size: 1, ownerName: post.owner?.metadata?.name})}">
         <h3 class="sidebar-title">作者</h3>
         <div class="author-info">
           <img th:if="${post.owner?.avatar != null and !#strings.isEmpty(post.owner?.avatar)}"
-               th:src="${post.owner?.avatar}" th:alt="${post.owner?.displayName}" class="author-avatar-lg" />
+               th:src="${post.owner?.avatar}" th:alt="${post.owner?.displayName}" class="author-avatar-lg" width="68" height="68" />
           <span class="author-name" th:text="${post.owner?.displayName}"></span>
           <p class="author-bio" th:if="${post.owner?.bio != null and !#strings.isEmpty(post.owner?.bio)}"
              th:text="${post.owner?.bio}"></p>
@@ -118,7 +119,7 @@
       </div>
 
       <!-- 最近文章（归档区块） -->
-      <div class="sidebar-card"
+      <div class="sidebar-card" data-sidebar-section="recent" th:if="${theme.config.sidebar?.show_recent != false}"
            th:with="recentPosts = ${postFinder.list({page: 1, size: 5})}">
         <h3 class="sidebar-title">最近文章</h3>
         <ul class="sidebar-post-list" th:if="${recentPosts != null and recentPosts.items != null and !recentPosts.items.isEmpty()}">
@@ -131,7 +132,9 @@
       </div>
 
       <!-- 目录 -->
-      <div class="sidebar-card toc-card" id="tocCard">
+      <div class="sidebar-card toc-card" id="tocCard"
+           data-sidebar-section="toc"
+           th:if="${theme.config.sidebar?.show_toc != false and theme.config.content?.auto_toc != false}">
         <h3 class="sidebar-title">目录</h3>
         <nav class="toc" id="toc"></nav>
       </div>
@@ -144,40 +147,52 @@
       var toc = document.getElementById('toc');
       var content = document.querySelector('.post-content');
       if (!toc || !content) return;
-      
-      var headings = content.querySelectorAll('h1, h2, h3, h4');
+
+      var card = document.getElementById('tocCard');
+      var headings = Array.from(content.querySelectorAll('h1, h2, h3, h4, h5, h6')).filter(function(h) {
+        return (h.textContent || '').trim().length > 0;
+      });
       if (!headings.length) {
-        document.getElementById('tocCard').style.display = 'none';
+        if (card) card.hidden = true;
         return;
       }
-      
-      var html = '<ul>';
+
+      var usedIds = {};
+      var list = document.createElement('ul');
       headings.forEach(function(h, i) {
-        var id = 'heading-' + i;
+        var base = (h.id || h.textContent || 'heading-' + i).toString().trim()
+          .toLowerCase().replace(/[^a-z0-9\u3400-\u9fff]+/g, '-').replace(/^-+|-+$/g, '') || ('heading-' + i);
+        var id = base;
+        var suffix = 2;
+        while (usedIds[id] || (document.getElementById(id) && document.getElementById(id) !== h)) id = base + '-' + suffix++;
+        usedIds[id] = true;
         h.id = id;
-        var level = parseInt(h.tagName.charAt(1));
-        var indent = (level - 1) * 12;
-        html += '<li style="padding-left:' + indent + 'px"><a href="#' + id + '">' + h.textContent + '</a></li>';
+        var item = document.createElement('li');
+        item.style.paddingLeft = Math.max(0, parseInt(h.tagName.charAt(1), 10) - 1) * 12 + 'px';
+        var link = document.createElement('a');
+        link.href = '#' + id;
+        link.textContent = (h.textContent || '').trim();
+        link.setAttribute('aria-label', link.textContent);
+        item.appendChild(link);
+        list.appendChild(item);
       });
-      html += '</ul>';
-      toc.innerHTML = html;
-      
-      // 高亮当前标题
-      var links = toc.querySelectorAll('a');
-      window.addEventListener('scroll', function() {
-        var current = null;
-        headings.forEach(function(h) {
-          if (window.scrollY >= h.offsetTop - 100) {
-            current = h;
-          }
+      toc.replaceChildren(list);
+
+      var links = Array.from(toc.querySelectorAll('a'));
+      function updateCurrent() {
+        var currentIndex = 0;
+        headings.forEach(function(h, i) {
+          if (h.getBoundingClientRect().top <= 110) currentIndex = i;
         });
-        links.forEach(function(link) {
-          link.classList.remove('active');
-          if (current && link.getAttribute('href') === '#' + current.id) {
-            link.classList.add('active');
-          }
+        links.forEach(function(link, i) {
+          var active = i === currentIndex;
+          link.classList.toggle('active', active);
+          if (active) link.setAttribute('aria-current', 'location');
+          else link.removeAttribute('aria-current');
         });
-      });
+      }
+      window.addEventListener('scroll', updateCurrent, { passive: true });
+      updateCurrent();
     })();
   </script>
 </th:block>

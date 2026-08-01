@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${category?.spec?.displayName} + ' - ' + ${site.title}, content=~{::content}, description=${category?.spec?.description}, canonical=${category?.status?.permalink}, image=${category?.spec?.cover}, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+  <div class="page-header" style="text-align: left; padding: var(--space-2xl) 0; border-bottom: 2px solid var(--primary); margin-bottom: var(--space-2xl); position: relative;">
+    <h1 class="page-title" th:text="${category?.spec?.displayName}" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; letter-spacing: 0.05em; color: var(--primary);"></h1>
+    <p class="page-desc" th:text="${category?.status?.postCount ?: 0} + ' ARTICLES'" style="font-size: 1rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.1em; margin: 0;"></p>
+    <div style="position: absolute; right: 0; bottom: -2px; width: 30%; height: 2px; background: var(--bg-primary);"></div>
+  </div>
+
+  <div class="news-list-mxbc" th:if="${posts != null and posts.items != null and !posts.items.isEmpty()}" style="display: flex; flex-direction: column; gap: var(--space-xl);">
+    <article class="news-item-mxbc" th:each="post : ${posts.items}" style="display: flex; gap: var(--space-xl); align-items: stretch; border-bottom: 1px dashed var(--border-color); padding-bottom: var(--space-xl); transition: all var(--transition-normal); cursor: pointer;" th:onclick="|window.location.href='@{${post.status?.permalink}}'|">
+      <div class="news-date-box" style="flex: 0 0 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-secondary); border-radius: var(--radius-md); padding: var(--space-sm); border: 1px solid var(--border-color); transition: all var(--transition-normal);">
+        <span class="news-day" th:text="${#temporals.format(post.spec?.publishTime, 'dd')}" style="font-size: 2rem; font-weight: 800; color: var(--primary); line-height: 1;"></span>
+        <span class="news-year-month" th:text="${#temporals.format(post.spec?.publishTime, 'yyyy-MM')}" style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 0.2rem;"></span>
+      </div>
+      <div class="news-content-box" style="flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+        <h3 class="news-title" th:text="${post.spec?.title}" style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin: 0 0 var(--space-xs) 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color var(--transition-fast);"></h3>
+        <p class="news-excerpt" th:if="${post.spec?.excerpt != null and post.spec?.excerpt.raw != null}" th:text="${post.spec?.excerpt.raw}" style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;"></p>
+      </div>
+      <div class="news-cover-box" th:if="${post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}" style="flex: 0 0 160px; height: 100px; border-radius: var(--radius-sm); overflow: hidden; display: none;">
+        <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" width="160" height="100" />
+      </div>
+    </article>
+  </div>
+
+  <style>
+    .news-item-mxbc:hover .news-date-box { background: var(--primary); border-color: var(--primary); }
+    .news-item-mxbc:hover .news-date-box .news-day { color: #fff; }
+    .news-item-mxbc:hover .news-date-box .news-year-month { color: rgba(255,255,255,0.8); }
+    .news-item-mxbc:hover .news-title { color: var(--primary); }
+    .news-item-mxbc:hover .news-cover-box img { transform: scale(1.05); }
+    @media (min-width: 768px) { .news-cover-box { display: block !important; } }
+  </style>
+
+  <div class="empty-state" th:unless="${posts != null and posts.items != null and !posts.items.isEmpty()}">
+    <p>该分类下暂无文章</p>
+  </div>
+
+  <nav class="pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext())}">
+    <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="page-btn">上一页</a>
+    <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="page-btn">下一页</a>
+  </nav>
+</th:block>
+</html>

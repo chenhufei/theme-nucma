@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title='错误', content=~{::content}, description='请求暂时无法完成', canonical='', image=${site.logo}, pageType='website', robots='noindex, nofollow')}">
+<th:block th:fragment="content">
+  <div class="error-page">
+    <h1 class="error-code" th:text="${error?.status ?: 'Error'}"></h1>
+    <p class="error-message" th:text="${#strings.defaultString(error?.title, '发生了错误')}"></p>
+    <p class="error-detail" th:if="${not #strings.isEmpty(error?.detail)}" th:text="${error?.detail}"></p>
+    <a th:href="@{/}" class="error-link">返回首页</a>
+  </div>
+</th:block>
+</html>

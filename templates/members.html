@@ -1,23 +1,39 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title='成员公示 - ' + ${site.title}, content=~{::content})}">
+      th:replace="~{layout :: html(title='成员公示 - ' + ${site.title}, content=~{::content}, description='成员信息与分组公示', canonical='/members', image=${site.logo}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
 
   <div class="page-header">
-    <div class="page-header-row">
-      <div>
-        <h1 class="page-title">成员公示</h1>
-        <p class="page-desc">共同维护校园沟通秩序</p>
+    <div class="page-header-row" style="display: flex; flex-direction: column; gap: var(--space-md);">
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: var(--space-md);">
+        <div>
+          <h1 class="page-title">成员公示</h1>
+          <p class="page-desc">共同维护校园沟通秩序</p>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap;">
+          <!-- 搜索框 -->
+          <div class="member-search-box" style="position: relative; min-width: 250px;">
+            <input type="text" id="memberSearchInput" placeholder="搜索名称、学校、QQ号..."
+                   style="width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); outline: none; transition: all 0.3s; font-size: 0.9rem;"
+                   oninput="filterMembers()" />
+            <svg style="position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary);" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="M21 21l-4.3-4.3"></path>
+            </svg>
+          </div>
+
+          <button th:if="${pluginFinder.available('PluginMembers')}"
+                  type="button"
+                  class="apply-btn"
+                  onclick="MemberApplyWidget.open()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            申请加入
+          </button>
+        </div>
       </div>
-      <button th:if="${pluginFinder.available('PluginMembers')}"
-              type="button"
-              class="apply-btn"
-              onclick="MemberApplyWidget.open()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <path d="M12 5v14M5 12h14"></path>
-        </svg>
-        申请加入
-      </button>
     </div>
   </div>
 
@@ -35,14 +51,16 @@
                   allMemberGroups = ${memberFinder?.listApprovedMembers()?.items}">
       <a th:href="@{/members}"
          class="member-filter-item"
-         th:classappend="${currentGroup == null or #strings.isEmpty(currentGroup)} ? 'is-active' : ''">
+         th:classappend="${currentGroup == null or #strings.isEmpty(currentGroup)} ? 'is-active' : ''"
+         th:aria-current="${currentGroup == null or #strings.isEmpty(currentGroup) ? 'page' : null}">
         全部
       </a>
       <th:block th:each="g : ${allMemberGroups}"
                 th:if="${allMemberGroups != null and g.members != null and !#lists.isEmpty(g.members)}">
         <a th:href="@{/members(group=${g.metadata.name})}"
            class="member-filter-item"
-           th:classappend="${currentGroup != null and currentGroup == g.metadata.name} ? 'is-active' : ''">
+           th:classappend="${currentGroup != null and currentGroup == g.metadata.name} ? 'is-active' : ''"
+           th:aria-current="${currentGroup != null and currentGroup == g.metadata.name ? 'page' : null}">
           <span th:text="${g.spec.displayName}">分组</span>
         </a>
       </th:block>
@@ -57,18 +75,20 @@
         <div class="member-group">
           <h2 class="member-group-title">
             <span th:text="${group.spec.displayName} ?: '未分组'">分组名</span>
-            <span class="member-group-count" th:text="${#lists.size(group.members)}">0</span>
+            <span class="member-group-count"
+                  th:text="${#lists.size(group.members)}"
+                  th:attr="data-total=${#lists.size(group.members)}">0</span>
           </h2>
 
           <div class="member-grid">
             <th:block th:each="member : ${group.members}">
               <a th:if="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
                  th:href="${member.spec.qqFriendLink}" target="_blank" rel="noopener noreferrer"
-                 class="member-card"
+                 class="member-card" th:attr="data-qq=${member.spec.qq ?: ''}"
                  th:title="${member.spec.school}">
                 <div class="member-avatar">
                   <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
-                       th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" />
+                       th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
                   <svg th:unless="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
                        fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
@@ -82,13 +102,18 @@
                   <div class="member-school member-school-empty"
                        th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}">暂无简介</div>
                 </div>
+                <!-- 悬停显示 QQ 链接二维码 -->
+                <div class="member-qr-popup">
+                  <img th:src="'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' + ${member.spec.qqFriendLink}"
+                       th:alt="'添加 ' + ${member.spec.displayName} + ' 的 QQ 二维码'" width="120" height="120" />
+                </div>
               </a>
 
               <div th:unless="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
-                   class="member-card">
+                 class="member-card" th:attr="data-qq=${member.spec.qq ?: ''}">
                 <div class="member-avatar">
                   <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
-                       th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" />
+                       th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
                   <svg th:unless="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
                        fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
@@ -119,11 +144,11 @@
           <th:block th:each="member : ${group.members}">
             <a th:if="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
                th:href="${member.spec.qqFriendLink}" target="_blank" rel="noopener noreferrer"
-               class="member-card"
+               class="member-card" th:attr="data-qq=${member.spec.qq ?: ''}"
                th:title="${member.spec.school}">
               <div class="member-avatar">
                 <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
-                     th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" />
+                     th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
                 <svg th:unless="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
                      fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
@@ -137,13 +162,18 @@
                 <div class="member-school member-school-empty"
                      th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}">暂无简介</div>
               </div>
+              <!-- 悬停显示 QQ 链接二维码 -->
+              <div class="member-qr-popup">
+                <img th:src="'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' + ${member.spec.qqFriendLink}"
+                     th:alt="'添加 ' + ${member.spec.displayName} + ' 的 QQ 二维码'" width="120" height="120" />
+              </div>
             </a>
 
             <div th:unless="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
-                 class="member-card">
+                 class="member-card" th:attr="data-qq=${member.spec.qq ?: ''}">
               <div class="member-avatar">
                 <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
-                     th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" />
+                     th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
                 <svg th:unless="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
                      fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
@@ -174,6 +204,11 @@
       </div>
     </th:block>
 
+    <div id="memberSearchEmpty" class="empty-state" role="status" hidden>
+      <p class="empty-text">未找到匹配成员</p>
+      <p class="empty-sub">请尝试其他名称、学校或 QQ 号</p>
+    </div>
+
     <!-- 空状态：无任何分组 -->
     <div th:if="${(currentGroup == null or #strings.isEmpty(currentGroup)) and (groups == null or #lists.isEmpty(groups))}"
          class="empty-state">
@@ -187,13 +222,75 @@
     </div>
 
     <!-- 评论区 -->
-    <section th:if="${haloCommentEnabled and theme.config.content?.enable_members_comment == true}" class="post-comments">
+    <section th:if="${haloCommentEnabled and theme.config.content?.members_comment_enabled == true}" class="post-comments">
       <halo:comment group="plugin.halo.run" kind="Plugin" th:attr="name=${pluginName}" />
     </section>
 
   </th:block>
 
-  <div th:unless="${pluginFinder.available('PluginMembers')}" class="empty-state">
+  <script th:if="${pluginFinder.available('PluginMembers')}">
+    // 引入 pinyin-pro 处理拼音首字母匹配
+    const pinyinScript = document.createElement('script');
+    pinyinScript.src = 'https://unpkg.com/pinyin-pro@3.16.4/dist/index.js';
+    document.head.appendChild(pinyinScript);
+
+    let searchTimeout;
+    function filterMembers() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        const input = document.getElementById('memberSearchInput');
+        const filter = input.value.toLowerCase().trim();
+        const cards = document.querySelectorAll('.member-card');
+        const searchEmpty = document.getElementById('memberSearchEmpty');
+        const groupCounts = document.querySelectorAll('.member-group-count');
+
+        if (!filter) {
+          cards.forEach(card => card.style.display = '');
+          document.querySelectorAll('.member-group').forEach(group => group.style.display = '');
+          groupCounts.forEach(count => {
+            if (count.dataset.total) count.textContent = count.dataset.total;
+          });
+          if (searchEmpty) searchEmpty.hidden = true;
+          return;
+        }
+
+        const isAscii = /^[a-z0-9]+$/i.test(filter);
+        const pinyinFn = window.pinyinPro ? window.pinyinPro.pinyin : null;
+
+        cards.forEach(function(card) {
+          const name = card.querySelector('.member-name')?.textContent?.toLowerCase() || '';
+          const school = card.querySelector('.member-school')?.textContent?.toLowerCase() || '';
+          const qq = card.getAttribute('data-qq') || '';
+
+          let isMatch = name.includes(filter) || school.includes(filter) || qq.includes(filter);
+
+          if (!isMatch && isAscii && pinyinFn) {
+            const namePinyin = pinyinFn(name, { pattern: 'first', type: 'array' }).join('').toLowerCase();
+            const schoolPinyin = pinyinFn(school, { pattern: 'first', type: 'array' }).join('').toLowerCase();
+            if (namePinyin.includes(filter) || schoolPinyin.includes(filter)) {
+              isMatch = true;
+            }
+          }
+
+          card.style.display = isMatch ? '' : 'none';
+        });
+
+        const groups = document.querySelectorAll('.member-group');
+        groups.forEach(function(group) {
+          const visibleCards = Array.from(group.querySelectorAll('.member-card')).filter(card => card.style.display !== 'none');
+          const hasVisibleCards = visibleCards.length > 0;
+          group.style.display = hasVisibleCards ? '' : 'none';
+          const count = group.querySelector('.member-group-count');
+          if (count) count.textContent = String(visibleCards.length);
+        });
+        const matches = Array.from(cards).filter(card => card.style.display !== 'none').length;
+        if (searchEmpty) searchEmpty.hidden = matches > 0;
+      }, 150);
+    }
+  </script>
+
+  <div th:unless="${pluginFinder.available('PluginMembers')}" class="empty-state"
+       role="status" data-plugin-status="missing" data-plugin="PluginMembers">
     <div class="empty-icon">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>

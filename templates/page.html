@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title=${singlePage?.spec?.title}, content=~{::content})}">
+      th:replace="~{layout :: html(title=${singlePage?.spec?.title} + ' - ' + ${site.title}, content=~{::content}, description=${singlePage?.spec?.excerpt?.raw}, canonical=${singlePage?.status?.permalink}, image=${singlePage?.spec?.cover}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
-  <article class="page">
+  <!-- 默认的 about 页面即使尚未在 Console 选择自定义模板，也使用关于页布局。 -->
+  <th:block th:if="${singlePage.spec?.slug == 'about'}">
+    <th:block th:replace="~{page_about :: content}"></th:block>
+  </th:block>
+
+  <article class="page" th:unless="${singlePage.spec?.slug == 'about'}">
     <header class="page-header">
       <h1 class="page-title" th:text="${singlePage?.spec?.title}"></h1>
     </header>
     <div class="page-content prose" th:utext="${singlePage?.content?.content}"></div>
     
     <!-- 评论区 -->
-    <section th:if="${haloCommentEnabled and theme.config.content?.enable_page_comment != false}" class="page-comments">
+    <section th:if="${haloCommentEnabled and theme.config.content?.page_comment_enabled != false}" class="page-comments">
       <halo:comment group="content.halo.run" kind="SinglePage" th:attr="name=${singlePage.metadata.name}" />
     </section>
   </article>

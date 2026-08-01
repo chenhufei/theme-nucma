@@ -1,7 +1,10 @@
 import { defineConfig } from 'vite'
 import { build as esbuild } from 'esbuild'
 import { resolve } from 'path'
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs'
+import packageJson from './package.json' with { type: 'json' }
+
+const rootDir = import.meta.dirname
 
 export default defineConfig({
   build: {
@@ -9,7 +12,7 @@ export default defineConfig({
     emptyOutDir: false,
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'src/css/main.css'),
+        main: resolve(rootDir, 'src/css/main.css'),
       },
       output: {
         assetFileNames: 'css/[name].[ext]',
@@ -21,9 +24,14 @@ export default defineConfig({
     {
       name: 'build-js',
       apply: 'build',
+      buildStart: () => {
+        rmSync(resolve(rootDir, 'templates/assets/css/main.css'), { force: true })
+        rmSync(resolve(rootDir, 'templates/assets/js/main.js'), { force: true })
+        rmSync(resolve(rootDir, 'templates/assets/build-info.json'), { force: true })
+      },
       closeBundle: async () => {
-        const jsSrc = resolve(__dirname, 'src/js/main.js')
-        const outDir = resolve(__dirname, 'templates/assets/js')
+        const jsSrc = resolve(rootDir, 'src/js/main.js')
+        const outDir = resolve(rootDir, 'templates/assets/js')
         if (!existsSync(jsSrc)) return
         mkdirSync(outDir, { recursive: true })
         await esbuild({
@@ -36,6 +44,11 @@ export default defineConfig({
           legalComments: 'none',
           logLevel: 'info',
         })
+        writeFileSync(
+          resolve(rootDir, 'templates/assets/build-info.json'),
+          `${JSON.stringify({ theme: packageJson.name, version: packageJson.version, assets: ['css/main.css', 'js/main.js'] }, null, 2)}\n`,
+          'utf8',
+        )
         console.log('\nJS bundle completed!')
       },
     },

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title=${title} + ' - ' + ${site.title}, content=~{::content})}">
+      th:replace="~{layout :: html(title=(${title} ?: '图库') + ' - ' + ${site.title}, content=~{::content}, description='浏览本站图库内容', canonical='/photos', image=${site.logo}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
 
   <div class="page-header">
@@ -34,7 +34,7 @@
        th:title="${photo.spec?.displayName}">
       <img th:src="${photo.spec?.cover ?: photo.spec?.url}"
            th:alt="${photo.spec?.displayName}"
-           loading="lazy" />
+           loading="lazy" width="250" height="200" />
       <div class="photo-overlay">
         <span class="photo-name" th:text="${photo.spec?.displayName}"></span>
         <span class="photo-desc" th:if="${photo.spec?.description != null and !#strings.isEmpty(photo.spec?.description)}"

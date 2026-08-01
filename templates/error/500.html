@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title='服务器错误', content=~{::content}, description='服务器暂时无法处理请求', canonical='', image=${site.logo}, pageType='website', robots='noindex, nofollow')}">
+<th:block th:fragment="content">
+  <div class="error-page">
+    <h1 class="error-code">500</h1>
+    <p class="error-message">服务器内部错误</p>
+    <a th:href="@{/}" class="error-link">返回首页</a>
+  </div>
+</th:block>
+</html>

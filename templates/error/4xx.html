@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title='请求错误 - ' + ${site.title}, content=~{::content}, description='请求无法完成', canonical='', image=${site.logo}, pageType='website', robots='noindex, nofollow')}">
+
+<th:block th:fragment="content">
+  <div class="page-container text-center" style="max-width:var(--site-reading-width)">
+    <div class="py-20">
+      <div class="guofeng-divider mb-8">◆</div>
+      <h1 class="section-title mb-4" th:text="${error?.status ?: '4xx'}">错误</h1>
+      <p class="mb-6" style="color:rgb(var(--color-text-muted))"
+         th:text="${#strings.defaultString(error?.title, '请求错误')}"></p>
+      <p th:if="${not #strings.isEmpty(error?.detail)}" class="text-sm mb-8"
+         style="color:rgb(var(--color-text-soft))" th:text="${error?.detail}"></p>
+      <a th:href="@{/}" class="inline-flex items-center gap-2 px-6 py-2.5 text-sm guofeng-border"
+         style="background:rgb(var(--color-surface))">返回首页</a>
+    </div>
+  </div>
+</th:block>
+</html>

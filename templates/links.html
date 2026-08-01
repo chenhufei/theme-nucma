@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title=${linksTitle} + ' - ' + ${site.title}, content=~{::content})}">
+      th:replace="~{layout :: html(title=(${linksTitle} ?: '友情链接') + ' - ' + ${site.title}, content=~{::content}, description='本站收录的友情链接与合作站点', canonical='/links', image=${site.logo}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
 
   <div class="page-header">
@@ -34,14 +34,16 @@
          th:with="allLinkGroups = ${linkFinder?.groupBy()}">
       <a th:href="@{/links}"
          class="link-filter-item"
-         th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active' : ''">
+         th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active' : ''"
+         th:aria-current="${group == null or #strings.isEmpty(group) ? 'page' : null}">
         全部
       </a>
       <a th:each="g : ${allLinkGroups}"
          th:if="${allLinkGroups != null}"
          th:href="@{/links(group=${g.metadata.name})}"
          class="link-filter-item"
-         th:classappend="${group != null and group == g.metadata.name} ? 'is-active' : ''">
+         th:classappend="${group != null and group == g.metadata.name} ? 'is-active' : ''"
+         th:aria-current="${group != null and group == g.metadata.name ? 'page' : null}">
         <span th:text="${g.spec?.displayName}">分组</span>
       </a>
     </nav>
@@ -67,7 +69,7 @@
               <div class="link-logo">
                 <img th:if="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
                      th:src="${link.spec.logo}" th:alt="${link.spec.displayName}"
-                     loading="lazy" />
+                     loading="lazy" width="48" height="48" />
                 <span th:unless="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
                       class="link-logo-text"
                       th:text="${#strings.substring(link.spec.displayName, 0, 1)}">
@@ -98,7 +100,7 @@
         <div class="link-logo">
           <img th:if="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
                th:src="${link.spec.logo}" th:alt="${link.spec.displayName}"
-               loading="lazy" />
+               loading="lazy" width="48" height="48" />
           <span th:unless="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
                 class="link-logo-text"
                 th:text="${#strings.substring(link.spec.displayName, 0, 1)}">
@@ -137,13 +139,14 @@
     </div>
 
     <!-- 评论区 -->
-    <section th:if="${haloCommentEnabled and theme.config.content?.enable_links_comment == true}" class="post-comments">
+    <section th:if="${haloCommentEnabled and theme.config.content?.links_comment_enabled == true}" class="post-comments">
       <halo:comment group="plugin.halo.run" kind="Plugin" th:attr="name=${pluginName}" />
     </section>
 
   </th:block>
 
-  <div th:unless="${pluginFinder.available('PluginLinks')}" class="empty-state">
+  <div th:unless="${pluginFinder.available('PluginLinks')}" class="empty-state"
+       role="status" data-plugin-status="missing" data-plugin="PluginLinks">
     <div class="empty-icon">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>

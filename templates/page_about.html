@@ -1,15 +1,176 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title=(${singlePage.spec.title} ?: '关于') + ' - ' + ${site.title}, content=~{::content})}">
+      th:replace="~{layout :: html(title=(${singlePage.spec.title} ?: '关于') + ' - ' + ${site.title}, content=~{::content}, description=${singlePage?.spec?.excerpt?.raw}, canonical=${singlePage?.status?.permalink}, image=${singlePage?.spec?.cover}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
   <article class="page">
     <header class="page-header">
       <h1 class="page-title" th:text="${singlePage.spec.title} ?: '关于'">关于</h1>
       <p class="page-desc" th:if="${singlePage.spec.excerpt != null and singlePage.spec.excerpt.raw != null and !#strings.isEmpty(singlePage.spec.excerpt.raw)}" th:text="${singlePage.spec.excerpt.raw}"></p>
     </header>
+
+    <!-- 旧版本配置可能没有 about_blocks，始终保留一组可用的默认内容。 -->
+    <th:block th:with="aboutBlocks = ${theme.config.about?.about_blocks}">
+      <th:block th:if="${aboutBlocks == null or #lists.isEmpty(aboutBlocks)}">
+        <div class="intro-content" style="margin-bottom: var(--space-2xl); background: var(--bg-secondary); padding: var(--space-xl); border-radius: var(--radius-lg);">
+          <div class="intro-stats" style="display: flex; gap: var(--space-xl); flex-wrap: wrap; justify-content: space-around;"
+               th:with="stats = ${siteStatsFinder.getStats()}, memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null}">
+            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
+              <span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span>
+              <span class="intro-stat-label">发布文章</span>
+            </div>
+            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
+              <span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span>
+              <span class="intro-stat-label">内容分类</span>
+            </div>
+            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
+              <span class="intro-stat-number" th:text="${stats?.comment ?: 0}"></span>
+              <span class="intro-stat-label">用户评论</span>
+            </div>
+            <div class="intro-stat" th:if="${memberGroups != null and memberGroups.items != null}" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
+              <span class="intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
+              <span class="intro-stat-label">成员数量</span>
+            </div>
+          </div>
+        </div>
+
+        <section class="section" style="margin-bottom: var(--space-2xl);">
+          <div class="section-container">
+            <div class="section-header-bar">
+              <h2 class="section-title-bar">常见问题解答</h2>
+            </div>
+            <div class="faq-list">
+              <div class="faq-item" th:each="item : ${theme.config.about?.faq_list}" x-data="{ open: false }">
+                <button class="faq-question" @click="open = !open" type="button">
+                  <span th:text="${item.question}"></span>
+                  <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''">
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </button>
+                <div class="faq-answer" x-show="open" x-collapse>
+                  <p th:text="${item.answer}"></p>
+                </div>
+              </div>
+              <th:block th:if="${theme.config.about?.faq_list == null or #lists.isEmpty(theme.config.about?.faq_list)}">
+                <div class="faq-item" x-data="{ open: false }">
+                  <button class="faq-question" @click="open = !open" type="button">
+                    <span>如何加入我们？</span>
+                    <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''">
+                      <path d="M6 9l6 6 6-6"></path>
+                    </svg>
+                  </button>
+                  <div class="faq-answer" x-show="open" x-collapse>
+                    <p>点击页面右上角「加入我们」或成员公示栏旁的申请入口，按提示填写信息即可。</p>
+                  </div>
+                </div>
+              </th:block>
+            </div>
+          </div>
+        </section>
+      </th:block>
+
+      <!-- 组织介绍统计 -->
+      <th:block th:unless="${aboutBlocks == null or #lists.isEmpty(aboutBlocks)}" th:each="block : ${aboutBlocks}">
+      <!-- 统计区块 -->
+      <div th:if="${block.type == 'stats'}" class="intro-content" style="margin-bottom: var(--space-2xl); background: var(--bg-secondary); padding: var(--space-xl); border-radius: var(--radius-lg);">
+        <div class="intro-stats" style="display: flex; gap: var(--space-xl); flex-wrap: wrap; justify-content: space-around;"
+             th:with="stats = ${siteStatsFinder.getStats()},
+                     memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null},
+                     hasCustomStats = ${theme.config.about?.stat_items != null and !#lists.isEmpty(theme.config.about.stat_items)}">
+
+          <!-- 后台有自定义统计项时：按配置渲染 -->
+          <th:block th:if="${hasCustomStats}">
+            <th:block th:each="item : ${theme.config.about.stat_items}">
+              <div class="intro-stat" th:if="${item.enabled != false}" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
+                <th:block th:if="${item.type == 'post'}">
+                  <span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '发布文章数'"></span>
+                </th:block>
+                <th:block th:if="${item.type == 'category'}">
+                  <span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '内容分类数'"></span>
+                </th:block>
+                <th:block th:if="${item.type == 'comment'}">
+                  <span class="intro-stat-number" th:text="${stats?.comment ?: 0}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '用户评论数'"></span>
+                </th:block>
+                <th:block th:if="${item.type == 'upvote'}">
+                  <span class="intro-stat-number" th:text="${stats?.upvote ?: 0}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '点赞数'"></span>
+                </th:block>
+                <th:block th:if="${item.type == 'member' and memberGroups != null and memberGroups.items != null}">
+                  <span class="intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '成员数量'"></span>
+                </th:block>
+                <th:block th:if="${item.type == 'custom' and item.custom_number != null and !#strings.isEmpty(item.custom_number)}">
+                  <span class="intro-stat-number" th:text="${item.custom_number}"></span>
+                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '自定义数值'"></span>
+                </th:block>
+              </div>
+            </th:block>
+          </th:block>
+
+          <!-- 后台无自定义统计项时：使用默认四项 -->
+          <th:block th:unless="${hasCustomStats}">
+            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
+              <span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span>
+              <span class="intro-stat-label">发布文章</span>
+            </div>
+            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
+              <span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span>
+              <span class="intro-stat-label">内容分类</span>
+            </div>
+            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
+              <span class="intro-stat-number" th:text="${stats?.comment ?: 0}"></span>
+              <span class="intro-stat-label">用户评论</span>
+            </div>
+            <div class="intro-stat" th:if="${memberGroups != null and memberGroups.items != null}" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
+              <span class="intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
+              <span class="intro-stat-label">成员数量</span>
+            </div>
+          </th:block>
+        </div>
+      </div>
+
+      <!-- 常见问题区块 -->
+      <section th:if="${block.type == 'faq'}" class="section" style="margin-bottom: var(--space-2xl);">
+        <div class="section-container">
+          <div class="section-header-bar">
+            <h2 class="section-title-bar">常见问题解答</h2>
+          </div>
+          <div class="faq-list">
+            <div class="faq-item" th:each="item, iter : ${theme.config.about?.faq_list}" x-data="{ open: false }">
+              <button class="faq-question" @click="open = !open">
+                <span th:text="${item.question}"></span>
+                <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''">
+                  <path d="M6 9l6 6 6-6"></path>
+                </svg>
+              </button>
+              <div class="faq-answer" x-show="open" x-collapse>
+                <p th:text="${item.answer}"></p>
+              </div>
+            </div>
+            <th:block th:if="${theme.config.about?.faq_list == null or #lists.isEmpty(theme.config.about?.faq_list)}">
+              <div class="faq-item" x-data="{ open: false }">
+                <button class="faq-question" @click="open = !open">
+                  <span>如何加入我们？</span>
+                  <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''">
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </button>
+                <div class="faq-answer" x-show="open" x-collapse>
+                  <p>点击页面右上角「加入我们」或成员公示栏旁的申请入口，按提示填写信息即可。</p>
+                </div>
+              </div>
+            </th:block>
+          </div>
+        </div>
+      </section>
+      </th:block>
+    </th:block>
+
     <!-- 优先使用后台编辑的内容，为空时使用主题设置中的默认内容 -->
     <div class="page-content prose"
-         th:utext="${singlePage.content?.content != null and !#strings.isEmpty(singlePage.content.content) ? singlePage.content.content : (theme.config.page_content?.about_default_content ?: '')}">
+         th:utext="${singlePage.content?.content != null and !#strings.isEmpty(singlePage.content.content) ? singlePage.content.content : ''}">
     </div>
 
     <section th:if="${haloCommentEnabled}" class="page-comments">

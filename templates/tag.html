@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${tag?.spec?.displayName} + ' - ' + ${site.title}, content=~{::content}, description='浏览标签“' + ${tag?.spec?.displayName} + '”下的内容', canonical=${tag?.status?.permalink}, image=${site.logo}, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+  <div class="page-header">
+    <h1 class="page-title" th:text="'#' + ${tag?.spec?.displayName}"></h1>
+    <p class="page-desc" th:text="${tag?.status?.postCount ?: 0} + ' 篇文章'"></p>
+  </div>
+
+  <div class="post-grid" th:if="${posts != null and posts.items != null and !posts.items.isEmpty()}">
+    <article class="post-card" th:each="post : ${posts.items}">
+      <a th:href="@{${post.status?.permalink}}" class="post-card-link">
+        <div class="post-cover" th:if="${post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}">
+          <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}" loading="lazy" />
+        </div>
+        <div class="post-info">
+          <time th:text="${#temporals.format(post.spec?.publishTime, 'yyyy-MM-dd')}"></time>
+          <h3 class="post-title" th:text="${post.spec?.title}"></h3>
+        </div>
+      </a>
+    </article>
+  </div>
+
+  <div class="empty-state" th:unless="${posts != null and posts.items != null and !posts.items.isEmpty()}">
+    <p>该标签下暂无文章</p>
+  </div>
+
+  <nav class="pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext())}">
+    <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="page-btn">上一页</a>
+    <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="page-btn">下一页</a>
+  </nav>
+</th:block>
+</html>

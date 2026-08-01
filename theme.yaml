@@ -12,8 +12,8 @@ spec:
   homepage: https://nucma.cn
   repo: https://github.com/chenhufei/theme-nucma
   issues: https://qm.qq.com/q/YEqkx4fa0M
-  version: "3.21.0"
-  requires: ">=2.0.0"
+  version: "3.26.10"
+  requires: ">=2.22.0"
   settingName: theme-nucma-setting
   configMapName: theme-nucma-config
   license:
@@ -24,3 +24,23 @@ spec:
       - name: page_about
         description: 关于页
         file: page_about.html
+    category:
+      - name: category
+        description: 分类模板
+        file: category.html
+      - name: category_knowledge
+        description: 知识库列表模板
+        file: category-knowledge.html
+      - name: category_grid
+        description: 网格卡片模板
+        file: category-grid-template.html
+    post:
+      - name: post
+        description: 文章模板
+        file: post.html
+      - name: post_letter
+        description: 信件/公告模板
+        file: post-letter.html
+      - name: post_magazine
+        description: 杂志大图模板
+        file: post-magazine.html

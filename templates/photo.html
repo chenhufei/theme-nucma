@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title=(${title} ?: ${photo?.spec?.displayName}) + ' - 图库', content=~{::content})}">
+      th:replace="~{layout :: html(title=(${title} ?: ${photo?.spec?.displayName}) + ' - 图库', content=~{::content}, description=${photo?.spec?.description}, canonical=${photo?.status?.permalink}, image=${photo?.spec?.url}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
 
   <div class="page-header photo-page-header">
@@ -22,7 +22,8 @@
     <div class="photo-main">
       <img th:src="${photo?.spec?.url ?: photo?.spec?.cover}"
            th:alt="${photo?.spec?.displayName}"
-           class="photo-full" loading="lazy" />
+           class="photo-full" loading="lazy"
+           th:width="${photo?.exif?.imageWidth}" th:height="${photo?.exif?.imageHeight}" />
       <!-- 上/下一张导航按钮 -->
       <a th:if="${prev != null}" th:href="@{${photoUrl.detail(prev)}}"
          class="photo-nav-btn photo-nav-prev" aria-label="上一张">
@@ -89,7 +90,7 @@
            th:title="${neighbor.spec?.displayName}">
           <img th:src="${neighbor.spec?.cover ?: neighbor.spec?.url}"
                th:alt="${neighbor.spec?.displayName}"
-               loading="lazy" />
+               loading="lazy" width="100" height="75" />
         </a>
       </div>
     </div>

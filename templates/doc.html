@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${doc?.spec?.title} + ' - ' + ${site.title}, content=~{::content}, description=${doc?.spec?.description}, canonical=null, image=${site.logo}, pageType='article', robots=null)}">
+<th:block th:fragment="content">
+  <article class="post-article">
+    <header class="post-header">
+      <h1 class="post-title" th:text="${doc?.spec?.title}"></h1>
+    </header>
+    <div class="post-content" th:utext="${doc?.content?.content}"></div>
+  </article>
+</th:block>
+</html>

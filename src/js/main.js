@@ -1,3 +1,5 @@
+import { initDiagnostics } from './modules/diagnostics.js';
+
 /**
  * NUCMA 国风主题 - 主脚本
  * 统一使用 GSAP 作为动画引擎（入场/滚动显现/计数）
@@ -10,99 +12,35 @@
   var hasST = hasGSAP && typeof ScrollTrigger !== 'undefined';
   if (hasST) gsap.registerPlugin(ScrollTrigger);
 
-  // ===== 主题切换（圆形波纹扩散——渐变波纹避免纯白/纯黑突兀） =====
-  // 策略：
-  // 1. 禁用元素自身的 CSS transition（theme-transitioning → transition: none），避免原生过渡色造成中间态闪白/黑；
-  // 2. 波纹使用径向渐变，从"次色"扩散到"目标色"，视觉上不会出现大片纯色突兀；
-  // 3. 波纹覆盖到 75% 时立即切换主题（GSAP 回调约在 0.7 progress 时），此时绝大部分已被渐变覆盖，切换无感知；
-  // 4. 最后波纹淡出并移除。
+  // ===== 主题切换 =====
+  var themeTransitionTimer = null;
   function initThemeToggle() {
     var toggle = document.getElementById('themeToggle');
     if (!toggle) return;
 
-    var animating = false;
     toggle.addEventListener('click', function(e) {
-      if (animating) return;
-      animating = true;
-
       var current = document.documentElement.getAttribute('data-theme');
       var next = current === 'dark' ? 'light' : 'dark';
-
-      var rect = toggle.getBoundingClientRect();
-      var x = rect.left + rect.width / 2;
-      var y = rect.top + rect.height / 2;
-
-      var maxRadius = Math.max(
-        Math.hypot(x, y),
-        Math.hypot(window.innerWidth - x, y),
-        Math.hypot(x, window.innerHeight - y),
-        Math.hypot(window.innerWidth - x, window.innerHeight - y)
-      );
-
-      var ripple = document.createElement('div');
-      ripple.className = 'theme-ripple';
-      ripple.setAttribute('data-next', next); // 触发 CSS 里的渐变配色
-      ripple.style.left = (x - maxRadius) + 'px';
-      ripple.style.top = (y - maxRadius) + 'px';
-      ripple.style.width = (maxRadius * 2) + 'px';
-      ripple.style.height = (maxRadius * 2) + 'px';
-      ripple.style.transformOrigin = 'center center';
-      ripple.style.transform = 'scale(0)';
-      ripple.style.opacity = '1';
-      document.body.appendChild(ripple);
-
-      // 暂停所有元素的原生 CSS transition，防止"半过渡色"造成白屏/黑屏
-      document.documentElement.classList.add('theme-transitioning');
-
-      if (hasGSAP && !prefersReduced) {
-        var themeSwitched = false;
-        // 快速扩散，用 power3 让边缘柔和
-        gsap.to(ripple, {
-          scale: 1,
-          duration: 0.52,
-          ease: 'power3.out',
-          onUpdate: function() {
-            // 在波纹覆盖 ~70% 时切换主题，视觉上无突兀纯色
-            if (!themeSwitched && this.progress() >= 0.72) {
-              themeSwitched = true;
-              applyTheme(next);
-            }
-          },
-          onComplete: function() {
-            if (!themeSwitched) applyTheme(next);
-            // 立即淡出，去掉波纹让新主题直接接管
-            gsap.to(ripple, {
-              opacity: 0,
-              duration: 0.22,
-              ease: 'power1.out',
-              onComplete: function() {
-                ripple.remove();
-                document.documentElement.classList.remove('theme-transitioning');
-                animating = false;
-              }
-            });
-          }
-        });
-      } else {
-        applyTheme(next);
-        setTimeout(function() {
-          ripple.remove();
-          document.documentElement.classList.remove('theme-transitioning');
-          animating = false;
-        }, 320);
-      }
+      applyTheme(next, true);
     });
 
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
       var saved = localStorage.getItem('theme-mode');
-      if (saved === 'system' || !saved) applyTheme('system');
+      if (saved === 'system' || !saved) applyTheme('system', true);
     });
   }
 
-  function applyTheme(mode) {
+  function applyTheme(mode, animate) {
     var actual = mode === 'system'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : mode;
+    if (animate && !prefersReduced) {
+      document.documentElement.classList.add('theme-transitioning');
+      window.clearTimeout(themeTransitionTimer);
+      themeTransitionTimer = window.setTimeout(function() {
+        document.documentElement.classList.remove('theme-transitioning');
+      }, 460);
+    }
     document.documentElement.setAttribute('data-theme', actual);
     document.documentElement.setAttribute('data-color-scheme', actual);
     document.documentElement.classList.remove('light', 'dark');
@@ -111,28 +49,12 @@
     localStorage.setItem('theme', actual);
   }
 
-  // ===== 移动端菜单 =====
-  function openMobileMenu() {
-    var menu = document.getElementById('mobileMenu');
-    if (menu) { menu.classList.add('is-open'); document.body.style.overflow = 'hidden'; }
-  }
-  function closeMobileMenu() {
-    var menu = document.getElementById('mobileMenu');
-    if (menu) { menu.classList.remove('is-open'); document.body.style.overflow = ''; }
-  }
-  function initMobileMenu() {
-    var btn = document.getElementById('mobileMenuBtn');
-    if (btn) btn.addEventListener('click', openMobileMenu);
-  }
-
-  // ===== 返回顶部：粒子飞升动画 + 鼠标跟随指示器（山顶指向鼠标） =====
+  // ===== 返回顶部：粒子飞升动画 =====
   function initBackToTop() {
     var wrap = document.getElementById('backToTop');
     if (!wrap) return;
 
     var particleLayer = wrap.querySelector('.bttp-particles-layer');
-    var pointer = wrap.querySelector('.bttp-pointer');
-    var pointerTip = wrap.querySelector('.bttp-pointer-tip');
 
     window.addEventListener('scroll', function() {
       wrap.classList.toggle('visible', window.scrollY > 300);
@@ -147,47 +69,6 @@
     });
 
     if (!hasGSAP || prefersReduced) return;
-
-    // --------- 指示器：大三角的山顶指向鼠标 ---------
-    function updatePointer() {
-      if (!wrap.classList.contains('visible')) return;
-      if (!pointer || !pointerTip) return;
-
-      var wrapRect = wrap.getBoundingClientRect();
-      var tipClientX = wrapRect.left + wrapRect.width / 2;
-      var tipClientY = wrapRect.top + 0; // 三角的 top 对齐山顶
-      var dx = (pointer._lastMouseX || tipClientX) - tipClientX;
-      var dy = (pointer._lastMouseY || tipClientY) - tipClientY;
-
-      // 只有当鼠标在页面上方 90% 区域才跟随；否则保持默认指向上方
-      var angleDeg = 0;
-      if (dy < 0 || Math.abs(dx) > 12) {
-        // atan2(dy, dx) 以"向右为 0°、向下为 90°"。我们要以"向上为 0°"：
-        var rad = Math.atan2(dx, -dy); // 0°=向上，正=向右偏
-        angleDeg = rad * 180 / Math.PI;
-        // 限制在 -75° ~ +75°，避免太夸张
-        if (angleDeg > 75) angleDeg = 75;
-        if (angleDeg < -75) angleDeg = -75;
-      }
-      gsap.to(pointerTip, {
-        rotation: angleDeg,
-        duration: 0.35,
-        ease: 'power2.out',
-        overwrite: true
-      });
-    }
-
-    document.addEventListener('mousemove', function(e) {
-      if (!wrap.classList.contains('visible')) return;
-      pointer._lastMouseX = e.clientX;
-      pointer._lastMouseY = e.clientY;
-      if (!pointer._raf) {
-        pointer._raf = requestAnimationFrame(function() {
-          pointer._raf = null;
-          updatePointer();
-        });
-      }
-    }, { passive: true });
 
     // --------- 粒子：从一排三角的山顶沿线向上飞升并淡化 ---------
     // 中心三角的山顶坐标（相对 particleLayer，particleLayer 左=0 top=0 与 wrap 同起点）
@@ -284,94 +165,8 @@
     }, { passive: true });
   }
 
-  // ===== FAQ（纯 GSAP 展开动画——高度+箭头旋转+内容淡入） =====
-  function toggleFaq(btn) {
-    var item = btn.closest('.faq-item');
-    if (!item) return;
-    var answer = item.querySelector('.faq-answer');
-    var icon = btn.querySelector('.faq-icon');
-    var content = answer ? answer.querySelector('p') : null;
 
-    // 先关闭其他已展开的
-    document.querySelectorAll('.faq-item.active').forEach(function(other) {
-      if (other === item) return;
-      other.classList.remove('active');
-      var otherAnswer = other.querySelector('.faq-answer');
-      var otherIcon = other.querySelector('.faq-icon');
-      var otherContent = otherAnswer ? otherAnswer.querySelector('p') : null;
-      if (!hasGSAP || prefersReduced) {
-        if (otherAnswer) otherAnswer.style.height = '0px';
-        return;
-      }
-      gsap.killTweensOf([otherAnswer, otherIcon, otherContent].filter(Boolean));
-      gsap.to(otherIcon, { rotation: 0, scale: 1, duration: 0.28, ease: 'power2.inOut' });
-      if (otherContent) {
-        gsap.to(otherContent, {
-          y: -8, opacity: 0, duration: 0.18, ease: 'power1.in'
-        });
-      }
-      if (otherAnswer) {
-        gsap.to(otherAnswer, {
-          height: 0,
-          duration: 0.36,
-          ease: 'power2.inOut',
-          overwrite: true
-        });
-      }
-    });
 
-    var isActive = item.classList.contains('active');
-    if (isActive) {
-      // 收起当前
-      item.classList.remove('active');
-      if (!hasGSAP || prefersReduced) {
-        if (answer) answer.style.height = '0px';
-        return;
-      }
-      gsap.killTweensOf([answer, icon, content].filter(Boolean));
-      gsap.to(icon, { rotation: 0, scale: 1, duration: 0.28, ease: 'power2.inOut' });
-      if (content) {
-        gsap.to(content, {
-          y: -8, opacity: 0, duration: 0.18, ease: 'power1.in'
-        });
-      }
-      if (answer) {
-        gsap.to(answer, {
-          height: 0,
-          duration: 0.36,
-          ease: 'power2.inOut',
-          overwrite: true
-        });
-      }
-    } else {
-      // 展开当前
-      item.classList.add('active');
-      if (!hasGSAP || prefersReduced) {
-        if (answer) answer.style.height = 'auto';
-        return;
-      }
-      gsap.killTweensOf([answer, icon, content].filter(Boolean));
-      gsap.to(icon, { rotation: 180, scale: 1.1, duration: 0.32, ease: 'back.out(1.4)' });
-
-      var tl = gsap.timeline({ defaults: { overwrite: true } });
-      if (answer) {
-        // 先 clear height，用 auto 的方式取 scrollHeight，避免估错
-        var targetHeight = answer.scrollHeight || 0;
-        tl.fromTo(answer,
-          { height: 0 },
-          { height: targetHeight, duration: 0.44, ease: 'expo.out' },
-          0
-        );
-      }
-      if (content) {
-        tl.fromTo(content,
-          { y: -8, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.36, ease: 'power2.out' },
-          0.1
-        );
-      }
-    }
-  }
 
   // ===== 导航栏自定义链接上下滚动轮播 =====
   function initHeaderLinksCarousel() {
@@ -464,6 +259,8 @@
       });
       indicators.forEach(function(ind, idx) {
         ind.classList.remove('is-active');
+        ind.setAttribute('aria-selected', String(idx === i));
+        ind.setAttribute('tabindex', idx === i ? '0' : '-1');
         // 触发 CSS scaleX 重播
         ind.style.animation = 'none';
         // eslint-disable-next-line no-unused-expressions
@@ -519,6 +316,19 @@
       });
       ind.addEventListener('mouseleave', function() {
         if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      });
+      ind.addEventListener('keydown', function(e) {
+        var target = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') target = (current + 1) % slides.length;
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') target = (current - 1 + slides.length) % slides.length;
+        if (e.key === 'Home') target = 0;
+        if (e.key === 'End') target = slides.length - 1;
+        if (target === null) return;
+        e.preventDefault();
+        current = target;
+        playFrom(current);
+        if (indicators[current]) indicators[current].focus();
+        start();
       });
     });
     banner.addEventListener('mouseenter', stop);
@@ -616,88 +426,6 @@
     }
   }
 
-  // ===== 登录状态检测 + 点击/hover 弹出菜单 =====
-  function initLoginEntry() {
-    var entry = document.getElementById('loginEntry');
-    var dropdown = document.getElementById('loginDropdown');
-    var wrap = document.getElementById('loginEntryWrap');
-    if (!entry || !dropdown) return;
-    var isLoggedIn = false;
-
-    function openDropdown() {
-      dropdown.classList.add('is-open');
-      entry.setAttribute('aria-expanded', 'true');
-    }
-    function closeDropdown() {
-      dropdown.classList.remove('is-open');
-      entry.setAttribute('aria-expanded', 'false');
-    }
-
-    entry.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!isLoggedIn) {
-        window.location.href = '/console';
-        return;
-      }
-      if (dropdown.classList.contains('is-open')) {
-        closeDropdown();
-      } else {
-        openDropdown();
-      }
-    });
-
-    if (wrap) {
-      wrap.addEventListener('mouseleave', function() {
-        if (isLoggedIn) closeDropdown();
-      });
-    }
-
-    document.addEventListener('click', function(e) {
-      if (!isLoggedIn) return;
-      if (!entry.contains(e.target) && !dropdown.contains(e.target)) {
-        closeDropdown();
-      }
-    });
-
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && isLoggedIn) closeDropdown();
-    });
-
-    fetch('/apis/api.console.halo.run/v1alpha1/users/-', { credentials: 'include' })
-      .then(function(res) { return res.ok ? res.json() : null; })
-      .then(function(data) {
-        if (data && data.user) {
-          isLoggedIn = true;
-          var user = data.user;
-          var avatar = user.spec && user.spec.avatar ? user.spec.avatar : '';
-          var name = user.spec && user.spec.displayName ? user.spec.displayName : (user.metadata && user.metadata.name ? user.metadata.name : '用户');
-          entry.title = name;
-          entry.innerHTML = '';
-          if (avatar) {
-            var img = document.createElement('img');
-            img.className = 'login-avatar';
-            img.src = avatar;
-            img.alt = name;
-            entry.appendChild(img);
-          } else {
-            var placeholder = document.createElement('span');
-            placeholder.className = 'login-avatar-placeholder';
-            placeholder.style.cssText = 'display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;border:2px solid var(--bg-primary);';
-            placeholder.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>';
-            entry.appendChild(placeholder);
-          }
-          var loginLink = dropdown.querySelector('.login-menu-login');
-          var ucLink = dropdown.querySelector('.login-menu-uc');
-          var logoutLink = dropdown.querySelector('.login-menu-logout');
-          if (loginLink) loginLink.style.display = 'none';
-          if (ucLink) ucLink.style.display = '';
-          if (logoutLink) logoutLink.style.display = '';
-        }
-      })
-      .catch(function() {});
-  }
-
   // ===== 首页卡片排序（pinned 优先，严格按 metadata.name 相等匹配） + 数量限制（pinned 不受限） =====
   function initGridLimit() {
     document.querySelectorAll('[data-limit]').forEach(function(grid) {
@@ -792,16 +520,55 @@
     });
   }
 
+  // ===== 可配置的首页/文章侧栏排序 =====
+  function applyConfiguredOrder(container, itemSelector, order) {
+    if (!container || !order.length) return;
+    var items = Array.from(container.querySelectorAll(itemSelector));
+    var byKey = {};
+    items.forEach(function(item) {
+      var key = item.dataset.homeSection || item.dataset.sidebarSection;
+      if (key) byKey[key] = item;
+    });
+    order.forEach(function(key) {
+      if (byKey[key]) container.appendChild(byKey[key]);
+    });
+  }
+
+  function initSectionOrdering() {
+    var home = document.querySelector('.home-sections[data-section-order]');
+    if (home) {
+      applyConfiguredOrder(home, '[data-home-section]', (home.dataset.sectionOrder || '').split(',').map(function(v) { return v.trim(); }).filter(Boolean));
+    }
+    var sidebar = document.querySelector('.post-sidebar[data-sidebar-order]');
+    if (sidebar) {
+      applyConfiguredOrder(sidebar, '[data-sidebar-section]', (sidebar.dataset.sidebarOrder || '').split(',').map(function(v) { return v.trim(); }).filter(Boolean));
+    }
+  }
+
+  // ===== 文章排版：仅对中文正文启用段落首行缩进 =====
+  function initPostTypography() {
+    var content = document.querySelector('.post-content.prose');
+    if (!content) return;
+    var text = (content.textContent || '').trim();
+    var firstParagraph = content.querySelector('p');
+    var firstText = firstParagraph ? (firstParagraph.textContent || '').trim() : '';
+    var hasCjk = /[\u3400-\u9fff]/.test(text.slice(0, 1600));
+    var letterOpening = /^(尊敬的|亲爱的|致|敬启者|您好|Dear\b|To whom it may concern\b|Hi\b|Hello\b)/i.test(firstText);
+    if (hasCjk && !letterOpening) content.classList.add('prose--cjk');
+    if (letterOpening || !hasCjk) content.classList.add('prose--letter');
+  }
+
   // ===== 初始化 =====
   document.addEventListener('DOMContentLoaded', function() {
+    initDiagnostics();
     initThemeToggle();
-    initMobileMenu();
     initBackToTop();
     initHeaderScroll();
-    initLoginEntry();
     // 先 priority 排序（保留 pinned 顺序），再按 pinned 精确置顶并做数量限制
     initPrioritySort();
     initGridLimit();
+    initSectionOrdering();
+    initPostTypography();
     initBannerAnimation();
     initHeaderLinksCarousel();
     initHeroBgCarousel();
@@ -810,7 +577,5 @@
     initCountUp();
   });
 
-  window.openMobileMenu = openMobileMenu;
-  window.closeMobileMenu = closeMobileMenu;
-  window.toggleFaq = toggleFaq;
+
 })();

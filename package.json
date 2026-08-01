@@ -1,26 +1,32 @@
 {
   "name": "theme-nucma",
-  "version": "3.21.0",
-  "description": "简约政府风格的 Halo 主题，适合校园官方站点使用",
+  "version": "3.26.10",
+  "description": "\u7b80\u7ea6\u653f\u5e9c\u98ce\u683c\u7684 Halo \u4e3b\u9898\uff0c\u9002\u5408\u6821\u56ed\u5b98\u65b9\u7ad9\u70b9\u4f7f\u7528",
   "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "vite build --watch",
-    "build": "vite build",
-    "package": "vite build && npx @halo-dev/theme-package-cli"
+    "check": "node tools/verify-theme.mjs",
+    "build": "npm run check && vite build && node tools/verify-theme.mjs --built",
+    "package": "npm run build && npx @halo-dev/theme-package-cli && node tools/verify-package.mjs"
   },
   "devDependencies": {
-    "vite": "^5.4.0",
-    "tailwindcss": "^3.4.0",
-    "postcss": "^8.4.0",
+    "adm-zip": "^0.6.0",
     "autoprefixer": "^10.4.0",
-    "esbuild": "^0.23.0"
+    "esbuild": "^0.28.1",
+    "js-yaml": "^5.2.2",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "vite": "^8.2.0"
   },
   "keywords": [
     "halo",
     "halo-theme",
     "nucma",
-    "校园主题"
+    "\u6821\u56ed\u4e3b\u9898"
   ],
   "author": "NUCMA",
   "homepage": "https://nucma.cn"
