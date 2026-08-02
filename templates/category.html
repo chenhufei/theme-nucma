@@ -2,12 +2,6 @@
 <html xmlns:th="https://www.thymeleaf.org"
       th:replace="~{layout :: html(title=${category?.spec?.displayName} + ' - ' + ${site.title}, content=~{::content}, description=${category?.spec?.description}, canonical=${category?.status?.permalink}, image=${category?.spec?.cover}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
-  <th:block th:if="${theme.config.appearance?.category_style == 'grid'}">
-    <th:block th:replace="~{category-grid :: content}"></th:block>
-  </th:block>
-  <th:block th:unless="${theme.config.appearance?.category_style == 'grid'}">
-    <th:block th:replace="~{category-list :: content}"></th:block>
-  </th:block>
-
+  <th:block th:replace="~{category-list :: content}"></th:block>
 </th:block>
 </html>

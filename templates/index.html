@@ -78,11 +78,11 @@
     </div>
   </section>
 
-  <!-- 首页分类三栏 -->
+  <!-- 首页自选分类栏 -->
   <section class="section" data-home-section="categories"
            th:if="${theme.config.home?.show_categories != false and theme.config.home?.category_columns_enabled == true and theme.config.home?.category_blocks != null and !#lists.isEmpty(theme.config.home.category_blocks)}">
     <div class="section-container">
-      <div class="category-cols-wrapper" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+      <div class="category-cols-wrapper">
         <th:block th:each="col : ${theme.config.home.category_blocks}"
                   th:with="catPostList = ${postFinder.list({page: 1, size: col.limit ?: 6, categoryName: col.category_name})},
                            catInfo = ${categoryFinder.getByName(col.category_name)}">
@@ -144,7 +144,7 @@
   </section>
 
   <!-- 友情链接 -->
-  <section class="section section-gray" data-home-section="links"
+  <section class="section" data-home-section="links"
            th:if="${theme.config.home?.show_links != false and pluginFinder.available('PluginLinks')}">
     <div class="section-container">
       <div class="section-header-bar">

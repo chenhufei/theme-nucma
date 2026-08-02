@@ -5,11 +5,11 @@ metadata:
 spec:
   forms:
     - group: navigation
-      label: 导航栏设置
+      label: 导航
       formSchema:
         - $formkit: select
           name: nav_align
-          label: 导航菜单对齐方式
+          label: 菜单对齐
           value: center
           help: header 内菜单与自定义链接的水平对齐
           options:
@@ -21,12 +21,12 @@ spec:
               value: right
         - $formkit: menuSelect
           name: header_menu
-          label: Header 菜单
+          label: 顶部菜单
           clearable: true
           help: 选择 Header 顶部导航使用的菜单（从 Halo 后台已创建的菜单中选择），清空则不显示主菜单
         - $formkit: menuSelect
           name: footer_menu
-          label: Footer 菜单
+          label: 页脚菜单
           clearable: true
           help: 选择 Footer 页脚快捷导航使用的菜单，清空则不显示
         - $formkit: menuSelect
@@ -40,7 +40,7 @@ spec:
           value: true
           help: 右上角显示登录按钮，已登录用户显示头像
     - group: sidebar
-      label: 文章侧边栏
+      label: 文章侧栏
       formSchema:
         - $formkit: select
           name: section_order
@@ -81,11 +81,11 @@ spec:
           label: 显示文章目录
           value: true
     - group: carousel
-      label: 导航轮播设置
+      label: 导航链接
       formSchema:
         - $formkit: number
           name: carousel_interval
-          label: 自定义链接轮播停留时长（毫秒）
+          label: 轮播间隔（毫秒）
           value: 3500
           min: 1500
           max: 10000
@@ -93,26 +93,34 @@ spec:
           help: 当自定义链接超过 1 个时会自动上下滚动轮播，此处设置每个链接在导航栏上的停留显示时间，单位毫秒，默认 3500ms
         - $formkit: array
           name: custom_links
-          label: 导航栏自定义链接
+          label: 自定义链接
+          value: []
           addLabel: 添加链接
           emptyText: 暂无自定义链接
           help: 在导航菜单右侧显示自定义链接，可选择图片或文字样式
           itemLabels:
+            - type: image
+              label: $value.image
             - type: text
-              label: "$value.text ? $value.text : ($value.image ? '[图片链接]' : $value.url)"
+              label: $value.text
+            - type: text
+              label: $value.url
           children:
             - $formkit: text
               name: text
               label: 链接文字
+              value: ""
               placeholder: 如：加入我们（不填则显示图片或URL）
             - $formkit: text
               name: url
               label: 链接地址
+              value: ""
               placeholder: https://
               validation: required
             - $formkit: attachment
               name: image
               label: 链接图片
+              value: ""
               accepts: ["image/*"]
               help: 从媒体库选择图片，设置后将显示为图片按钮
             - $formkit: select
@@ -126,20 +134,11 @@ spec:
                   value: _self
 
     - group: appearance
-      label: 外观与全局
+      label: 外观
       formSchema:
         - $formkit: select
-          name: category_style
-          label: 默认分类页展示样式
-          value: list
-          options:
-            - label: 列表样式 (List)
-              value: list
-            - label: 网格卡片样式 (Grid)
-              value: grid
-        - $formkit: select
           name: default_theme_mode
-          label: 默认配色模式
+          label: 默认明暗模式
           value: system
           options:
             - label: 跟随系统
@@ -157,20 +156,21 @@ spec:
           label: 显示返回顶部按钮
           value: true
     - group: hero
-      label: 首页 Hero 设置
+      label: 首页横幅
       formSchema:
         - $formkit: checkbox
           name: show_hero
-          label: 显示 Hero 区块
+          label: 显示横幅
           value: true
         - $formkit: attachment
           name: bg_image
-          label: Hero 背景图片（单图）
+          label: 单张背景
           accepts: ["image/*"]
           help: 从媒体库选择一张背景图片。如需轮播多图请使用下方「多背景轮播图」设置，留空使用默认渐变背景。
         - $formkit: array
           name: bg_carousel
-          label: 多背景轮播图
+          label: 背景轮播
+          value: []
           addLabel: 添加背景图
           emptyText: 请先添加至少 2 张轮播图
           help: 添加多张图（超过1张）会自动轮播，底部显示条形指示线，建议尺寸一致（1920x600 以上）。
@@ -178,16 +178,18 @@ spec:
             - type: image
               label: $value.url
             - type: text
-              label: "$value.caption ? $value.caption : $value.url"
+              label: $value.caption
           children:
             - $formkit: attachment
               name: url
               label: 背景图片
+              value: ""
               accepts: ["image/*"]
               validation: required
             - $formkit: text
               name: caption
               label: 图片说明（可选）
+              value: ""
               placeholder: 如：春日校园
         - $formkit: number
           name: carousel_interval
@@ -199,7 +201,7 @@ spec:
           help: 每张图停留显示的时间，单位毫秒，默认 5000ms
         - $formkit: select
           name: bg_overlay
-          label: Hero 遮罩强度
+          label: 背景遮罩
           value: medium
           help: 自定义背景图片的遮罩强度，影响文字可读性
           options:
@@ -213,12 +215,12 @@ spec:
               value: dark
         - $formkit: checkbox
           name: full_width
-          label: Hero 全宽显示
+          label: 铺满页面宽度
           value: false
           help: 开启后 Hero 区域顶到页面边缘和 header，不留容器边距
         - $formkit: range
           name: min_height
-          label: Hero 区块高度（像素）
+          label: 横幅高度（像素）
           value: 320
           min: 200
           max: 800
@@ -227,7 +229,7 @@ spec:
 
 
     - group: home
-      label: 首页配置
+      label: 首页内容
       formSchema:
         - $formkit: select
           name: section_order
@@ -334,42 +336,40 @@ spec:
           value: 8
         - $formkit: checkbox
           name: category_columns_enabled
-          label: 开启首页分类三栏展示
-          help: 开启后，首页的信息公告区域将分为三个分类区块展示
+          label: 开启首页自选分类栏
+          help: 开启后按下方已选择的分类数量展示等宽栏目，支持 1-3 栏
           value: false
         - $formkit: array
           name: category_blocks
-          label: 分类区块配置（限3个）
-          addLabel: 添加分类区块
-          help: 配置首页三栏分别显示的分类文章，请确保只添加三个
+          label: 首页分类栏（最多3栏）
+          value: []
+          max: 3
+          addLabel: 添加分类栏
+          help: 每个条目对应首页一栏；选择两个条目时显示两栏，移动端自动改为单栏
           itemLabels:
             - type: text
-              label: "$value.block_title ? $value.block_title : $value.category_name"
+              label: $value.block_title
+            - type: text
+              label: $value.category_name
           children:
-            - $formkit: select
+            - $formkit: categorySelect
               name: category_name
               label: 选择分类
+              value: ""
+              autoSelect: false
+              validation: required
               help: 选择要展示的分类
-              action: /apis/content.halo.run/v1alpha1/categories
-              requestOption:
-                method: GET
-                pageField: page
-                sizeField: size
-                totalField: total
-                itemsField: items
-                labelField: spec.displayName
-                valueField: metadata.name
-                fieldSelectorKey: metadata.name
             - $formkit: text
               name: block_title
               label: 区块显示标题
+              value: ""
               help: 前台显示的区块标题，如“校园新闻”
             - $formkit: number
               name: limit
               label: 显示数量
               value: 6
     - group: about
-      label: 关于页设置
+      label: 关于页
       formSchema:
         - $formkit: array
           name: about_blocks
@@ -381,11 +381,12 @@ spec:
             - type: faq
           itemLabels:
             - type: text
-              label: "$value.type == 'stats' ? '数据统计' : ($value.type == 'faq' ? '常见问题' : $value.type)"
+              label: $value.type
           children:
             - $formkit: select
               name: type
               label: 区块类型
+              value: stats
               options:
                 - label: 数据统计
                   value: stats
@@ -394,12 +395,17 @@ spec:
         - $formkit: array
           name: stat_items
           label: 统计项列表
+          value: []
           addLabel: 添加统计项
           emptyText: 暂无统计项（将使用默认：文章数、分类数、评论数、成员数）
           help: 自由添加或排序统计项，可选预设类型或自定义数值名称
           itemLabels:
             - type: text
-              label: "$value.label ? $value.label : ($value.type == 'post' ? '发布文章数' : ($value.type == 'category' ? '内容分类数' : ($value.type == 'comment' ? '用户评论数' : ($value.type == 'upvote' ? '点赞数' : ($value.type == 'member' ? '成员数量' : ($value.type == 'custom' ? '自定义数值' : $value.type))))))"
+              label: $value.label
+            - type: text
+              label: $value.type
+            - type: text
+              label: $value.custom_number
           children:
             - $formkit: select
               name: type
@@ -422,11 +428,13 @@ spec:
             - $formkit: text
               name: custom_number
               label: 自定义数值
+              value: ""
               placeholder: 仅类型为「自定义数值」时生效，如：2018
               help: 当类型选择为自定义数值时，在此填写数字内容
             - $formkit: text
               name: label
               label: 覆盖显示名称（可选）
+              value: ""
               placeholder: 留空则使用预设名称，如：成立年份
               help: 可替换预设的名称显示，自定义项建议填写显示名称
             - $formkit: checkbox
@@ -474,7 +482,7 @@ spec:
               validation: required
 
     - group: content
-      label: 内容设置
+      label: 内容与功能
       formSchema:
         - $formkit: select
           name: date_format
@@ -543,7 +551,7 @@ spec:
 
 
     - group: footer
-      label: 页脚设置
+      label: 页脚
       formSchema:
         - $formkit: textarea
           name: copyright
@@ -558,6 +566,7 @@ spec:
         - $formkit: array
           name: custom_column_items
           label: 自定义栏目内容
+          value: []
           addLabel: 添加项目
           emptyText: 暂无内容
           help: 添加图片或文字链接，支持简单的可视化排版
@@ -565,20 +574,25 @@ spec:
             - type: image
               label: $value.image
             - type: text
-              label: "$value.title ? $value.title : $value.url"
+              label: $value.title
+            - type: text
+              label: $value.url
           children:
             - $formkit: text
               name: title
               label: 标题/文字
+              value: ""
               placeholder: 如：微信公众号
             - $formkit: attachment
               name: image
               label: 图片
+              value: ""
               accepts: ["image/*"]
               help: 从媒体库选择图片，如二维码、Logo 等
             - $formkit: text
               name: url
               label: 链接地址
+              value: ""
               placeholder: https://（可选，留空则不可点击）
             - $formkit: select
               name: target

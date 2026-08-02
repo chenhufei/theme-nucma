@@ -12,7 +12,7 @@ spec:
   homepage: https://nucma.cn
   repo: https://github.com/chenhufei/theme-nucma
   issues: https://qm.qq.com/q/YEqkx4fa0M
-  version: "3.26.12"
+  version: "3.26.15"
   requires: ">=2.22.0"
   settingName: theme-nucma-setting
   configMapName: theme-nucma-config
@@ -21,26 +21,20 @@ spec:
       url: "https://github.com/chenhufei/theme-nucma/blob/main/LICENSE"
   customTemplates:
     page:
-      - name: page_about
-        description: 关于页
+      - name: 关于页
+        description: 站点介绍、统计与常见问题
         file: page_about.html
     category:
-      - name: category
-        description: 分类模板
-        file: category.html
-      - name: category_knowledge
-        description: 知识库列表模板
+      - name: 知识库列表
+        description: 适合文档和专题内容
         file: category-knowledge.html
-      - name: category_grid
-        description: 网格卡片模板
+      - name: 网格卡片
+        description: 适合封面内容展示
         file: category-grid-template.html
     post:
-      - name: post
-        description: 文章模板
-        file: post.html
-      - name: post_letter
-        description: 信件/公告模板
+      - name: 信件 / 公告
+        description: 不缩进正文，适合公文和信件
         file: post-letter.html
-      - name: post_magazine
-        description: 杂志大图模板
+      - name: 杂志大图
+        description: 强调封面和首段的视觉文章
         file: post-magazine.html
