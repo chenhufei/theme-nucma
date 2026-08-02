@@ -188,9 +188,6 @@ button { font-family: inherit; line-height: 1.4; }
 .login-entry .login-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
 .login-dropdown { position: absolute; top: calc(100% + 6px); right: 0; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 180px; z-index: 101; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: all 0.2s ease; overflow: hidden; }
 .login-dropdown.is-open { opacity: 1; visibility: visible; transform: translateY(0); }
-/* hover/focus 展开菜单 */
-.login-entry-wrap:hover .login-dropdown,
-.login-entry-wrap:focus-within .login-dropdown { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
 .login-dropdown { pointer-events: none; }
 .login-dropdown.is-open { pointer-events: auto; }
 .login-dropdown a { display: flex; align-items: center; gap: var(--space-sm); padding: 0.625rem var(--space-md); font-size: 0.875rem; color: var(--text-secondary); text-decoration: none; transition: all 0.15s ease; }

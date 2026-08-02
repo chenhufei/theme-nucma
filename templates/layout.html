@@ -173,7 +173,30 @@
           </button>
           <!-- 登录入口（在明暗切换右侧） -->
           <th:block th:if="${theme.config.navigation?.show_login_btn != false}">
-            <div class="login-entry-wrap" id="loginEntryWrap" x-data="{ open: false, loggedIn: false, user: null }" x-init="
+            <div class="login-entry-wrap" id="loginEntryWrap" x-data="{ open: false, pinned: false, loggedIn: false, user: null, openTimer: null, closeTimer: null,
+                showMenu() {
+                  clearTimeout(this.closeTimer);
+                  clearTimeout(this.openTimer);
+                  this.openTimer = setTimeout(() => { this.open = true; }, 140);
+                },
+                hideMenu() {
+                  clearTimeout(this.openTimer);
+                  clearTimeout(this.closeTimer);
+                  if (!this.pinned) this.closeTimer = setTimeout(() => { this.open = false; }, 200);
+                },
+                toggleMenu() {
+                  clearTimeout(this.openTimer);
+                  clearTimeout(this.closeTimer);
+                  this.pinned = !this.pinned;
+                  this.open = this.pinned;
+                },
+                closeMenu() {
+                  clearTimeout(this.openTimer);
+                  clearTimeout(this.closeTimer);
+                  this.open = false;
+                  this.pinned = false;
+                }
+              }" x-init="
                 fetch('/apis/api.console.halo.run/v1alpha1/users/-', { credentials: 'include' })
                   .then(res => res.ok ? res.json() : null)
                   .then(data => {
@@ -182,8 +205,8 @@
                       user = data.user;
                     }
                   }).catch(() => {})
-              " @mouseleave="if(loggedIn) open = false" @click.away="open = false" @keydown.escape.window="open = false">
-              <button id="loginEntry" class="icon-btn login-entry" type="button" :title="loggedIn ? (user.spec?.displayName || user.metadata?.name || '用户') : '登录'" :aria-label="loggedIn ? (user.spec?.displayName || user.metadata?.name || '用户') : '登录'" @click.prevent="if(!loggedIn) { window.location.href='/console' } else { open = !open }" :aria-expanded="open">
+              " @mouseenter="if(loggedIn) showMenu()" @mouseleave="if(loggedIn) hideMenu()" @focusin="if(loggedIn) showMenu()" @click.away="closeMenu()" @keydown.escape.window="closeMenu()">
+              <button id="loginEntry" class="icon-btn login-entry" type="button" :title="loggedIn ? (user.spec?.displayName || user.metadata?.name || '用户') : '登录'" :aria-label="loggedIn ? (user.spec?.displayName || user.metadata?.name || '用户') : '登录'" @click.prevent="if(!loggedIn) { window.location.href='/console' } else { toggleMenu() }" :aria-expanded="open">
                 <template x-if="loggedIn">
                   <div style="display:contents">
                     <template x-if="user.spec?.avatar">
@@ -204,9 +227,9 @@
                   </svg>
                 </template>
               </button>
-              <div id="loginDropdown" class="login-dropdown" role="menu" aria-label="用户菜单" :class="{ 'is-open': open }" x-show="open" x-transition.opacity style="display: none;">
+              <div id="loginDropdown" class="login-dropdown" role="menu" aria-label="用户菜单" :class="{ 'is-open': open }" x-show="open" x-transition.opacity.duration.160ms style="display: none;">
                 <!-- 未登录时显示 -->
-                <a href="/console" role="menuitem" class="login-menu-login" x-show="!loggedIn">
+                <a href="/console" role="menuitem" class="login-menu-login" x-show="!loggedIn" @click="closeMenu()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
                     <polyline points="10 17 15 12 10 7"></polyline>
@@ -215,14 +238,14 @@
                   <span>登录</span>
                 </a>
                 <!-- 已登录时显示 -->
-                <a href="/uc" role="menuitem" class="login-menu-uc" x-show="loggedIn">
+                <a href="/uc" role="menuitem" class="login-menu-uc" x-show="loggedIn" @click="closeMenu()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
                   </svg>
                   <span>个人中心</span>
                 </a>
-                <a href="/logout" role="menuitem" class="login-menu-logout" x-show="loggedIn">
+                <a href="/logout" role="menuitem" class="login-menu-logout" x-show="loggedIn" @click="closeMenu()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                     <polyline points="16 17 21 12 16 7"></polyline>

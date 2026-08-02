@@ -46,6 +46,7 @@ spec:
           name: section_order
           label: 侧边栏区块顺序
           multiple: true
+          sortable: true
           value: [menu, info, author, recent, toc]
           options:
             - label: 快捷导航
@@ -174,8 +175,10 @@ spec:
           emptyText: 请先添加至少 2 张轮播图
           help: 添加多张图（超过1张）会自动轮播，底部显示条形指示线，建议尺寸一致（1920x600 以上）。
           itemLabels:
+            - type: image
+              label: $value.url
             - type: text
-              label: "$value.caption ? $value.caption : ($value.image ? '[图片链接]' : $value.url)"
+              label: "$value.caption ? $value.caption : $value.url"
           children:
             - $formkit: attachment
               name: url
@@ -230,6 +233,7 @@ spec:
           name: section_order
           label: 首页区块顺序
           multiple: true
+          sortable: true
           value: [news, categories, members, links]
           options:
             - label: 信息公告
@@ -276,12 +280,16 @@ spec:
           name: member_pinned
           label: 固定显示的成员（优先）
           multiple: true
+          sortable: true
           clearable: true
           searchable: true
           help: 选中的成员将优先排在首页成员列表最前面，不受数量限制影响。需启用 PluginMembers 并已有成员数据。
           action: /apis/member.plugin.halo.run/v1alpha1/members
           requestOption:
             method: GET
+            pageField: page
+            sizeField: size
+            totalField: total
             itemsField: items
             labelField: spec.displayName
             valueField: metadata.name
@@ -305,12 +313,16 @@ spec:
           name: link_pinned
           label: 固定显示的友链（优先）
           multiple: true
+          sortable: true
           clearable: true
           searchable: true
           help: 选中的友链将优先排在首页友链列表最前面，不受数量限制影响。需启用 PluginLinks 并已有友链数据。
           action: /apis/core.halo.run/v1alpha1/links
           requestOption:
             method: GET
+            pageField: page
+            sizeField: size
+            totalField: total
             itemsField: items
             labelField: spec.displayName
             valueField: metadata.name
@@ -330,6 +342,9 @@ spec:
           label: 分类区块配置（限3个）
           addLabel: 添加分类区块
           help: 配置首页三栏分别显示的分类文章，请确保只添加三个
+          itemLabels:
+            - type: text
+              label: "$value.block_title ? $value.block_title : $value.category_name"
           children:
             - $formkit: select
               name: category_name
@@ -338,6 +353,9 @@ spec:
               action: /apis/content.halo.run/v1alpha1/categories
               requestOption:
                 method: GET
+                pageField: page
+                sizeField: size
+                totalField: total
                 itemsField: items
                 labelField: spec.displayName
                 valueField: metadata.name
@@ -381,7 +399,7 @@ spec:
           help: 自由添加或排序统计项，可选预设类型或自定义数值名称
           itemLabels:
             - type: text
-              label: "$value.label ? $value.label : (#{$value.type == 'post' ? '发布文章数' : ($value.type == 'category' ? '内容分类数' : ($value.type == 'comment' ? '用户评论数' : ($value.type == 'upvote' ? '点赞数' : ($value.type == 'member' ? '成员数量' : ($value.type == 'custom' ? '自定义数值' : $value.type))))))"
+              label: "$value.label ? $value.label : ($value.type == 'post' ? '发布文章数' : ($value.type == 'category' ? '内容分类数' : ($value.type == 'comment' ? '用户评论数' : ($value.type == 'upvote' ? '点赞数' : ($value.type == 'member' ? '成员数量' : ($value.type == 'custom' ? '自定义数值' : $value.type))))))"
           children:
             - $formkit: select
               name: type
@@ -544,8 +562,10 @@ spec:
           emptyText: 暂无内容
           help: 添加图片或文字链接，支持简单的可视化排版
           itemLabels:
+            - type: image
+              label: $value.image
             - type: text
-              label: $value.title
+              label: "$value.title ? $value.title : $value.url"
           children:
             - $formkit: text
               name: title
