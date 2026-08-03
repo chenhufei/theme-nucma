@@ -267,16 +267,11 @@
   </header>
 
   <!-- 移动端菜单 -->
-  <div id="mobileMenu" class="mobile-menu" x-show="mobileMenuOpen" x-cloak
-       :aria-hidden="!mobileMenuOpen" x-transition.opacity.duration.260ms>
+  <div id="mobileMenu" class="mobile-menu" x-cloak
+       :class="{ 'is-open': mobileMenuOpen }"
+       :aria-hidden="!mobileMenuOpen">
     <div class="mobile-menu-overlay" @click="mobileMenuOpen = false"></div>
-    <div class="mobile-menu-content" @click.stop x-show="mobileMenuOpen"
-         x-transition:enter="mobile-menu-content-transition"
-         x-transition:enter-start="mobile-menu-content-enter-start"
-         x-transition:enter-end="mobile-menu-content-enter-end"
-         x-transition:leave="mobile-menu-content-transition"
-         x-transition:leave-start="mobile-menu-content-leave-start"
-         x-transition:leave-end="mobile-menu-content-leave-end">
+    <div class="mobile-menu-content" @click.stop>
       <div class="mobile-menu-header">
         <span th:text="${site.title}"></span>
         <button @click="mobileMenuOpen = false" class="icon-btn" aria-label="关闭">
@@ -306,7 +301,7 @@
                th:aria-label="${link.text}"
                style="display: flex; align-items: center; gap: 8px;">
               <img th:if="${link.image != null and !#strings.isEmpty(link.image)}"
-                   th:src="${link.image}" th:alt="${link.text}" width="20" height="20" style="object-fit:contain;"/>
+                   th:src="${link.image}" th:alt="${link.text}" width="36" height="36" style="object-fit:contain;"/>
               <span th:if="${link.text != null and !#strings.isEmpty(link.text)}" th:text="${link.text}"></span>
             </a>
           </div>

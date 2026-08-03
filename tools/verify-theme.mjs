@@ -27,6 +27,33 @@ const theme = yaml.load(read('theme.yaml'));
 const settings = yaml.load(read('settings.yaml'));
 const gitignore = read('.gitignore');
 
+const groups = settings.spec?.forms || [];
+const groupNames = groups.map((form) => form.group);
+if (new Set(groupNames).size !== groupNames.length) {
+  fail('settings.yaml 存在重复设置分组');
+}
+
+function walkSchema(nodes, visitor) {
+  for (const node of nodes || []) {
+    visitor(node);
+    walkSchema(node.children, visitor);
+  }
+}
+
+for (const form of groups) {
+  const fieldNames = (form.formSchema || []).map((node) => node.name).filter(Boolean);
+  walkSchema(form.formSchema, (node) => {
+    if (node.attrs?.style?.includes('grid-template-columns')) {
+      fail(`${form.group} 设置仍包含人为分栏布局`);
+    }
+    if (node.$formkit === 'array' && (!node.itemLabels || node.itemLabels.length === 0)) {
+      fail(`${form.group}.${node.name} 数组缺少折叠列表显示字段`);
+    }
+  });
+  const duplicates = fieldNames.filter((name, index) => fieldNames.indexOf(name) !== index);
+  if (duplicates.length) fail(`${form.group} 设置存在重复字段：${[...new Set(duplicates)].join(', ')}`);
+}
+
 if (/^templates\/$/m.test(gitignore)) {
   fail('.gitignore 不得排除整个 templates 目录，否则主题源码无法完整提交');
 }

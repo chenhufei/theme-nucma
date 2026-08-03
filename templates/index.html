@@ -29,6 +29,7 @@
         <div th:each="bg, bgStat : ${backgrounds}"
              class="banner-bg-slide"
              th:classappend="${bgStat.index == 0} ? 'is-active' : ''"
+             th:data-bg-url="${bg.url != null and !#strings.isEmpty(bg.url)} ? ${bg.url} : null"
              th:style="${bg.url != null and !#strings.isEmpty(bg.url)} ? 'background-image: url(' + ${bg.url} + ')' : ''"></div>
       </div>
       <!-- 条形指示线 -->
@@ -126,8 +127,9 @@
           <th:block th:each="group : ${groupsResult.items}">
             <th:block th:each="member : ${group.members}">
               <div class="member-card" th:attr="data-id=${member.metadata?.name ?: ''},data-priority=${member.spec?.priority ?: 0}">
-                <img th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
-                     class="member-card-background" th:src="${member.spec.background}" alt="" aria-hidden="true" loading="lazy" />
+                <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
+                      class="member-card-background" aria-hidden="true"
+                      th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
                 <div class="member-avatar">
                   <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
                        th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />

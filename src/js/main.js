@@ -244,19 +244,34 @@ import { initDiagnostics } from './modules/diagnostics.js';
     var interval = parseInt(banner.dataset.bgInterval || '5000', 10) || 5000;
     var current = 0;
     var timer = null;
+    var transitionToken = 0;
+    var transitionCleanup = null;
+    var loadPromises = [];
     // 在 banner 上注入 CSS 变量，让指示条 scaleX 动画时长与轮播间隔一致
     banner.style.setProperty('--hero-bg-duration', (interval / 1000).toFixed(2) + 's');
 
-    function playFrom(i) {
-      // 先清所有
-      slides.forEach(function(s, idx) {
-        if (idx === i) return;
-        s.classList.remove('is-active');
-        if (hasGSAP && !prefersReduced) {
-          gsap.killTweensOf(s);
-          gsap.set(s, { opacity: 0, scale: 1.04 });
+    function loadSlide(i) {
+      if (loadPromises[i]) return loadPromises[i];
+      var url = slides[i].getAttribute('data-bg-url');
+      if (!url) return Promise.resolve(false);
+      loadPromises[i] = new Promise(function(resolve) {
+        var image = new Image();
+        var settled = false;
+        function finish(ok) {
+          if (settled) return;
+          settled = true;
+          resolve(ok);
         }
+        image.onload = function() { finish(true); };
+        image.onerror = function() { finish(false); };
+        image.src = url;
+        if (image.complete) finish(image.naturalWidth > 0);
+        setTimeout(function() { finish(false); }, 6000);
       });
+      return loadPromises[i];
+    }
+
+    function updateIndicators(i) {
       indicators.forEach(function(ind, idx) {
         ind.classList.remove('is-active');
         ind.setAttribute('aria-selected', String(idx === i));
@@ -267,24 +282,65 @@ import { initDiagnostics } from './modules/diagnostics.js';
         ind.offsetHeight;
         ind.style.animation = '';
       });
-
-      var cur = slides[i];
-      cur.classList.add('is-active');
       var ind = indicators[i];
       if (ind) ind.classList.add('is-active');
+    }
 
-      if (hasGSAP && !prefersReduced) {
-        gsap.killTweensOf(cur);
-        gsap.fromTo(cur,
-          { opacity: 0, scale: 1.04 },
-          { opacity: 1, scale: 1, duration: 1.0, ease: 'power3.out' }
-        );
+    function playFrom(i) {
+      if (transitionCleanup) {
+        clearTimeout(transitionCleanup);
+        transitionCleanup = null;
       }
+      slides.forEach(function(slide, idx) {
+        slide.classList.remove('is-entering');
+        slide.classList.toggle('is-active', idx === current);
+      });
+
+      var outgoing = slides[current];
+      var incoming = slides[i];
+      if (!incoming || i === current) {
+        updateIndicators(current);
+        return;
+      }
+
+      slides.forEach(function(slide, idx) {
+        if (idx === current || idx === i) return;
+        slide.classList.remove('is-active', 'is-entering');
+      });
+
+      incoming.classList.remove('is-active', 'is-entering');
+      // Commit the transparent state before fading in; the previous image stays underneath.
+      void incoming.offsetWidth;
+      incoming.classList.add('is-entering');
+      transitionCleanup = setTimeout(function() {
+        outgoing.classList.remove('is-active');
+        incoming.classList.remove('is-entering');
+        incoming.classList.add('is-active');
+        transitionCleanup = null;
+      }, 950);
+
+      current = i;
+      updateIndicators(current);
+    }
+
+    function requestSlide(i, skipUnavailable) {
+      var token = ++transitionToken;
+      function trySlide(candidate, remaining) {
+        loadSlide(candidate).then(function(ready) {
+          if (token !== transitionToken) return;
+          if (ready) {
+            playFrom(candidate);
+            return;
+          }
+          if (!skipUnavailable || remaining <= 1) return;
+          trySlide((candidate + 1) % slides.length, remaining - 1);
+        });
+      }
+      trySlide(i, slides.length - 1);
     }
 
     function next() {
-      current = (current + 1) % slides.length;
-      playFrom(current);
+      requestSlide((current + 1) % slides.length, true);
     }
 
     function start() {
@@ -300,8 +356,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
       ind.addEventListener('click', function() {
         var idx = parseInt(ind.getAttribute('data-index') || '0', 10);
         if (idx === current || isNaN(idx)) return;
-        current = idx;
-        playFrom(current);
+        requestSlide(idx);
         start();
       });
       // 悬停指示线一段时间后跳转
@@ -309,8 +364,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
         hoverTimer = setTimeout(function() {
           var idx = parseInt(ind.getAttribute('data-index') || '0', 10);
           if (idx === current || isNaN(idx)) return;
-          current = idx;
-          playFrom(current);
+          requestSlide(idx);
           start();
         }, 300);
       });
@@ -325,17 +379,20 @@ import { initDiagnostics } from './modules/diagnostics.js';
         if (e.key === 'End') target = slides.length - 1;
         if (target === null) return;
         e.preventDefault();
-        current = target;
-        playFrom(current);
-        if (indicators[current]) indicators[current].focus();
+        requestSlide(target);
+        if (indicators[target]) indicators[target].focus();
         start();
       });
     });
     banner.addEventListener('mouseenter', stop);
     banner.addEventListener('mouseleave', start);
 
-    playFrom(0);
-    start();
+    updateIndicators(0);
+    slides.forEach(function(_, idx) { loadSlide(idx); });
+    Promise.all(loadPromises).then(function() {
+      updateIndicators(current);
+      start();
+    });
     try {
       document.addEventListener('visibilitychange', function() {
         if (document.hidden) stop(); else start();

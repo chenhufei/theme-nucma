@@ -11,7 +11,7 @@
           <span class="post-category" th:each="cat : ${post.categories}"
                 th:text="${cat.spec?.displayName}"></span>
           <time th:text="${#temporals.format(post.spec?.publishTime, 'yyyy年MM月dd日')}"></time>
-          <span th:if="${theme.config.post?.show_views != false and post.stats?.visit != null}" 
+          <span th:if="${theme.config.sidebar?.show_views != false and post.stats?.visit != null}"
                 th:text="${post.stats?.visit + ' 次阅读'}"></span>
         </div>
         <h1 class="post-title" th:text="${post.spec?.title}"></h1>
@@ -23,7 +23,7 @@
       </header>
 
       <!-- 文章封面 -->
-      <div class="post-cover" th:if="${theme.config.post?.show_cover != false and post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}">
+      <div class="post-cover" th:if="${theme.config.sidebar?.show_cover != false and post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}">
         <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}" width="16" height="9" />
       </div>
 
@@ -31,7 +31,7 @@
       <div class="post-content prose" th:utext="${post.content?.content}"></div>
 
       <!-- 标签 -->
-      <div class="post-tags" th:if="${theme.config.post?.show_tags != false and post.tags != null and !post.tags.isEmpty()}">
+      <div class="post-tags" th:if="${theme.config.sidebar?.show_tags != false and post.tags != null and !post.tags.isEmpty()}">
         <a th:each="tag : ${post.tags}" th:href="@{${tag.status?.permalink}}"
            class="tag" th:text="'#' + ${tag.spec?.displayName}"></a>
       </div>
