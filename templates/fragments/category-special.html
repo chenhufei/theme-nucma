@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<th:block th:fragment="special(style, eyebrow, kicker)">
+  <section th:class="'special-category special-category--' + ${style}">
+    <header class="special-category__header">
+      <div class="special-category__motif" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="special-category__heading">
+        <span class="special-category__eyebrow" th:text="${eyebrow}"></span>
+        <h1 th:text="${category?.spec?.displayName}">专题分类</h1>
+        <p th:text="${category?.spec?.description != null and !#strings.isEmpty(category.spec.description) ? category.spec.description : kicker}"></p>
+      </div>
+      <div class="special-category__count">
+        <strong th:text="${category?.status?.postCount ?: 0}">0</strong>
+        <span>篇专题内容</span>
+      </div>
+      <div th:if="${style == 'sanxiaxiang'}" class="special-category__signals" aria-label="三下乡专题方向">
+        <span>青春实践</span><span>服务基层</span><span>成果纪实</span>
+      </div>
+      <div th:if="${style == 'festival'}" class="special-category__signals" aria-label="校园节庆专题方向">
+        <span>社团风采</span><span>舞台现场</span><span>青春记忆</span>
+      </div>
+      <div th:if="${style == 'future'}" class="special-category__signals" aria-label="科技未来专题方向">
+        <span>创新实验</span><span>青年创客</span><span>数字校园</span>
+      </div>
+      <div th:if="${style == 'volunteer'}" class="special-category__signals" aria-label="公益志愿专题方向">
+        <span>志愿行动</span><span>公益项目</span><span>温暖故事</span>
+      </div>
+      <div th:if="${style == 'heritage'}" class="special-category__signals" aria-label="传统文化专题方向">
+        <span>非遗新生</span><span>文化寻访</span><span>青年传承</span>
+      </div>
+      <div th:if="${style == 'sports'}" class="special-category__signals" aria-label="体育赛事专题方向">
+        <span>赛事速递</span><span>人物瞬间</span><span>团队荣誉</span>
+      </div>
+    </header>
+
+    <div th:if="${posts != null and posts.items != null and !posts.items.isEmpty()}" class="special-category__content">
+      <article class="special-category__lead" th:each="post, iter : ${posts.items}" th:if="${iter.index == 0}">
+        <a th:href="@{${post.status?.permalink}}" class="special-category__lead-link">
+          <div class="special-category__lead-media" th:if="${post.spec?.cover != null and !#strings.isEmpty(post.spec.cover)}">
+            <img th:src="${post.spec.cover}" th:alt="${post.spec?.title}" width="1200" height="675" loading="eager" />
+          </div>
+          <div class="special-category__lead-copy">
+            <span class="special-category__label" th:switch="${style}">
+              <th:block th:case="'future'">前沿观察</th:block>
+              <th:block th:case="'volunteer'">行动现场</th:block>
+              <th:block th:case="'heritage'">文化档案</th:block>
+              <th:block th:case="'sports'">赛场焦点</th:block>
+              <th:block th:case="'festival'">青春现场</th:block>
+              <th:block th:case="*">重点报道</th:block>
+            </span>
+            <time th:text="${#temporals.format(post.spec?.publishTime, 'yyyy-MM-dd')}"></time>
+            <h2 th:text="${post.spec?.title}"></h2>
+            <p th:if="${post.spec?.excerpt?.raw != null}" th:text="${post.spec.excerpt.raw}"></p>
+            <span class="special-category__read">阅读全文</span>
+          </div>
+        </a>
+      </article>
+
+      <div class="special-category__grid">
+        <article class="special-category__item" th:each="post, iter : ${posts.items}" th:if="${iter.index > 0}">
+          <a th:href="@{${post.status?.permalink}}">
+            <div class="special-category__item-media" th:if="${post.spec?.cover != null and !#strings.isEmpty(post.spec.cover)}">
+              <img th:src="${post.spec.cover}" th:alt="${post.spec?.title}" width="640" height="360" loading="lazy" />
+            </div>
+            <div class="special-category__item-copy">
+              <div class="special-category__meta">
+                <span th:text="${iter.count < 10 ? '0' + iter.count : iter.count}"></span>
+                <time th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}"></time>
+              </div>
+              <h2 th:text="${post.spec?.title}"></h2>
+              <p th:if="${post.spec?.excerpt?.raw != null}" th:text="${post.spec.excerpt.raw}"></p>
+            </div>
+          </a>
+        </article>
+      </div>
+    </div>
+
+    <div th:if="${posts == null or posts.items == null or posts.items.isEmpty()}" class="empty-state">
+      <p class="empty-text">该专题暂时没有文章</p>
+      <p class="empty-sub">内容发布后将在这里集中展示</p>
+    </div>
+
+    <nav class="pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext())}">
+      <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="page-btn">上一页</a>
+      <span class="page-info" th:text="${posts.page} + ' / ' + ${posts.totalPages}"></span>
+      <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="page-btn">下一页</a>
+    </nav>
+  </section>
+</th:block>
+</html>

@@ -56,11 +56,12 @@
 
     <!-- 右侧：侧边栏 -->
     <aside class="post-sidebar"
-           th:data-sidebar-order="${theme.config.sidebar?.section_order != null ? #strings.listJoin(theme.config.sidebar.section_order, ',') : 'menu,info,author,recent,toc'}">
+           th:with="sidebarOrder=${theme.config.sidebar?.section_blocks != null ? theme.config.sidebar.section_blocks.![type] : theme.config.sidebar?.section_order}"
+           th:data-sidebar-order="${sidebarOrder != null ? #strings.listJoin(sidebarOrder, ',') : 'menu,info,author,recent,toc'}">
       <!-- 自定义菜单 -->
       <th:block th:with="sidebarMenuName = ${theme.config.navigation?.sidebar_menu ?: ''}">
         <div class="sidebar-card" data-sidebar-section="menu"
-             th:if="${theme.config.sidebar?.show_menu != false and !#strings.isEmpty(sidebarMenuName)}"
+             th:if="${(sidebarOrder == null or #lists.contains(sidebarOrder, 'menu')) and !#strings.isEmpty(sidebarMenuName)}"
              th:with="menu = ${menuFinder.getByName(sidebarMenuName)}">
           <h3 class="sidebar-title">快捷导航</h3>
           <nav class="sidebar-nav" th:if="${menu != null and menu.menuItems != null}">
@@ -73,7 +74,8 @@
       </th:block>
 
       <!-- 文章信息 -->
-      <div class="sidebar-card" data-sidebar-section="info" th:if="${theme.config.sidebar?.show_info != false}">
+      <div class="sidebar-card" data-sidebar-section="info"
+           th:if="${sidebarOrder == null or #lists.contains(sidebarOrder, 'info')}">
         <h3 class="sidebar-title">文章信息</h3>
         <div class="sidebar-info">
           <div class="info-item">
@@ -92,7 +94,8 @@
       </div>
 
       <!-- 作者信息 -->
-      <div class="sidebar-card" data-sidebar-section="author" th:if="${theme.config.sidebar?.show_author != false and post.owner != null}"
+      <div class="sidebar-card" data-sidebar-section="author"
+           th:if="${(sidebarOrder == null or #lists.contains(sidebarOrder, 'author')) and post.owner != null}"
            th:with="authorPosts = ${postFinder.list({page: 1, size: 1, ownerName: post.owner?.metadata?.name})}">
         <h3 class="sidebar-title">作者</h3>
         <div class="author-info">
@@ -119,7 +122,8 @@
       </div>
 
       <!-- 最近文章（归档区块） -->
-      <div class="sidebar-card" data-sidebar-section="recent" th:if="${theme.config.sidebar?.show_recent != false}"
+      <div class="sidebar-card" data-sidebar-section="recent"
+           th:if="${sidebarOrder == null or #lists.contains(sidebarOrder, 'recent')}"
            th:with="recentPosts = ${postFinder.list({page: 1, size: 5})}">
         <h3 class="sidebar-title">最近文章</h3>
         <ul class="sidebar-post-list" th:if="${recentPosts != null and recentPosts.items != null and !recentPosts.items.isEmpty()}">
@@ -134,7 +138,7 @@
       <!-- 目录 -->
       <div class="sidebar-card toc-card" id="tocCard"
            data-sidebar-section="toc"
-           th:if="${theme.config.sidebar?.show_toc != false and theme.config.content?.auto_toc != false}">
+           th:if="${(sidebarOrder == null or #lists.contains(sidebarOrder, 'toc')) and theme.config.content?.auto_toc != false}">
         <h3 class="sidebar-title">目录</h3>
         <nav class="toc" id="toc"></nav>
       </div>

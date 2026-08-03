@@ -4,9 +4,13 @@
 <th:block th:fragment="content">
   <!-- Banner - 校园风格 -->
   <section class="banner" th:if="${theme.config.hero?.show_hero != false}"
-           th:with="hasBg = ${theme.config.hero?.bg_image != null and !#strings.isEmpty(theme.config.hero.bg_image)},
-                    carousel = ${theme.config.hero?.bg_carousel != null and !#lists.isEmpty(theme.config.hero.bg_carousel) and #lists.size(theme.config.hero.bg_carousel) > 1},
-                    backgrounds = ${theme.config.hero?.bg_carousel},
+           th:with="legacyBg = ${theme.config.hero?.bg_image != null and !#strings.isEmpty(theme.config.hero.bg_image) ? theme.config.hero.bg_image : ''},
+                     backgrounds = ${theme.config.hero?.bg_carousel},
+                     hasBackgrounds = ${backgrounds != null and !#lists.isEmpty(backgrounds)},
+                     singleBackground = ${hasBackgrounds ? backgrounds[0] : null},
+                     carousel = ${hasBackgrounds and #lists.size(backgrounds) > 1},
+                     singleBgUrl = ${singleBackground != null and singleBackground.url != null and !#strings.isEmpty(singleBackground.url) ? singleBackground.url : legacyBg},
+                     hasBg = ${!#strings.isEmpty(singleBgUrl)},
                     bgInterval = ${theme.config.hero?.carousel_interval ?: 5000},
                     fullW = ${theme.config.hero?.full_width == true},
                     overlay = ${theme.config.hero?.bg_overlay != null and !#strings.isEmpty(theme.config.hero.bg_overlay) ? theme.config.hero.bg_overlay : 'medium'},
@@ -17,7 +21,7 @@
     <!-- 单背景 -->
     <th:block th:if="${!carousel}">
       <div class="banner-bg"
-           th:style="${hasBg} ? 'background-image: url(' + ${theme.config.hero.bg_image} + ')' : ''"></div>
+           th:style="${hasBg} ? 'background-image: url(' + ${singleBgUrl} + ')' : ''"></div>
     </th:block>
     <!-- 多背景轮播 -->
     <th:block th:if="${carousel}">
@@ -58,11 +62,12 @@
   </section>
 
   <div class="home-sections"
-       th:data-section-order="${theme.config.home?.section_order != null ? #strings.listJoin(theme.config.home.section_order, ',') : 'news,categories,members,links'}">
+       th:with="homeOrder=${theme.config.home?.section_blocks != null ? theme.config.home.section_blocks.![type] : theme.config.home?.section_order}"
+       th:data-section-order="${homeOrder != null ? #strings.listJoin(homeOrder, ',') : 'news,members,links'}">
 
   <!-- 信息公告 -->
   <section class="section" data-home-section="news"
-           th:if="${theme.config.home?.show_news != false and theme.config.home?.category_columns_enabled != true}">
+           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and (theme.config.home?.category_blocks == null or #lists.isEmpty(theme.config.home.category_blocks))}">
     <div class="section-container" th:if="${posts != null and posts.items != null and !posts.items.isEmpty()}">
       <div class="section-header-bar">
         <h2 class="section-title-bar">信息公告</h2>
@@ -79,26 +84,26 @@
   </section>
 
   <!-- 首页自选分类栏 -->
-  <section class="section" data-home-section="categories"
-           th:if="${theme.config.home?.show_categories != false and theme.config.home?.category_columns_enabled == true and theme.config.home?.category_blocks != null and !#lists.isEmpty(theme.config.home.category_blocks)}">
+  <section class="section" data-home-section="news"
+           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and theme.config.home?.category_blocks != null and !#lists.isEmpty(theme.config.home.category_blocks)}">
     <div class="section-container">
       <div class="category-cols-wrapper">
         <th:block th:each="col : ${theme.config.home.category_blocks}"
                   th:with="catPostList = ${postFinder.list({page: 1, size: col.limit ?: 6, categoryName: col.category_name})},
                            catInfo = ${categoryFinder.getByName(col.category_name)}">
           <div class="category-col">
-            <div class="section-header-bar" style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-              <h2 class="section-title-bar" style="font-size: 1.1rem; margin-bottom: 0;" th:text="${col.block_title ?: (catInfo != null ? catInfo.spec?.displayName : '分类文章')}"></h2>
-              <a th:if="${catInfo != null}" th:href="@{${catInfo.status?.permalink}}" class="more-link" style="font-size: 0.85rem;">更多</a>
+            <div class="section-header-bar category-col-header">
+              <h2 class="section-title-bar" th:text="${col.block_title ?: (catInfo != null ? catInfo.spec?.displayName : '分类文章')}"></h2>
+              <a th:if="${catInfo != null}" th:href="@{${catInfo.status?.permalink}}" class="more-link">更多</a>
             </div>
-            <div class="news-list" th:if="${catPostList != null and catPostList.items != null and !catPostList.items.isEmpty()}" style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div class="news-list" th:if="${catPostList != null and catPostList.items != null and !catPostList.items.isEmpty()}">
               <a th:each="post : ${catPostList.items}"
-                 th:href="@{${post.status?.permalink}}" target="_blank" rel="noopener noreferrer" class="news-item" style="display: flex; gap: 1rem; align-items: center; padding: 0.5rem 0;">
-                <span class="news-date" th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}" style="color: var(--text-tertiary); font-size: 0.85rem; flex-shrink: 0;"></span>
-                <span class="news-title" th:text="${post.spec?.title}" style="color: var(--text-primary); font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; min-width: 0;"></span>
+                 th:href="@{${post.status?.permalink}}" target="_blank" rel="noopener noreferrer" class="news-item">
+                <span class="news-date" th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}"></span>
+                <span class="news-title" th:text="${post.spec?.title}"></span>
               </a>
             </div>
-            <div class="empty-state" th:if="${catPostList == null or catPostList.items == null or catPostList.items.isEmpty()}" style="padding: 1rem 0; color: var(--text-tertiary); font-size: 0.85rem;">
+            <div class="empty-state category-col-empty" th:if="${catPostList == null or catPostList.items == null or catPostList.items.isEmpty()}">
               暂无文章
             </div>
           </div>
@@ -108,7 +113,7 @@
   </section>
 
   <section class="section" data-home-section="members"
-           th:if="${theme.config.home?.show_members != false and pluginFinder.available('PluginMembers')}">
+           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'members')) and pluginFinder.available('PluginMembers')}">
     <div class="section-container">
       <div class="section-header-bar">
         <h2 class="section-title-bar">成员公示</h2>
@@ -121,6 +126,8 @@
           <th:block th:each="group : ${groupsResult.items}">
             <th:block th:each="member : ${group.members}">
               <div class="member-card" th:attr="data-id=${member.metadata?.name ?: ''},data-priority=${member.spec?.priority ?: 0}">
+                <img th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
+                     class="member-card-background" th:src="${member.spec.background}" alt="" aria-hidden="true" loading="lazy" />
                 <div class="member-avatar">
                   <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
                        th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
@@ -145,7 +152,7 @@
 
   <!-- 友情链接 -->
   <section class="section" data-home-section="links"
-           th:if="${theme.config.home?.show_links != false and pluginFinder.available('PluginLinks')}">
+           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'links')) and pluginFinder.available('PluginLinks')}">
     <div class="section-container">
       <div class="section-header-bar">
         <h2 class="section-title-bar">友情链接</h2>
@@ -192,7 +199,7 @@
   </div>
 
   <!-- 分页 -->
-  <nav class="pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext()) and (theme.config.home?.category_columns_enabled != true or theme.config.home?.category_blocks == null or #lists.isEmpty(theme.config.home.category_blocks))}">
+  <nav class="pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext()) and (theme.config.home?.category_blocks == null or #lists.isEmpty(theme.config.home.category_blocks))}">
     <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="page-btn">上一页</a>
     <span class="page-info" th:text="${posts.page} + ' / ' + ${posts.totalPages}"></span>
     <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="page-btn">下一页</a>

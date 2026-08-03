@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${category?.spec?.displayName} + ' - ' + ${site.title}, content=~{::content}, description=${category?.spec?.description}, canonical=${category?.status?.permalink}, image=null, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+  <th:block th:replace="~{fragments/category-special :: special('future', 'NEXT / CAMPUS', '追踪青年创新、数字校园与正在发生的未来')}"></th:block>
+</th:block>
+</html>

@@ -2,178 +2,170 @@
 <html xmlns:th="https://www.thymeleaf.org"
       th:replace="~{layout :: html(title=(${singlePage.spec.title} ?: '关于') + ' - ' + ${site.title}, content=~{::content}, description=${singlePage?.spec?.excerpt?.raw}, canonical=${singlePage?.status?.permalink}, image=${singlePage?.spec?.cover}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
-  <article class="page">
+  <article class="page about-page">
     <header class="page-header">
       <h1 class="page-title" th:text="${singlePage.spec.title} ?: '关于'">关于</h1>
-      <p class="page-desc" th:if="${singlePage.spec.excerpt != null and singlePage.spec.excerpt.raw != null and !#strings.isEmpty(singlePage.spec.excerpt.raw)}" th:text="${singlePage.spec.excerpt.raw}"></p>
+      <p class="page-desc"
+         th:if="${singlePage.spec.excerpt != null and singlePage.spec.excerpt.raw != null and !#strings.isEmpty(singlePage.spec.excerpt.raw)}"
+         th:text="${singlePage.spec.excerpt.raw}"></p>
     </header>
 
-    <!-- 旧版本配置可能没有 about_blocks，始终保留一组可用的默认内容。 -->
     <th:block th:with="aboutBlocks = ${theme.config.about?.about_blocks}">
+      <!-- 兼容旧配置：没有排序配置时仍提供正文、统计与常见问题。 -->
       <th:block th:if="${aboutBlocks == null or #lists.isEmpty(aboutBlocks)}">
-        <div class="intro-content" style="margin-bottom: var(--space-2xl); background: var(--bg-secondary); padding: var(--space-xl); border-radius: var(--radius-lg);">
-          <div class="intro-stats" style="display: flex; gap: var(--space-xl); flex-wrap: wrap; justify-content: space-around;"
-               th:with="stats = ${siteStatsFinder.getStats()}, memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null}">
-            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
-              <span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span>
-              <span class="intro-stat-label">发布文章</span>
-            </div>
-            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
-              <span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span>
-              <span class="intro-stat-label">内容分类</span>
-            </div>
-            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
-              <span class="intro-stat-number" th:text="${stats?.comment ?: 0}"></span>
-              <span class="intro-stat-label">用户评论</span>
-            </div>
-            <div class="intro-stat" th:if="${memberGroups != null and memberGroups.items != null}" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
+        <section class="about-section" th:if="${singlePage.content?.content != null and !#strings.isEmpty(singlePage.content.content)}">
+          <div class="section-header-bar"><h2 class="section-title-bar">站点介绍</h2></div>
+          <div class="page-content prose" th:utext="${singlePage.content.content}"></div>
+        </section>
+
+        <section class="about-section about-stats"
+                 th:with="stats = ${siteStatsFinder.getStats()}, memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null}">
+          <div class="section-header-bar"><h2 class="section-title-bar">数据统计</h2></div>
+          <div class="intro-stats">
+            <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span><span class="intro-stat-label">发布文章</span></div>
+            <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.visit ?: 0}"></span><span class="intro-stat-label">站点访问</span></div>
+            <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span><span class="intro-stat-label">内容分类</span></div>
+            <div class="intro-stat" th:if="${memberGroups != null and memberGroups.items != null}">
               <span class="intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
               <span class="intro-stat-label">成员数量</span>
             </div>
           </div>
-        </div>
+        </section>
 
-        <section class="section" style="margin-bottom: var(--space-2xl);">
-          <div class="section-container">
-            <div class="section-header-bar">
-              <h2 class="section-title-bar">常见问题解答</h2>
-            </div>
-            <div class="faq-list">
-              <div class="faq-item" th:each="item : ${theme.config.about?.faq_list}" x-data="{ open: false }">
-                <button class="faq-question" @click="open = !open" type="button">
-                  <span th:text="${item.question}"></span>
-                  <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''">
-                    <path d="M6 9l6 6 6-6"></path>
-                  </svg>
-                </button>
-                <div class="faq-answer" x-show="open" x-collapse>
-                  <p th:text="${item.answer}"></p>
-                </div>
-              </div>
-              <th:block th:if="${theme.config.about?.faq_list == null or #lists.isEmpty(theme.config.about?.faq_list)}">
-                <div class="faq-item" x-data="{ open: false }">
-                  <button class="faq-question" @click="open = !open" type="button">
-                    <span>如何加入我们？</span>
-                    <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''">
-                      <path d="M6 9l6 6 6-6"></path>
-                    </svg>
-                  </button>
-                  <div class="faq-answer" x-show="open" x-collapse>
-                    <p>点击页面右上角「加入我们」或成员公示栏旁的申请入口，按提示填写信息即可。</p>
-                  </div>
-                </div>
-              </th:block>
+        <section class="about-section">
+          <div class="section-header-bar"><h2 class="section-title-bar">常见问题</h2></div>
+          <div class="faq-list">
+            <div class="faq-item" th:each="item : ${theme.config.about?.faq_list}" x-data="{ open: false }">
+              <button class="faq-question" @click="open = !open" type="button" :aria-expanded="open">
+                <span th:text="${item.question}"></span>
+                <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+              <div class="faq-answer" x-show="open" x-collapse><p th:text="${item.answer}"></p></div>
             </div>
           </div>
         </section>
       </th:block>
 
-      <!-- 组织介绍统计 -->
       <th:block th:unless="${aboutBlocks == null or #lists.isEmpty(aboutBlocks)}" th:each="block : ${aboutBlocks}">
-      <!-- 统计区块 -->
-      <div th:if="${block.type == 'stats'}" class="intro-content" style="margin-bottom: var(--space-2xl); background: var(--bg-secondary); padding: var(--space-xl); border-radius: var(--radius-lg);">
-        <div class="intro-stats" style="display: flex; gap: var(--space-xl); flex-wrap: wrap; justify-content: space-around;"
-             th:with="stats = ${siteStatsFinder.getStats()},
-                     memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null},
-                     hasCustomStats = ${theme.config.about?.stat_items != null and !#lists.isEmpty(theme.config.about.stat_items)}">
+        <section th:if="${block.type == 'content'}" class="about-section">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '站点介绍'}"></h2></div>
+          <div class="page-content prose"
+               th:utext="${singlePage.content?.content != null and !#strings.isEmpty(singlePage.content.content) ? singlePage.content.content : ''}"></div>
+        </section>
 
-          <!-- 后台有自定义统计项时：按配置渲染 -->
-          <th:block th:if="${hasCustomStats}">
-            <th:block th:each="item : ${theme.config.about.stat_items}">
-              <div class="intro-stat" th:if="${item.enabled != false}" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
-                <th:block th:if="${item.type == 'post'}">
-                  <span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span>
-                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '发布文章数'"></span>
-                </th:block>
-                <th:block th:if="${item.type == 'category'}">
-                  <span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span>
-                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '内容分类数'"></span>
-                </th:block>
-                <th:block th:if="${item.type == 'comment'}">
-                  <span class="intro-stat-number" th:text="${stats?.comment ?: 0}"></span>
-                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '用户评论数'"></span>
-                </th:block>
-                <th:block th:if="${item.type == 'upvote'}">
-                  <span class="intro-stat-number" th:text="${stats?.upvote ?: 0}"></span>
-                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '点赞数'"></span>
-                </th:block>
-                <th:block th:if="${item.type == 'member' and memberGroups != null and memberGroups.items != null}">
-                  <span class="intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
-                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '成员数量'"></span>
-                </th:block>
-                <th:block th:if="${item.type == 'custom' and item.custom_number != null and !#strings.isEmpty(item.custom_number)}">
-                  <span class="intro-stat-number" th:text="${item.custom_number}"></span>
-                  <span class="intro-stat-label" th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : '自定义数值'"></span>
-                </th:block>
+        <section th:if="${block.type == 'stats'}" class="about-section about-stats"
+                 th:with="stats = ${siteStatsFinder.getStats()},
+                          memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null},
+                          linkCount = ${pluginFinder.available('PluginLinks') ? linkFinder.count() : null},
+                          hasCustomStats = ${theme.config.about?.stat_items != null and !#lists.isEmpty(theme.config.about.stat_items)}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '数据统计'}"></h2></div>
+          <div class="intro-stats">
+            <th:block th:if="${hasCustomStats}" th:each="item : ${theme.config.about.stat_items}">
+              <div class="intro-stat"
+                   th:if="${item.enabled != false and (item.type != 'member' or memberGroups != null) and (item.type != 'link' or linkCount != null)}">
+                <span class="intro-stat-number" th:if="${item.type == 'post'}" th:text="${stats?.post ?: 0}"></span>
+                <span class="intro-stat-number" th:if="${item.type == 'category'}" th:text="${stats?.category ?: 0}"></span>
+                <span class="intro-stat-number" th:if="${item.type == 'comment'}" th:text="${stats?.comment ?: 0}"></span>
+                <span class="intro-stat-number" th:if="${item.type == 'upvote'}" th:text="${stats?.upvote ?: 0}"></span>
+                <span class="intro-stat-number" th:if="${item.type == 'visit'}" th:text="${stats?.visit ?: 0}"></span>
+                <span class="intro-stat-number" th:if="${item.type == 'member' and memberGroups != null and memberGroups.items != null}"
+                      th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
+                <span class="intro-stat-number" th:if="${item.type == 'link'}" th:text="${linkCount ?: 0}"></span>
+                <span class="intro-stat-number" th:if="${item.type == 'custom'}" th:text="${item.custom_number ?: 0}"></span>
+                <span class="intro-stat-label"
+                      th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : ${item.type == 'post' ? '发布文章数' : item.type == 'category' ? '内容分类数' : item.type == 'comment' ? '用户评论数' : item.type == 'upvote' ? '点赞数' : item.type == 'visit' ? '站点访问量' : item.type == 'member' ? '成员数量' : item.type == 'link' ? '友情链接数' : '自定义数值'}"></span>
               </div>
             </th:block>
-          </th:block>
+            <th:block th:unless="${hasCustomStats}">
+              <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span><span class="intro-stat-label">发布文章</span></div>
+              <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.visit ?: 0}"></span><span class="intro-stat-label">站点访问</span></div>
+              <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span><span class="intro-stat-label">内容分类</span></div>
+              <div class="intro-stat" th:if="${memberGroups != null and memberGroups.items != null}">
+                <span class="intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
+                <span class="intro-stat-label">成员数量</span>
+              </div>
+            </th:block>
+          </div>
+        </section>
 
-          <!-- 后台无自定义统计项时：使用默认四项 -->
-          <th:block th:unless="${hasCustomStats}">
-            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
-              <span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span>
-              <span class="intro-stat-label">发布文章</span>
-            </div>
-            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
-              <span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span>
-              <span class="intro-stat-label">内容分类</span>
-            </div>
-            <div class="intro-stat" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
-              <span class="intro-stat-number" th:text="${stats?.comment ?: 0}"></span>
-              <span class="intro-stat-label">用户评论</span>
-            </div>
-            <div class="intro-stat" th:if="${memberGroups != null and memberGroups.items != null}" style="flex: 1 1 calc(25% - var(--space-xl)); min-width: 120px; text-align: center;">
-              <span class="intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
-              <span class="intro-stat-label">成员数量</span>
-            </div>
-          </th:block>
-        </div>
-      </div>
-
-      <!-- 常见问题区块 -->
-      <section th:if="${block.type == 'faq'}" class="section" style="margin-bottom: var(--space-2xl);">
-        <div class="section-container">
+        <section th:if="${block.type == 'latest'}" class="about-section"
+                 th:with="recentPosts = ${postFinder.list({page: 1, size: 6})}">
           <div class="section-header-bar">
-            <h2 class="section-title-bar">常见问题解答</h2>
+            <h2 class="section-title-bar" th:text="${block.title ?: '最新文章'}"></h2>
+            <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="more-link">更多</a>
           </div>
-          <div class="faq-list">
-            <div class="faq-item" th:each="item, iter : ${theme.config.about?.faq_list}" x-data="{ open: false }">
-              <button class="faq-question" @click="open = !open">
-                <span th:text="${item.question}"></span>
-                <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''">
-                  <path d="M6 9l6 6 6-6"></path>
-                </svg>
-              </button>
-              <div class="faq-answer" x-show="open" x-collapse>
-                <p th:text="${item.answer}"></p>
-              </div>
+          <div class="about-latest-list" th:if="${recentPosts != null and recentPosts.items != null}">
+            <a class="news-item" th:each="recent : ${recentPosts.items}" th:href="@{${recent.status?.permalink}}">
+              <time class="news-date" th:text="${#temporals.format(recent.spec?.publishTime, 'MM-dd')}"></time>
+              <span class="news-title" th:text="${recent.spec?.title}"></span>
+            </a>
+          </div>
+        </section>
+
+        <section th:if="${block.type == 'categories'}" class="about-section"
+                 th:with="allCategories = ${categoryFinder.listAll()}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '内容分类'}"></h2></div>
+          <div class="about-category-list">
+            <a th:each="item : ${allCategories}" th:href="@{${item.status?.permalink}}" class="about-category-item">
+              <span th:text="${item.spec?.displayName}"></span>
+              <strong th:text="${item.status?.postCount ?: 0}"></strong>
+            </a>
+          </div>
+        </section>
+
+        <section th:if="${block.type == 'members' and pluginFinder.available('PluginMembers')}" class="about-section"
+                 th:with="memberGroups = ${memberFinder.listApprovedMembers()}">
+          <div class="section-header-bar">
+            <h2 class="section-title-bar" th:text="${block.title ?: '成员展示'}"></h2>
+            <a th:href="@{/members}" class="more-link">更多</a>
+          </div>
+          <div class="about-member-groups" th:if="${memberGroups != null and memberGroups.items != null}">
+            <div class="about-member-group" th:each="group : ${memberGroups.items}">
+              <span th:text="${group.group?.spec?.displayName ?: '未分组'}"></span>
+              <strong th:text="${group.members != null ? #lists.size(group.members) : 0}"></strong>
             </div>
-            <th:block th:if="${theme.config.about?.faq_list == null or #lists.isEmpty(theme.config.about?.faq_list)}">
-              <div class="faq-item" x-data="{ open: false }">
-                <button class="faq-question" @click="open = !open">
-                  <span>如何加入我们？</span>
-                  <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''">
-                    <path d="M6 9l6 6 6-6"></path>
-                  </svg>
-                </button>
-                <div class="faq-answer" x-show="open" x-collapse>
-                  <p>点击页面右上角「加入我们」或成员公示栏旁的申请入口，按提示填写信息即可。</p>
-                </div>
-              </div>
-            </th:block>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <section th:if="${block.type == 'links' and pluginFinder.available('PluginLinks')}" class="about-section"
+                 th:with="randomLinks = ${linkFinder.random(8)}">
+          <div class="section-header-bar">
+            <h2 class="section-title-bar" th:text="${block.title ?: '友情链接'}"></h2>
+            <a th:href="@{/links}" class="more-link">更多</a>
+          </div>
+          <div class="link-grid" th:if="${randomLinks != null}">
+            <a class="link-card" th:each="link : ${randomLinks}" th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer">
+              <div class="link-logo">
+                <img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:src="${link.spec.logo}" th:alt="${link.spec?.displayName}" width="48" height="48" loading="lazy" />
+                <span class="link-logo-text" th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:text="${#strings.substring(link.spec?.displayName ?: '?', 0, 1)}"></span>
+              </div>
+              <div class="link-body"><div class="link-name" th:text="${link.spec?.displayName}"></div></div>
+            </a>
+          </div>
+        </section>
+
+        <section th:if="${block.type == 'faq'}" class="about-section">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '常见问题'}"></h2></div>
+          <div class="faq-list">
+            <div class="faq-item" th:each="item : ${theme.config.about?.faq_list}" x-data="{ open: false }">
+              <button class="faq-question" @click="open = !open" type="button" :aria-expanded="open">
+                <span th:text="${item.question}"></span>
+                <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+              <div class="faq-answer" x-show="open" x-collapse><p th:text="${item.answer}"></p></div>
+            </div>
+          </div>
+        </section>
       </th:block>
+
+      <!-- 旧版已保存排序通常没有 content，继续显示正文以保持兼容。 -->
+      <section class="about-section"
+               th:if="${aboutBlocks != null and !#lists.isEmpty(aboutBlocks) and !#lists.contains(aboutBlocks.![type], 'content') and singlePage.content?.content != null and !#strings.isEmpty(singlePage.content.content)}">
+        <div class="page-content prose" th:utext="${singlePage.content.content}"></div>
+      </section>
     </th:block>
 
-    <!-- 优先使用后台编辑的内容，为空时使用主题设置中的默认内容 -->
-    <div class="page-content prose"
-         th:utext="${singlePage.content?.content != null and !#strings.isEmpty(singlePage.content.content) ? singlePage.content.content : ''}">
-    </div>
-
-    <section th:if="${haloCommentEnabled}" class="page-comments">
+    <section th:if="${haloCommentEnabled and theme.config.content?.page_comment_enabled != false}" class="page-comments">
       <halo:comment group="content.halo.run" kind="SinglePage" th:attr="name=${singlePage?.metadata.name}" />
     </section>
   </article>

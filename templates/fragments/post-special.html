@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<th:block th:fragment="special(style, eyebrow)">
+  <article th:class="'special-post special-post--' + ${style}">
+    <header class="special-post__header" th:classappend="${post.spec?.cover != null and !#strings.isEmpty(post.spec.cover)} ? ' special-post__header--cover' : ''">
+      <img th:if="${post.spec?.cover != null and !#strings.isEmpty(post.spec.cover)}" th:src="${post.spec.cover}" th:alt="${post.spec?.title}" width="1600" height="900" />
+      <div class="special-post__header-copy">
+        <span class="special-post__eyebrow" th:text="${eyebrow}"></span>
+        <h1 th:text="${post.spec?.title}"></h1>
+        <p th:if="${post.spec?.excerpt?.raw != null}" th:text="${post.spec.excerpt.raw}"></p>
+        <div class="special-post__meta">
+          <time th:text="${#temporals.format(post.spec?.publishTime, 'yyyy年MM月dd日')}"></time>
+          <span th:if="${post.owner != null}" th:text="${post.owner?.displayName}"></span>
+          <span th:if="${post.stats?.visit != null}" th:text="${post.stats.visit + ' 次阅读'}"></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="special-post__body">
+      <div class="post-content prose" th:utext="${post.content?.content}"></div>
+
+      <div class="post-tags" th:if="${post.tags != null and !post.tags.isEmpty()}">
+        <a th:each="tag : ${post.tags}" th:href="@{${tag.status?.permalink}}" class="tag" th:text="'#' + ${tag.spec?.displayName}"></a>
+      </div>
+
+      <div class="post-nav" th:with="cursor = ${postFinder.cursor(post.metadata.name)}">
+        <a th:if="${cursor.hasPrevious()}" th:href="@{${cursor.previous.status?.permalink}}" class="post-nav-item prev">
+          <span class="post-nav-label">上一篇</span><span class="post-nav-title" th:text="${cursor.previous.spec?.title}"></span>
+        </a>
+        <a th:if="${cursor.hasNext()}" th:href="@{${cursor.next.status?.permalink}}" class="post-nav-item next">
+          <span class="post-nav-label">下一篇</span><span class="post-nav-title" th:text="${cursor.next.spec?.title}"></span>
+        </a>
+      </div>
+
+      <section th:if="${haloCommentEnabled and theme.config.content?.post_comment_enabled != false}" class="post-comments">
+        <halo:comment group="content.halo.run" kind="Post" th:attr="name=${post.metadata.name}" />
+      </section>
+    </div>
+  </article>
+</th:block>
+</html>

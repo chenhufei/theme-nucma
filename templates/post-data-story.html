@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${post?.spec?.title} + ' - ' + ${site.title}, content=~{::content}, description=${post?.spec?.excerpt?.raw}, canonical=${post?.status?.permalink}, image=${post?.spec?.cover}, pageType='article', robots=null)}">
+<th:block th:fragment="content">
+  <th:block th:replace="~{fragments/post-special :: special('data-story', '数据纪实')}" />
+</th:block>
+</html>

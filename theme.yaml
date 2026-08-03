@@ -12,7 +12,7 @@ spec:
   homepage: https://nucma.cn
   repo: https://github.com/chenhufei/theme-nucma
   issues: https://qm.qq.com/q/YEqkx4fa0M
-  version: "3.26.15"
+  version: "3.26.21"
   requires: ">=2.22.0"
   settingName: theme-nucma-setting
   configMapName: theme-nucma-config
@@ -31,6 +31,33 @@ spec:
       - name: 网格卡片
         description: 适合封面内容展示
         file: category-grid-template.html
+      - name: 红色革命专题
+        description: 适合党史、红色文化与主题教育报道
+        file: category-revolution.html
+      - name: 绿色环保专题
+        description: 适合生态文明、环保行动与可持续内容
+        file: category-ecology.html
+      - name: 蓝色马卡龙
+        description: 适合校园生活、青年文化与清新图文
+        file: category-macaron.html
+      - name: 三下乡专题
+        description: 适合社会实践、服务基层、实践队伍与成果报道
+        file: category-sanxiaxiang.html
+      - name: 校园节庆专题
+        description: 高饱和青春视觉，适合社团文化节、迎新晚会和校园活动
+        file: category-youth-festival.html
+      - name: 科技未来专题
+        description: 数字网格与未来感视觉，适合科创、竞赛和数字校园内容
+        file: category-digital-future.html
+      - name: 公益志愿专题
+        description: 行动时间线视觉，适合志愿服务、公益项目和社会责任内容
+        file: category-volunteer.html
+      - name: 传统文化专题
+        description: 纸张、印章与典籍气质，适合非遗、国风和文化传承内容
+        file: category-heritage.html
+      - name: 体育赛事专题
+        description: 记分牌与赛场动势，适合运动会、联赛和竞技报道
+        file: category-sports.html
     post:
       - name: 信件 / 公告
         description: 不缩进正文，适合公文和信件
@@ -38,3 +65,27 @@ spec:
       - name: 杂志大图
         description: 强调封面和首段的视觉文章
         file: post-magazine.html
+      - name: 权威发布
+        description: 居中标题与规整正文，适合新闻、通知和正式稿件
+        file: post-news.html
+      - name: 专题报道
+        description: 封面主视觉与叙事正文，适合人物和活动特写
+        file: post-feature.html
+      - name: 沉浸阅读
+        description: 收窄版心并弱化装饰，适合长文和深度内容
+        file: post-reading.html
+      - name: 人物对谈
+        description: 强化问答、引语和人物信息，适合访谈与口述记录
+        file: post-interview.html
+      - name: 实践手记
+        description: 带有田野笔记与行程记录感，适合三下乡和调研日志
+        file: post-field-report.html
+      - name: 数据纪实
+        description: 强化数字、表格与信息层级，适合成果总结和数据报道
+        file: post-data-story.html
+      - name: 影像叙事
+        description: 宽幅图片与留白主导，适合摄影故事和活动图集
+        file: post-photo-essay.html
+      - name: 行动倡议
+        description: 海报式标题与醒目行动提示，适合招募、倡议和主题活动
+        file: post-campaign.html

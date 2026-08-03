@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{layout :: html(title=${category?.spec?.displayName} + ' - ' + ${site.title}, content=~{::content}, description=${category?.spec?.description}, canonical=${category?.status?.permalink}, image=null, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+  <th:block th:replace="~{fragments/category-special :: special('sports', 'CAMPUS LEAGUE', '用速度、协作与坚持书写青春赛场')}"></th:block>
+</th:block>
+</html>

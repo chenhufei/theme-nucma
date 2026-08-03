@@ -4,21 +4,56 @@ metadata:
   name: theme-nucma-setting
 spec:
   forms:
-    - group: navigation
-      label: 导航
+    - group: appearance
+      label: 全局外观
       formSchema:
-        - $formkit: select
-          name: nav_align
-          label: 菜单对齐
-          value: center
-          help: header 内菜单与自定义链接的水平对齐
-          options:
-            - label: 居中对齐
+        - $el: div
+          attrs:
+            style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:start"
+          children:
+            - $formkit: select
+              name: default_theme_mode
+              label: 默认明暗模式
+              value: system
+              options:
+                - label: 跟随系统
+                  value: system
+                - label: 浅色
+                  value: light
+                - label: 深色
+                  value: dark
+            - $formkit: color
+              name: primary_color
+              label: 主色调
+              value: "#D13E43"
+            - $formkit: checkbox
+              name: back_to_top_enabled
+              label: 显示返回顶部按钮
+              value: true
+    - group: navigation
+      label: 页头导航
+      formSchema:
+        - $el: div
+          attrs:
+            style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:start"
+          children:
+            - $formkit: select
+              name: nav_align
+              label: 菜单对齐
               value: center
-            - label: 左侧对齐
-              value: left
-            - label: 右侧对齐
-              value: right
+              help: header 内菜单与自定义链接的水平对齐
+              options:
+                - label: 居中对齐
+                  value: center
+                - label: 左侧对齐
+                  value: left
+                - label: 右侧对齐
+                  value: right
+            - $formkit: checkbox
+              name: show_login_btn
+              label: 显示登录入口
+              value: true
+              help: 右上角显示登录按钮，已登录用户显示头像
         - $formkit: menuSelect
           name: header_menu
           label: 顶部菜单
@@ -34,54 +69,8 @@ spec:
           label: 文章侧边栏菜单
           clearable: true
           help: 选择文章页侧边栏显示的菜单，清空则不显示
-        - $formkit: checkbox
-          name: show_login_btn
-          label: 显示登录入口
-          value: true
-          help: 右上角显示登录按钮，已登录用户显示头像
-    - group: sidebar
-      label: 文章侧栏
-      formSchema:
-        - $formkit: select
-          name: section_order
-          label: 侧边栏区块顺序
-          multiple: true
-          sortable: true
-          value: [menu, info, author, recent, toc]
-          options:
-            - label: 快捷导航
-              value: menu
-            - label: 文章信息
-              value: info
-            - label: 作者信息
-              value: author
-            - label: 最近文章
-              value: recent
-            - label: 文章目录
-              value: toc
-          help: 拖动或重新选择调整文章页侧边栏区块顺序
-        - $formkit: checkbox
-          name: show_menu
-          label: 显示快捷导航
-          value: true
-        - $formkit: checkbox
-          name: show_info
-          label: 显示文章信息
-          value: true
-        - $formkit: checkbox
-          name: show_author
-          label: 显示作者信息
-          value: true
-        - $formkit: checkbox
-          name: show_recent
-          label: 显示最近文章
-          value: true
-        - $formkit: checkbox
-          name: show_toc
-          label: 显示文章目录
-          value: true
     - group: carousel
-      label: 导航链接
+      label: 页头链接
       formSchema:
         - $formkit: number
           name: carousel_interval
@@ -99,8 +88,6 @@ spec:
           emptyText: 暂无自定义链接
           help: 在导航菜单右侧显示自定义链接，可选择图片或文字样式
           itemLabels:
-            - type: image
-              label: $value.image
             - type: text
               label: $value.text
             - type: text
@@ -133,47 +120,16 @@ spec:
                 - label: 当前页
                   value: _self
 
-    - group: appearance
-      label: 外观
-      formSchema:
-        - $formkit: select
-          name: default_theme_mode
-          label: 默认明暗模式
-          value: system
-          options:
-            - label: 跟随系统
-              value: system
-            - label: 浅色
-              value: light
-            - label: 深色
-              value: dark
-        - $formkit: color
-          name: primary_color
-          label: 主色调
-          value: "#D13E43"
-        - $formkit: checkbox
-          name: back_to_top_enabled
-          label: 显示返回顶部按钮
-          value: true
     - group: hero
       label: 首页横幅
       formSchema:
-        - $formkit: checkbox
-          name: show_hero
-          label: 显示横幅
-          value: true
-        - $formkit: attachment
-          name: bg_image
-          label: 单张背景
-          accepts: ["image/*"]
-          help: 从媒体库选择一张背景图片。如需轮播多图请使用下方「多背景轮播图」设置，留空使用默认渐变背景。
         - $formkit: array
           name: bg_carousel
-          label: 背景轮播
+          label: 横幅背景
           value: []
           addLabel: 添加背景图
-          emptyText: 请先添加至少 2 张轮播图
-          help: 添加多张图（超过1张）会自动轮播，底部显示条形指示线，建议尺寸一致（1920x600 以上）。
+          emptyText: 留空使用默认背景
+          help: 添加 1 张作为单图背景，添加多张自动轮播；建议图片尺寸一致（1920x600 以上）
           itemLabels:
             - type: image
               label: $value.url
@@ -191,33 +147,41 @@ spec:
               label: 图片说明（可选）
               value: ""
               placeholder: 如：春日校园
-        - $formkit: number
-          name: carousel_interval
-          label: 轮播间隔（毫秒）
-          value: 5000
-          min: 2500
-          max: 15000
-          step: 500
-          help: 每张图停留显示的时间，单位毫秒，默认 5000ms
-        - $formkit: select
-          name: bg_overlay
-          label: 背景遮罩
-          value: medium
-          help: 自定义背景图片的遮罩强度，影响文字可读性
-          options:
-            - label: 无遮罩
-              value: none
-            - label: 轻度
-              value: light
-            - label: 中度（推荐）
+        - $el: div
+          attrs:
+            style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:start"
+          children:
+            - $formkit: checkbox
+              name: show_hero
+              label: 显示横幅
+              value: true
+            - $formkit: number
+              name: carousel_interval
+              label: 轮播间隔（毫秒）
+              value: 5000
+              min: 2500
+              max: 15000
+              step: 500
+              help: 每张图停留显示的时间，单位毫秒，默认 5000ms
+            - $formkit: select
+              name: bg_overlay
+              label: 背景遮罩
               value: medium
-            - label: 重度
-              value: dark
-        - $formkit: checkbox
-          name: full_width
-          label: 铺满页面宽度
-          value: false
-          help: 开启后 Hero 区域顶到页面边缘和 header，不留容器边距
+              help: 自定义背景图片的遮罩强度，影响文字可读性
+              options:
+                - label: 无遮罩
+                  value: none
+                - label: 轻度
+                  value: light
+                - label: 中度（推荐）
+                  value: medium
+                - label: 重度
+                  value: dark
+            - $formkit: checkbox
+              name: full_width
+              label: 铺满页面宽度
+              value: false
+              help: 开启后 Hero 区域顶到页面边缘和 header，不留容器边距
         - $formkit: range
           name: min_height
           label: 横幅高度（像素）
@@ -227,130 +191,139 @@ spec:
           step: 10
           help: 通过拖动条调节 Hero 区域最小高度（当前值会实时显示在右侧输入框中，默认 320px）
 
-
     - group: home
       label: 首页内容
       formSchema:
-        - $formkit: select
-          name: section_order
-          label: 首页区块顺序
-          multiple: true
-          sortable: true
-          value: [news, categories, members, links]
-          options:
-            - label: 信息公告
+        - $formkit: array
+          name: section_blocks
+          label: 首页区块排序
+          addLabel: 添加首页区块
+          emptyText: 暂无首页区块
+          value:
+            - type: news
+              title: 文章内容
+            - type: members
+              title: 成员公示
+            - type: links
+              title: 友情链接
+          help: 拖动调整顺序；列表中存在即显示。支持移除后重新添加，每种区块建议只添加一次
+          itemLabels:
+            - type: text
+              label: $value.title
+            - type: text
+              label: $value.type
+          children:
+            - $formkit: select
+              name: type
+              label: 区块类型
               value: news
-            - label: 分类文章
-              value: categories
-            - label: 成员公示
-              value: members
-            - label: 友情链接
-              value: links
-          help: 调整首页主要内容区块的显示顺序
-        - $formkit: checkbox
-          name: show_news
-          label: 显示信息公告
-          value: true
-        - $formkit: checkbox
-          name: show_categories
-          label: 显示分类文章区块
-          value: true
-        - $formkit: checkbox
-          name: show_members
-          label: 显示成员公示区块
-          value: true
-        - $formkit: checkbox
-          name: show_links
-          label: 显示友情链接区块
-          value: true
-        - $formkit: select
-          name: member_limit
-          label: 首页成员展示数
-          value: 6
-          options:
-            - label: 4 个
-              value: 4
-            - label: 6 个
-              value: 6
-            - label: 8 个
-              value: 8
-            - label: 10 个
-              value: 10
-            - label: 12 个
-              value: 12
-        - $formkit: select
-          name: member_pinned
-          label: 固定显示的成员（优先）
-          multiple: true
-          sortable: true
-          clearable: true
-          searchable: true
-          help: 选中的成员将优先排在首页成员列表最前面，不受数量限制影响。需启用 PluginMembers 并已有成员数据。
-          action: /apis/member.plugin.halo.run/v1alpha1/members
-          requestOption:
-            method: GET
-            pageField: page
-            sizeField: size
-            totalField: total
-            itemsField: items
-            labelField: spec.displayName
-            valueField: metadata.name
-            fieldSelectorKey: metadata.name
-        - $formkit: select
-          name: link_limit
-          label: 首页友链展示数
-          value: 8
-          options:
-            - label: 4 个
-              value: 4
-            - label: 6 个
-              value: 6
-            - label: 8 个
-              value: 8
-            - label: 10 个
-              value: 10
-            - label: 12 个
-              value: 12
-        - $formkit: select
-          name: link_pinned
-          label: 固定显示的友链（优先）
-          multiple: true
-          sortable: true
-          clearable: true
-          searchable: true
-          help: 选中的友链将优先排在首页友链列表最前面，不受数量限制影响。需启用 PluginLinks 并已有友链数据。
-          action: /apis/core.halo.run/v1alpha1/links
-          requestOption:
-            method: GET
-            pageField: page
-            sizeField: size
-            totalField: total
-            itemsField: items
-            labelField: spec.displayName
-            valueField: metadata.name
-            fieldSelectorKey: metadata.name
+              validation: required
+              options:
+                - label: 文章内容
+                  value: news
+                - label: 成员公示
+                  value: members
+                - label: 友情链接
+                  value: links
+            - $formkit: text
+              name: title
+              label: 列表显示名称
+              value: ""
+              validation: required
+              help: 仅用于后台识别排序项，不改变前台区块标题
+        - $el: div
+          attrs:
+            style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;align-items:start"
+          children:
+            - $el: div
+              children:
+                - $formkit: select
+                  name: member_limit
+                  label: 成员数量
+                  value: 6
+                  options:
+                    - label: 4 个
+                      value: 4
+                    - label: 6 个
+                      value: 6
+                    - label: 8 个
+                      value: 8
+                    - label: 10 个
+                      value: 10
+                    - label: 12 个
+                      value: 12
+                - $formkit: select
+                  name: member_pinned
+                  label: 固定成员
+                  multiple: true
+                  sortable: true
+                  clearable: true
+                  searchable: true
+                  help: 选中项优先展示；需启用成员插件
+                  action: /apis/member.plugin.halo.run/v1alpha1/members
+                  requestOption:
+                    method: GET
+                    pageField: page
+                    sizeField: size
+                    totalField: total
+                    itemsField: items
+                    labelField: spec.displayName
+                    valueField: metadata.name
+                    iconField: spec.avatar
+                    descriptionField: spec.school
+                    fieldSelectorKey: metadata.name
+            - $el: div
+              children:
+                - $formkit: select
+                  name: link_limit
+                  label: 友链数量
+                  value: 8
+                  options:
+                    - label: 4 个
+                      value: 4
+                    - label: 6 个
+                      value: 6
+                    - label: 8 个
+                      value: 8
+                    - label: 10 个
+                      value: 10
+                    - label: 12 个
+                      value: 12
+                - $formkit: select
+                  name: link_pinned
+                  label: 固定友链
+                  multiple: true
+                  sortable: true
+                  clearable: true
+                  searchable: true
+                  help: 选中项优先展示；需启用官方链接插件
+                  action: /apis/core.halo.run/v1alpha1/links
+                  requestOption:
+                    method: GET
+                    pageField: page
+                    sizeField: size
+                    totalField: total
+                    itemsField: items
+                    labelField: spec.displayName
+                    valueField: metadata.name
+                    iconField: spec.logo
+                    descriptionField: spec.url
+                    fieldSelectorKey: metadata.name
 
         - $formkit: number
           name: news_limit
           label: 默认公告显示数量
           value: 8
-        - $formkit: checkbox
-          name: category_columns_enabled
-          label: 开启首页自选分类栏
-          help: 开启后按下方已选择的分类数量展示等宽栏目，支持 1-3 栏
-          value: false
         - $formkit: array
           name: category_blocks
-          label: 首页分类栏（最多3栏）
+          label: 首页分类栏（留空显示全部文章）
           value: []
           max: 3
           addLabel: 添加分类栏
-          help: 每个条目对应首页一栏；选择两个条目时显示两栏，移动端自动改为单栏
+          help: 不添加分类栏时显示全部文章；添加后按 1-3 个分类栏展示，两个条目即显示两栏，移动端自动改为单栏
           itemLabels:
             - type: text
               label: $value.block_title
-            - type: text
-              label: $value.category_name
           children:
             - $formkit: categorySelect
               name: category_name
@@ -368,6 +341,55 @@ spec:
               name: limit
               label: 显示数量
               value: 6
+
+    - group: sidebar
+      label: 文章侧栏
+      formSchema:
+        - $formkit: array
+          name: section_blocks
+          label: 侧边栏区块顺序
+          addLabel: 添加侧栏区块
+          emptyText: 暂无侧栏区块
+          value:
+            - type: menu
+              title: 快捷导航
+            - type: info
+              title: 文章信息
+            - type: author
+              title: 作者信息
+            - type: recent
+              title: 最近文章
+            - type: toc
+              title: 文章目录
+          help: 拖动调整顺序；列表中存在即显示。支持移除后重新添加，每种区块建议只添加一次
+          itemLabels:
+            - type: text
+              label: $value.title
+            - type: text
+              label: $value.type
+          children:
+            - $formkit: select
+              name: type
+              label: 区块类型
+              value: menu
+              validation: required
+              options:
+                - label: 快捷导航
+                  value: menu
+                - label: 文章信息
+                  value: info
+                - label: 作者信息
+                  value: author
+                - label: 最近文章
+                  value: recent
+                - label: 文章目录
+                  value: toc
+            - $formkit: text
+              name: title
+              label: 列表显示名称
+              value: ""
+              validation: required
+              help: 仅用于后台识别排序项，不改变前台侧栏标题
     - group: about
       label: 关于页
       formSchema:
@@ -375,11 +397,20 @@ spec:
           name: about_blocks
           label: 关于页区块排序
           addLabel: 添加区块
+          emptyText: 暂无关于页区块
           help: 拖动调整关于页各个区块的显示顺序
           value:
+            - type: content
+              title: 站点介绍
             - type: stats
+              title: 数据统计
+            - type: latest
+              title: 最新内容
             - type: faq
+              title: 常见问题
           itemLabels:
+            - type: text
+              label: $value.title
             - type: text
               label: $value.type
           children:
@@ -388,10 +419,26 @@ spec:
               label: 区块类型
               value: stats
               options:
+                - label: 站点介绍
+                  value: content
                 - label: 数据统计
                   value: stats
+                - label: 最新文章
+                  value: latest
+                - label: 内容分类
+                  value: categories
+                - label: 成员展示
+                  value: members
+                - label: 友情链接
+                  value: links
                 - label: 常见问题
                   value: faq
+            - $formkit: text
+              name: title
+              label: 区块标题
+              value: ""
+              validation: required
+              help: 用于前台区块标题，也会显示在折叠列表中
         - $formkit: array
           name: stat_items
           label: 统计项列表
@@ -420,8 +467,12 @@ spec:
                   value: comment
                 - label: 点赞数
                   value: upvote
+                - label: 站点访问量
+                  value: visit
                 - label: 成员数量（需启用成员插件）
                   value: member
+                - label: 友情链接数（需启用官方链接插件）
+                  value: link
                 - label: 自定义数值
                   value: custom
               validation: required
@@ -482,59 +533,63 @@ spec:
               validation: required
 
     - group: content
-      label: 内容与功能
+      label: 全站功能
       formSchema:
-        - $formkit: select
-          name: date_format
-          label: 日期格式
-          value: YYYY-MM-DD
-          options:
-            - label: 2024-01-01
+        - $el: div
+          attrs:
+            style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:start"
+          children:
+            - $formkit: select
+              name: date_format
+              label: 日期格式
               value: YYYY-MM-DD
-            - label: 2024年1月1日
-              value: YYYY年MM月DD日
-            - label: 01/01/2024
-              value: MM/DD/YYYY
-            - label: 01-01
-              value: MM-DD
-        - $formkit: checkbox
-          name: search_enabled
-          label: 启用搜索功能
-          value: true
-        - $formkit: checkbox
-          name: theme_toggle_enabled
-          label: 显示主题切换按钮
-          value: true
-        - $formkit: checkbox
-          name: auto_toc
-          label: 自动生成文章目录
-          value: true
-          help: 根据文章标题自动提取目录，文章没有标题时自动隐藏
-        - $formkit: checkbox
-          name: post_comment_enabled
-          label: 文章页评论区
-          value: true
-          help: 开启后文章页底部显示评论区
-        - $formkit: checkbox
-          name: page_comment_enabled
-          label: 自定义页评论区
-          value: true
-          help: 开启后自定义页面底部显示评论区
-        - $formkit: checkbox
-          name: links_comment_enabled
-          label: 友链页评论区
-          value: false
-          help: 开启后友链页底部显示评论区
-        - $formkit: checkbox
-          name: members_comment_enabled
-          label: 成员页评论区
-          value: false
-          help: 开启后成员页底部显示评论区
-        - $formkit: checkbox
-          name: developer_mode
-          label: 开发者诊断模式
-          value: false
-          help: 仅排查问题时开启；开启后浏览器控制台会输出主题版本、页面模板和基础契约检查结果，不记录用户数据
+              options:
+                - label: 2024-01-01
+                  value: YYYY-MM-DD
+                - label: 2024年1月1日
+                  value: YYYY年MM月DD日
+                - label: 01/01/2024
+                  value: MM/DD/YYYY
+                - label: 01-01
+                  value: MM-DD
+            - $formkit: checkbox
+              name: search_enabled
+              label: 启用搜索功能
+              value: true
+            - $formkit: checkbox
+              name: theme_toggle_enabled
+              label: 显示主题切换按钮
+              value: true
+            - $formkit: checkbox
+              name: auto_toc
+              label: 自动生成文章目录
+              value: true
+              help: 根据文章标题自动提取目录，文章没有标题时自动隐藏
+            - $formkit: checkbox
+              name: post_comment_enabled
+              label: 文章页评论区
+              value: true
+              help: 开启后文章页底部显示评论区
+            - $formkit: checkbox
+              name: page_comment_enabled
+              label: 自定义页评论区
+              value: true
+              help: 开启后自定义页面底部显示评论区
+            - $formkit: checkbox
+              name: links_comment_enabled
+              label: 友链页评论区
+              value: false
+              help: 开启后友链页底部显示评论区
+            - $formkit: checkbox
+              name: members_comment_enabled
+              label: 成员页评论区
+              value: false
+              help: 开启后成员页底部显示评论区
+            - $formkit: checkbox
+              name: developer_mode
+              label: 开发者诊断模式
+              value: false
+              help: 仅排查问题时开启；开启后浏览器控制台会输出主题版本、页面模板和基础契约检查结果，不记录用户数据
         - $formkit: code
           name: custom_css
           label: 自定义 CSS
@@ -571,8 +626,6 @@ spec:
           emptyText: 暂无内容
           help: 添加图片或文字链接，支持简单的可视化排版
           itemLabels:
-            - type: image
-              label: $value.image
             - type: text
               label: $value.title
             - type: text
@@ -583,12 +636,14 @@ spec:
               label: 标题/文字
               value: ""
               placeholder: 如：微信公众号
+              validation: required
             - $formkit: attachment
               name: image
               label: 图片
               value: ""
               accepts: ["image/*"]
               help: 从媒体库选择图片，如二维码、Logo 等
+              validation: required
             - $formkit: text
               name: url
               label: 链接地址
@@ -603,18 +658,22 @@ spec:
                   value: _blank
                 - label: 当前页
                   value: _self
-        - $formkit: text
-          name: icp_number
-          label: ICP 备案号
-          placeholder: 京ICP备XXXXXXXX号
-        - $formkit: text
-          name: icp_link
-          label: ICP 备案链接
-          value: https://beian.miit.gov.cn/
-        - $formkit: text
-          name: police_number
-          label: 公安备案号
-          placeholder: 京公网安备XXXXXXXXXXXXXX号
-        - $formkit: text
-          name: police_record_code
-          label: 公安备案验证码
+        - $el: div
+          attrs:
+            style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:start"
+          children:
+            - $formkit: text
+              name: icp_number
+              label: ICP 备案号
+              placeholder: 京ICP备XXXXXXXX号
+            - $formkit: text
+              name: icp_link
+              label: ICP 备案链接
+              value: https://beian.miit.gov.cn/
+            - $formkit: text
+              name: police_number
+              label: 公安备案号
+              placeholder: 京公网安备XXXXXXXXXXXXXX号
+            - $formkit: text
+              name: police_record_code
+              label: 公安备案验证码

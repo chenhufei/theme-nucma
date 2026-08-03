@@ -86,6 +86,8 @@
                  th:href="${member.spec.qqFriendLink}" target="_blank" rel="noopener noreferrer"
                  class="member-card" th:attr="data-qq=${member.spec.qq ?: ''}"
                  th:title="${member.spec.school}">
+                <img th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
+                     class="member-card-background" th:src="${member.spec.background}" alt="" aria-hidden="true" loading="lazy" />
                 <div class="member-avatar">
                   <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
                        th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
@@ -111,6 +113,8 @@
 
               <div th:unless="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
                  class="member-card" th:attr="data-qq=${member.spec.qq ?: ''}">
+                <img th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
+                     class="member-card-background" th:src="${member.spec.background}" alt="" aria-hidden="true" loading="lazy" />
                 <div class="member-avatar">
                   <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
                        th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
@@ -146,6 +150,8 @@
                th:href="${member.spec.qqFriendLink}" target="_blank" rel="noopener noreferrer"
                class="member-card" th:attr="data-qq=${member.spec.qq ?: ''}"
                th:title="${member.spec.school}">
+              <img th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
+                   class="member-card-background" th:src="${member.spec.background}" alt="" aria-hidden="true" loading="lazy" />
               <div class="member-avatar">
                 <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
                      th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
@@ -171,6 +177,8 @@
 
             <div th:unless="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
                  class="member-card" th:attr="data-qq=${member.spec.qq ?: ''}">
+              <img th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
+                   class="member-card-background" th:src="${member.spec.background}" alt="" aria-hidden="true" loading="lazy" />
               <div class="member-avatar">
                 <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
                      th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
