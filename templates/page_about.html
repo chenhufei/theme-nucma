@@ -165,7 +165,7 @@
       </section>
     </th:block>
 
-    <section th:if="${haloCommentEnabled and theme.config.content?.page_comment_enabled != false}" class="page-comments">
+    <section th:if="${haloCommentEnabled and (theme.config.pages?.page_comment_enabled != null ? theme.config.pages.page_comment_enabled : theme.config.content?.page_comment_enabled) != false}" class="page-comments">
       <halo:comment group="content.halo.run" kind="SinglePage" th:attr="name=${singlePage?.metadata.name}" />
     </section>
   </article>

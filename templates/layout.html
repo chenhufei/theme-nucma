@@ -75,10 +75,11 @@
     })();
   </script>
   <!-- 引入 Alpine.js 处理交互（插件需在核心之前加载） -->
-  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <th:block th:if="${theme.config.content?.custom_css != null and !#strings.isEmpty(theme.config.content.custom_css)}">
-    <style th:utext="${theme.config.content.custom_css}"></style>
+  <script defer src="https://cdn.bootcdn.net/ajax/libs/alpinejs-collapse/3.15.12/cdn.min.js"></script>
+  <script defer src="https://cdn.bootcdn.net/ajax/libs/alpinejs/3.15.12/cdn.min.js"></script>
+  <th:block th:with="customCss=${theme.config.appearance?.custom_css != null ? theme.config.appearance.custom_css : theme.config.content?.custom_css}"
+            th:if="${customCss != null and !#strings.isEmpty(customCss)}">
+    <style th:utext="${customCss}"></style>
   </th:block>
 </head>
 <body x-data="{ mobileMenuOpen: false }"
@@ -86,6 +87,17 @@
       @keydown.escape.window="mobileMenuOpen = false"
       th:data-template="${_templateId}"
       th:data-theme-version="${theme.spec.version}">
+  <div th:if="${seoPageType == 'article'}"
+       id="readingProgress"
+       class="reading-progress"
+       role="progressbar"
+       aria-label="文章阅读进度"
+       aria-valuemin="0"
+       aria-valuemax="100"
+       aria-valuenow="0">
+    <span class="reading-progress__bar"></span>
+  </div>
+
   <!-- 顶部导航 -->
   <header class="site-header">
     <div class="container">
@@ -97,7 +109,9 @@
                th:src="${site.logo}" th:alt="${site.title}" height="32" />
           <span th:text="${site.title}"></span>
         </a>
-        <nav class="main-nav">
+        <nav class="main-nav"
+             th:with="headerLinks=${theme.config.navigation?.custom_links != null ? theme.config.navigation.custom_links : theme.config.carousel?.custom_links},
+                      headerLinkInterval=${theme.config.navigation?.carousel_interval != null ? theme.config.navigation.carousel_interval : (theme.config.carousel?.carousel_interval ?: 3500)}">
           <!-- 主菜单（header_menu 为空则不显示） -->
           <th:block th:if="${theme.config.navigation?.header_menu != null and !#strings.isEmpty(theme.config.navigation?.header_menu)}"
              th:with="menu = ${menuFinder.getByName(theme.config.navigation?.header_menu)}">
@@ -109,13 +123,12 @@
             </th:block>
           </th:block>
           <!-- 自定义链接跟在菜单右侧，超过1个时自动上下滚动轮播 -->
-          <th:block th:if="${theme.config.carousel?.custom_links != null and !#lists.isEmpty(theme.config.carousel.custom_links)}">
-            <th:block th:with="carousel = ${#lists.size(theme.config.carousel.custom_links) > 1},
-                              interval = ${theme.config.carousel?.carousel_interval ?: 3500}">
+          <th:block th:if="${headerLinks != null and !#lists.isEmpty(headerLinks)}">
+            <th:block th:with="carousel = ${#lists.size(headerLinks) > 1}">
               <div class="header-links-wrap" th:classappend="${carousel ? 'is-carousel' : ''}"
-                   th:data-interval="${carousel} ? ${interval} : null">
+                   th:data-interval="${carousel} ? ${headerLinkInterval} : null">
                 <div class="header-links-track" th:if="${carousel}">
-                  <th:block th:each="link : ${theme.config.carousel.custom_links}">
+                  <th:block th:each="link : ${headerLinks}">
                     <div class="header-links-slide">
                       <a th:if="${link.url != null and !#strings.isEmpty(link.url) and (link.text != null and !#strings.isEmpty(link.text) or link.image != null and !#strings.isEmpty(link.image))}"
                          th:href="${link.url}"
@@ -132,7 +145,7 @@
                   </th:block>
                 </div>
                 <th:block th:unless="${carousel}">
-                  <th:block th:each="link : ${theme.config.carousel.custom_links}">
+                  <th:block th:each="link : ${headerLinks}">
                     <a th:if="${link.url != null and !#strings.isEmpty(link.url) and (link.text != null and !#strings.isEmpty(link.text) or link.image != null and !#strings.isEmpty(link.image))}"
                        th:href="${link.url}"
                      th:target="${link.target ?: '_blank'}"
@@ -151,7 +164,7 @@
           </th:block>
         </nav>
         <div class="header-actions">
-          <th:block th:if="${theme.config.content?.search_enabled != false}">
+          <th:block th:if="${(theme.config.navigation?.search_enabled != null ? theme.config.navigation.search_enabled : theme.config.content?.search_enabled) != false}">
             <button th:if="${pluginFinder.available('PluginSearchWidget')}"
                     onclick="SearchWidget.open()"
                     class="icon-btn" aria-label="搜索">
@@ -161,7 +174,7 @@
               </svg>
             </button>
           </th:block>
-          <button th:if="${theme.config.content?.theme_toggle_enabled != false}"
+          <button th:if="${(theme.config.navigation?.theme_toggle_enabled != null ? theme.config.navigation.theme_toggle_enabled : theme.config.content?.theme_toggle_enabled) != false}"
                   id="themeToggle" class="icon-btn theme-toggle-btn" aria-label="切换主题">
             <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="5"></circle>
@@ -291,9 +304,10 @@
                @click="mobileMenuOpen = false"></a>
           </th:block>
         </th:block>
-        <th:block th:if="${theme.config.carousel?.custom_links != null and !#lists.isEmpty(theme.config.carousel.custom_links)}">
+        <th:block th:with="mobileHeaderLinks=${theme.config.navigation?.custom_links != null ? theme.config.navigation.custom_links : theme.config.carousel?.custom_links}"
+                  th:if="${mobileHeaderLinks != null and !#lists.isEmpty(mobileHeaderLinks)}">
           <div class="mobile-custom-links">
-            <a th:each="link : ${theme.config.carousel.custom_links}"
+            <a th:each="link : ${mobileHeaderLinks}"
                th:if="${link.url != null and !#strings.isEmpty(link.url) and (link.text != null and !#strings.isEmpty(link.text) or link.image != null and !#strings.isEmpty(link.image))}"
                th:href="${link.url}"
                th:target="${link.target ?: '_blank'}"
@@ -316,6 +330,93 @@
       <th:block th:replace="${content}" />
     </div>
   </main>
+
+  <th:block th:if="${seoPageType == 'article' and (theme.config.sidebar?.auto_toc != null ? theme.config.sidebar.auto_toc : theme.config.content?.auto_toc) != false}">
+    <button id="mobileTocToggle"
+            class="mobile-toc-toggle"
+            type="button"
+            aria-controls="mobileTocDrawer"
+            aria-expanded="false"
+            hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M8 6h13M8 12h13M8 18h13"></path>
+        <path d="M3 6h.01M3 12h.01M3 18h.01"></path>
+      </svg>
+      <span>目录</span>
+    </button>
+
+    <dialog id="mobileTocDrawer" class="mobile-toc-drawer" aria-labelledby="mobileTocTitle" hidden>
+      <div class="mobile-toc-drawer__panel">
+        <header class="mobile-toc-drawer__header">
+          <h2 id="mobileTocTitle">文章目录</h2>
+          <button type="button" class="viewer-icon-btn" data-toc-close aria-label="关闭目录">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </header>
+        <nav id="mobileToc" class="toc mobile-toc" aria-label="文章目录"></nav>
+      </div>
+    </dialog>
+  </th:block>
+
+  <dialog th:if="${seoPageType == 'article'}"
+          id="articleImageViewer"
+          class="article-image-viewer"
+          aria-labelledby="articleImageViewerTitle"
+          hidden>
+    <div class="article-image-viewer__shell">
+      <header class="article-image-viewer__header">
+        <div class="article-image-viewer__heading">
+          <h2 id="articleImageViewerTitle">图片预览</h2>
+          <span id="articleImageViewerCounter" aria-live="polite"></span>
+        </div>
+        <button type="button" class="viewer-icon-btn" data-image-viewer-close aria-label="关闭图片预览">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </header>
+
+      <div class="article-image-viewer__stage">
+        <button type="button" class="viewer-nav viewer-nav--prev" data-image-viewer-prev aria-label="上一张图片">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m15 18-6-6 6-6"></path>
+          </svg>
+        </button>
+        <div id="articleImageViewerCanvas" class="article-image-viewer__canvas">
+          <img id="articleImageViewerImage" alt="" draggable="false" />
+        </div>
+        <button type="button" class="viewer-nav viewer-nav--next" data-image-viewer-next aria-label="下一张图片">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m9 18 6-6-6-6"></path>
+          </svg>
+        </button>
+      </div>
+
+      <footer class="article-image-viewer__footer">
+        <p id="articleImageViewerCaption"></p>
+        <div class="article-image-viewer__toolbar" aria-label="图片缩放">
+          <button type="button" class="viewer-icon-btn" data-image-viewer-zoom-out aria-label="缩小图片">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35M8 11h6"></path>
+            </svg>
+          </button>
+          <button type="button" class="viewer-reset-btn" data-image-viewer-reset aria-label="重置图片缩放">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path>
+            </svg>
+            <span id="articleImageViewerZoom">100%</span>
+          </button>
+          <button type="button" class="viewer-icon-btn" data-image-viewer-zoom-in aria-label="放大图片">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35M11 8v6M8 11h6"></path>
+            </svg>
+          </button>
+        </div>
+      </footer>
+    </div>
+  </dialog>
 
   <!-- 页脚 -->
   <footer class="site-footer">
@@ -354,7 +455,7 @@
         </div>
 
         <!-- 快捷导航（使用 Halo 内置菜单） -->
-        <th:block th:with="footerMenuName = ${theme.config.navigation?.footer_menu ?: ''}">
+        <th:block th:with="footerMenuName = ${theme.config.footer?.footer_menu != null ? theme.config.footer.footer_menu : (theme.config.navigation?.footer_menu ?: '')}">
           <div class="footer-col"
                th:if="${!#strings.isEmpty(footerMenuName)}"
                th:with="menu = ${menuFinder.getByName(footerMenuName)}">
@@ -422,17 +523,18 @@
 
   <halo:footer />
   <!-- GSAP 动画库（统一动画引擎） -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script th:inline="javascript">
     window.NUCMA_RUNTIME = {
-      debug: /*[[${theme.config.content?.developer_mode == true}]]*/ false,
+      debug: /*[[${theme.config.appearance?.developer_mode != null ? theme.config.appearance.developer_mode : theme.config.content?.developer_mode == true}]]*/ false,
       version: /*[[${theme.spec.version}]]*/ "development"
     };
   </script>
   <script th:src="@{/assets/js/main.js(v=${theme.spec.version})}" defer></script>
-  <th:block th:if="${theme.config.content?.custom_js != null and !#strings.isEmpty(theme.config.content.custom_js)}">
-    <script th:utext="${theme.config.content.custom_js}"></script>
+  <th:block th:with="customJs=${theme.config.appearance?.custom_js != null ? theme.config.appearance.custom_js : theme.config.content?.custom_js}"
+            th:if="${customJs != null and !#strings.isEmpty(customJs)}">
+    <script th:utext="${customJs}"></script>
   </th:block>
 </body>
 </html>

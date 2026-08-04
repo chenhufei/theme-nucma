@@ -234,7 +234,7 @@
     </div>
 
     <!-- 评论区 -->
-    <section th:if="${haloCommentEnabled and theme.config.content?.members_comment_enabled == true}" class="post-comments">
+    <section th:if="${haloCommentEnabled and (theme.config.pages?.members_comment_enabled != null ? theme.config.pages.members_comment_enabled : theme.config.content?.members_comment_enabled) == true}" class="post-comments">
       <halo:comment group="plugin.halo.run" kind="Plugin" th:attr="name=${pluginName}" />
     </section>
 
@@ -243,7 +243,7 @@
   <script th:if="${pluginFinder.available('PluginMembers')}">
     // 引入 pinyin-pro 处理拼音首字母匹配
     const pinyinScript = document.createElement('script');
-    pinyinScript.src = 'https://unpkg.com/pinyin-pro@3.16.4/dist/index.js';
+    pinyinScript.src = 'https://cdn.staticfile.net/pinyin-pro/3.16.4/index.js';
     document.head.appendChild(pinyinScript);
 
     let searchTimeout;

@@ -615,6 +615,457 @@ import { initDiagnostics } from './modules/diagnostics.js';
     if (letterOpening || !hasCjk) content.classList.add('prose--letter');
   }
 
+  // ===== 文章阅读进度 =====
+  function initReadingProgress() {
+    var progress = document.getElementById('readingProgress');
+    var content = document.querySelector('.post-content.prose');
+    if (!progress || !content) return;
+    var bar = progress.querySelector('.reading-progress__bar');
+    if (!bar) return;
+
+    var frame = null;
+    var lastValue = -1;
+    function update() {
+      frame = null;
+      var rect = content.getBoundingClientRect();
+      var contentTop = rect.top + window.scrollY;
+      var start = Math.max(0, contentTop - 80);
+      var end = Math.max(start + 1, contentTop + content.offsetHeight - window.innerHeight);
+      var ratio = Math.min(1, Math.max(0, (window.scrollY - start) / (end - start)));
+      var value = Math.round(ratio * 100);
+      bar.style.transform = 'scaleX(' + ratio.toFixed(4) + ')';
+      if (value !== lastValue) {
+        progress.setAttribute('aria-valuenow', String(value));
+        lastValue = value;
+      }
+    }
+    function requestUpdate() {
+      if (frame !== null) return;
+      frame = window.requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate);
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(requestUpdate).observe(content);
+    }
+    update();
+  }
+
+  // ===== 文章目录：桌面侧栏与移动抽屉共享同一份标题数据 =====
+  function initArticleToc() {
+    var content = document.querySelector('.post-content.prose');
+    var desktopToc = document.getElementById('toc');
+    var desktopCard = document.getElementById('tocCard');
+    var mobileToc = document.getElementById('mobileToc');
+    var mobileToggle = document.getElementById('mobileTocToggle');
+    var drawer = document.getElementById('mobileTocDrawer');
+    if (!content || (!desktopToc && !mobileToc)) return;
+
+    var headings = Array.from(content.querySelectorAll('h1, h2, h3, h4, h5, h6')).filter(function(heading) {
+      return (heading.textContent || '').trim().length > 0;
+    });
+    if (!headings.length) {
+      if (desktopCard) desktopCard.hidden = true;
+      if (mobileToggle) mobileToggle.hidden = true;
+      if (drawer) drawer.hidden = true;
+      return;
+    }
+
+    var usedIds = {};
+    var minLevel = Math.min.apply(null, headings.map(function(heading) {
+      return parseInt(heading.tagName.slice(1), 10);
+    }));
+    headings.forEach(function(heading, index) {
+      var base = (heading.id || heading.textContent || 'heading-' + index).toString().trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9\u3400-\u9fff]+/g, '-')
+        .replace(/^-+|-+$/g, '') || ('heading-' + index);
+      var id = base;
+      var suffix = 2;
+      while (usedIds[id] || (document.getElementById(id) && document.getElementById(id) !== heading)) {
+        id = base + '-' + suffix++;
+      }
+      usedIds[id] = true;
+      heading.id = id;
+    });
+
+    function buildList(target) {
+      if (!target) return;
+      var list = document.createElement('ul');
+      headings.forEach(function(heading, index) {
+        var level = parseInt(heading.tagName.slice(1), 10);
+        var item = document.createElement('li');
+        item.style.setProperty('--toc-depth', String(Math.max(0, level - minLevel)));
+        var link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = (heading.textContent || '').trim();
+        link.dataset.tocIndex = String(index);
+        link.setAttribute('aria-label', link.textContent);
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+      target.replaceChildren(list);
+    }
+
+    buildList(desktopToc);
+    buildList(mobileToc);
+    if (desktopCard) desktopCard.hidden = false;
+    if (mobileToggle) mobileToggle.hidden = false;
+    if (drawer) {
+      drawer.hidden = false;
+      drawer.setAttribute('aria-hidden', 'true');
+    }
+
+    var closeTimer = null;
+    var mobileMedia = window.matchMedia('(max-width: 1024px)');
+    function finishDrawerClose(restoreFocus) {
+      if (!drawer) return;
+      if (drawer.open && typeof drawer.close === 'function') drawer.close();
+      else drawer.removeAttribute('open');
+      if (restoreFocus && mobileToggle) mobileToggle.focus();
+    }
+    function closeDrawer(restoreFocus) {
+      if (!drawer || !drawer.open) return;
+      window.clearTimeout(closeTimer);
+      drawer.classList.remove('is-open');
+      drawer.setAttribute('aria-hidden', 'true');
+      document.documentElement.classList.remove('mobile-toc-open');
+      if (mobileToggle) mobileToggle.setAttribute('aria-expanded', 'false');
+      if (prefersReduced) finishDrawerClose(restoreFocus);
+      else closeTimer = window.setTimeout(function() { finishDrawerClose(restoreFocus); }, 220);
+    }
+    function openDrawer() {
+      if (!drawer || !mobileMedia.matches) return;
+      window.clearTimeout(closeTimer);
+      if (!drawer.open) {
+        if (typeof drawer.showModal === 'function') drawer.showModal();
+        else drawer.setAttribute('open', '');
+      }
+      drawer.setAttribute('aria-hidden', 'false');
+      document.documentElement.classList.add('mobile-toc-open');
+      if (mobileToggle) mobileToggle.setAttribute('aria-expanded', 'true');
+      window.requestAnimationFrame(function() {
+        drawer.classList.add('is-open');
+        var closeButton = drawer.querySelector('[data-toc-close]');
+        if (closeButton) closeButton.focus();
+      });
+    }
+
+    if (mobileToggle && drawer) {
+      mobileToggle.addEventListener('click', openDrawer);
+      var closeButton = drawer.querySelector('[data-toc-close]');
+      if (closeButton) closeButton.addEventListener('click', function() { closeDrawer(true); });
+      drawer.addEventListener('cancel', function(event) {
+        event.preventDefault();
+        closeDrawer(true);
+      });
+      drawer.addEventListener('click', function(event) {
+        if (event.target === drawer) closeDrawer(true);
+      });
+      drawer.addEventListener('close', function() {
+        drawer.classList.remove('is-open');
+        drawer.setAttribute('aria-hidden', 'true');
+        document.documentElement.classList.remove('mobile-toc-open');
+        mobileToggle.setAttribute('aria-expanded', 'false');
+      });
+      mobileToc.addEventListener('click', function(event) {
+        if (event.target.closest('a')) closeDrawer(false);
+      });
+      mobileMedia.addEventListener('change', function(event) {
+        if (!event.matches) closeDrawer(false);
+      });
+    }
+
+    var tocLinks = Array.from(document.querySelectorAll('.toc a[data-toc-index]'));
+    var currentFrame = null;
+    function updateCurrent() {
+      currentFrame = null;
+      var currentIndex = 0;
+      headings.forEach(function(heading, index) {
+        if (heading.getBoundingClientRect().top <= 110) currentIndex = index;
+      });
+      tocLinks.forEach(function(link) {
+        var active = parseInt(link.dataset.tocIndex || '-1', 10) === currentIndex;
+        link.classList.toggle('active', active);
+        if (active) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    }
+    function requestCurrentUpdate() {
+      if (currentFrame !== null) return;
+      currentFrame = window.requestAnimationFrame(updateCurrent);
+    }
+    window.addEventListener('scroll', requestCurrentUpdate, { passive: true });
+    updateCurrent();
+  }
+
+  // ===== 文章图片查看器 =====
+  function initArticleImageViewer() {
+    var content = document.querySelector('.post-content.prose');
+    var viewer = document.getElementById('articleImageViewer');
+    if (!content || !viewer) return;
+    var viewerImage = document.getElementById('articleImageViewerImage');
+    var canvas = document.getElementById('articleImageViewerCanvas');
+    var counter = document.getElementById('articleImageViewerCounter');
+    var caption = document.getElementById('articleImageViewerCaption');
+    var zoomValue = document.getElementById('articleImageViewerZoom');
+    var previousButton = viewer.querySelector('[data-image-viewer-prev]');
+    var nextButton = viewer.querySelector('[data-image-viewer-next]');
+    if (!viewerImage || !canvas || !counter || !caption || !zoomValue || !previousButton || !nextButton) return;
+
+    var currentImages = [];
+    var currentIndex = 0;
+    var scale = 1;
+    var panX = 0;
+    var panY = 0;
+    var dragging = false;
+    var dragStartX = 0;
+    var dragStartY = 0;
+    var dragOriginX = 0;
+    var dragOriginY = 0;
+    var previousFocus = null;
+    var closeTimer = null;
+
+    function isEligible(image) {
+      if (!image || image.closest('a, button')) return false;
+      if (image.matches('[data-no-viewer], [data-image-viewer="false"], .emoji, .emojione, .katex img')) return false;
+      if (image.closest('[data-no-viewer], .emoji, .emojione, .katex')) return false;
+      return !(image.naturalWidth > 0 && image.naturalHeight > 0 && image.naturalWidth <= 160 && image.naturalHeight <= 160);
+    }
+    function refreshImageState(image) {
+      var eligible = isEligible(image);
+      image.classList.toggle('article-viewer-image', eligible);
+      if (eligible) {
+        image.setAttribute('aria-haspopup', 'dialog');
+        if (!image.hasAttribute('tabindex')) {
+          image.setAttribute('tabindex', '0');
+          image.dataset.viewerTabindexAdded = 'true';
+        }
+      } else {
+        image.removeAttribute('aria-haspopup');
+        if (image.dataset.viewerTabindexAdded === 'true') {
+          image.removeAttribute('tabindex');
+          delete image.dataset.viewerTabindexAdded;
+        }
+      }
+    }
+    var sourceImages = Array.from(content.querySelectorAll('img'));
+    sourceImages.forEach(function(image) {
+      refreshImageState(image);
+      if (!image.complete) image.addEventListener('load', function() { refreshImageState(image); }, { once: true });
+    });
+    function collectImages() {
+      return sourceImages.filter(isEligible);
+    }
+    function imageCaption(image) {
+      var figure = image.closest('figure');
+      var figureCaption = figure ? figure.querySelector('figcaption') : null;
+      return ((figureCaption && figureCaption.textContent) || image.getAttribute('alt') || image.getAttribute('title') || '').trim();
+    }
+    function applyTransform() {
+      viewerImage.style.transform = 'translate3d(' + panX + 'px,' + panY + 'px,0) scale(' + scale.toFixed(2) + ')';
+      zoomValue.textContent = Math.round(scale * 100) + '%';
+      canvas.classList.toggle('is-zoomed', scale > 1);
+    }
+    function resetTransform() {
+      scale = 1;
+      panX = 0;
+      panY = 0;
+      applyTransform();
+    }
+    function setScale(nextScale) {
+      scale = Math.min(4, Math.max(1, nextScale));
+      if (scale === 1) {
+        panX = 0;
+        panY = 0;
+      }
+      applyTransform();
+    }
+    function renderImage() {
+      var source = currentImages[currentIndex];
+      if (!source) return;
+      resetTransform();
+      viewerImage.src = source.currentSrc || source.src;
+      viewerImage.alt = source.getAttribute('alt') || '文章图片';
+      counter.textContent = (currentIndex + 1) + ' / ' + currentImages.length;
+      caption.textContent = imageCaption(source);
+      caption.hidden = !caption.textContent;
+      previousButton.disabled = currentImages.length <= 1;
+      nextButton.disabled = currentImages.length <= 1;
+    }
+    function showImage(offset) {
+      if (!currentImages.length) return;
+      currentIndex = (currentIndex + offset + currentImages.length) % currentImages.length;
+      renderImage();
+    }
+    function finishViewerClose() {
+      if (viewer.open && typeof viewer.close === 'function') viewer.close();
+      else viewer.removeAttribute('open');
+      viewerImage.removeAttribute('src');
+      if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
+    }
+    function closeViewer() {
+      if (!viewer.open) return;
+      window.clearTimeout(closeTimer);
+      viewer.classList.remove('is-open');
+      document.documentElement.classList.remove('image-viewer-open');
+      if (prefersReduced) finishViewerClose();
+      else closeTimer = window.setTimeout(finishViewerClose, 180);
+    }
+    function openViewer(image) {
+      currentImages = collectImages();
+      currentIndex = currentImages.indexOf(image);
+      if (currentIndex < 0) return;
+      previousFocus = document.activeElement;
+      viewer.hidden = false;
+      renderImage();
+      if (!viewer.open) {
+        if (typeof viewer.showModal === 'function') viewer.showModal();
+        else viewer.setAttribute('open', '');
+      }
+      document.documentElement.classList.add('image-viewer-open');
+      window.requestAnimationFrame(function() {
+        viewer.classList.add('is-open');
+        var closeButton = viewer.querySelector('[data-image-viewer-close]');
+        if (closeButton) closeButton.focus();
+      });
+    }
+
+    content.addEventListener('click', function(event) {
+      var image = event.target.closest('img');
+      if (!isEligible(image)) return;
+      event.preventDefault();
+      openViewer(image);
+    });
+    content.addEventListener('keydown', function(event) {
+      var image = event.target.closest('img.article-viewer-image');
+      if (!image || (event.key !== 'Enter' && event.key !== ' ')) return;
+      event.preventDefault();
+      openViewer(image);
+    });
+    viewer.querySelector('[data-image-viewer-close]').addEventListener('click', closeViewer);
+    previousButton.addEventListener('click', function() { showImage(-1); });
+    nextButton.addEventListener('click', function() { showImage(1); });
+    viewer.querySelector('[data-image-viewer-zoom-out]').addEventListener('click', function() { setScale(scale - 0.25); });
+    viewer.querySelector('[data-image-viewer-zoom-in]').addEventListener('click', function() { setScale(scale + 0.25); });
+    viewer.querySelector('[data-image-viewer-reset]').addEventListener('click', resetTransform);
+    viewer.addEventListener('cancel', function(event) {
+      event.preventDefault();
+      closeViewer();
+    });
+    viewer.addEventListener('click', function(event) {
+      if (event.target === viewer) closeViewer();
+    });
+    viewer.addEventListener('close', function() {
+      viewer.classList.remove('is-open');
+      document.documentElement.classList.remove('image-viewer-open');
+    });
+    viewer.addEventListener('keydown', function(event) {
+      if (event.key === 'ArrowLeft') showImage(-1);
+      if (event.key === 'ArrowRight') showImage(1);
+      if (event.key === '+' || event.key === '=') setScale(scale + 0.25);
+      if (event.key === '-') setScale(scale - 0.25);
+      if (event.key === '0') resetTransform();
+    });
+    canvas.addEventListener('wheel', function(event) {
+      event.preventDefault();
+      setScale(scale + (event.deltaY < 0 ? 0.25 : -0.25));
+    }, { passive: false });
+    canvas.addEventListener('dblclick', resetTransform);
+    canvas.addEventListener('pointerdown', function(event) {
+      if (scale <= 1 || event.button !== 0) return;
+      dragging = true;
+      dragStartX = event.clientX;
+      dragStartY = event.clientY;
+      dragOriginX = panX;
+      dragOriginY = panY;
+      canvas.classList.add('is-dragging');
+      canvas.setPointerCapture(event.pointerId);
+    });
+    canvas.addEventListener('pointermove', function(event) {
+      if (!dragging) return;
+      panX = dragOriginX + event.clientX - dragStartX;
+      panY = dragOriginY + event.clientY - dragStartY;
+      applyTransform();
+    });
+    function stopDragging(event) {
+      if (!dragging) return;
+      dragging = false;
+      canvas.classList.remove('is-dragging');
+      if (event && canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    }
+    canvas.addEventListener('pointerup', stopDragging);
+    canvas.addEventListener('pointercancel', stopDragging);
+  }
+
+  // ===== 友链实时搜索 =====
+  function initLinkSearch() {
+    var search = document.querySelector('[data-link-search]');
+    if (!search) return;
+    var input = search.querySelector('#linkSearchInput');
+    var clearButton = search.querySelector('[data-link-search-clear]');
+    var resultRoot = document.getElementById('linkSearchResults');
+    var empty = document.getElementById('linkSearchEmpty');
+    var count = document.getElementById('linkSearchCount');
+    if (!input || !clearButton || !resultRoot || !empty || !count) return;
+    var cards = Array.from(resultRoot.querySelectorAll('.link-card'));
+    if (!cards.length) {
+      search.hidden = true;
+      return;
+    }
+
+    function normalize(value) {
+      var text = (value || '').toString().toLowerCase();
+      try { text = text.normalize('NFKC'); } catch (_) {}
+      return text.replace(/\s+/g, ' ').trim();
+    }
+    var indexedCards = cards.map(function(card) {
+      return {
+        card: card,
+        text: normalize([
+          card.querySelector('.link-name')?.textContent,
+          card.querySelector('.link-desc')?.textContent,
+          card.getAttribute('href'),
+        ].filter(Boolean).join(' ')),
+      };
+    });
+    var groups = Array.from(resultRoot.querySelectorAll('.link-group'));
+    function update() {
+      var query = normalize(input.value);
+      var visible = 0;
+      indexedCards.forEach(function(item) {
+        var matched = !query || item.text.includes(query);
+        item.card.hidden = !matched;
+        if (matched) visible++;
+      });
+      groups.forEach(function(group) {
+        var groupCards = Array.from(group.querySelectorAll('.link-card'));
+        var groupVisible = groupCards.filter(function(card) { return !card.hidden; }).length;
+        group.hidden = groupVisible === 0;
+        var groupCount = group.querySelector('.link-group-count');
+        if (groupCount) groupCount.textContent = String(groupVisible);
+      });
+      count.textContent = query ? visible + ' 个结果' : '共 ' + cards.length + ' 个';
+      clearButton.hidden = !query;
+      empty.hidden = !query || visible > 0;
+    }
+    function clear() {
+      input.value = '';
+      update();
+      input.focus();
+    }
+    input.addEventListener('input', update);
+    input.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && input.value) {
+        event.preventDefault();
+        clear();
+      }
+    });
+    clearButton.addEventListener('click', clear);
+    update();
+  }
+
   // ===== 初始化 =====
   document.addEventListener('DOMContentLoaded', function() {
     initDiagnostics();
@@ -626,6 +1077,10 @@ import { initDiagnostics } from './modules/diagnostics.js';
     initGridLimit();
     initSectionOrdering();
     initPostTypography();
+    initReadingProgress();
+    initArticleToc();
+    initArticleImageViewer();
+    initLinkSearch();
     initBannerAnimation();
     initHeaderLinksCarousel();
     initHeroBgCarousel();

@@ -32,7 +32,7 @@
         </a>
       </div>
 
-      <section th:if="${haloCommentEnabled and theme.config.content?.post_comment_enabled != false}" class="post-comments">
+      <section th:if="${haloCommentEnabled and (theme.config.sidebar?.post_comment_enabled != null ? theme.config.sidebar.post_comment_enabled : theme.config.content?.post_comment_enabled) != false}" class="post-comments">
         <halo:comment group="content.halo.run" kind="Post" th:attr="name=${post.metadata.name}" />
       </section>
     </div>

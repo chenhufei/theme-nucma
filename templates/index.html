@@ -3,18 +3,20 @@
       th:replace="~{layout :: html(title=${site.title}, content=~{::content}, description=${site.seo?.description ?: site.subtitle}, canonical=${site.url}, image=${site.logo}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
   <!-- Banner - 校园风格 -->
-  <section class="banner" th:if="${theme.config.hero?.show_hero != false}"
-           th:with="legacyBg = ${theme.config.hero?.bg_image != null and !#strings.isEmpty(theme.config.hero.bg_image) ? theme.config.hero.bg_image : ''},
-                     backgrounds = ${theme.config.hero?.bg_carousel},
+  <section class="banner"
+           th:with="heroConfig = ${theme.config.home?.show_hero != null ? theme.config.home : theme.config.hero},
+                     legacyBg = ${heroConfig?.bg_image != null and !#strings.isEmpty(heroConfig.bg_image) ? heroConfig.bg_image : ''},
+                     backgrounds = ${heroConfig?.bg_carousel},
                      hasBackgrounds = ${backgrounds != null and !#lists.isEmpty(backgrounds)},
                      singleBackground = ${hasBackgrounds ? backgrounds[0] : null},
                      carousel = ${hasBackgrounds and #lists.size(backgrounds) > 1},
                      singleBgUrl = ${singleBackground != null and singleBackground.url != null and !#strings.isEmpty(singleBackground.url) ? singleBackground.url : legacyBg},
                      hasBg = ${!#strings.isEmpty(singleBgUrl)},
-                    bgInterval = ${theme.config.hero?.carousel_interval ?: 5000},
-                    fullW = ${theme.config.hero?.full_width == true},
-                    overlay = ${theme.config.hero?.bg_overlay != null and !#strings.isEmpty(theme.config.hero.bg_overlay) ? theme.config.hero.bg_overlay : 'medium'},
-                    heroH = ${theme.config.hero?.min_height}"
+                     bgInterval = ${heroConfig?.carousel_interval ?: 5000},
+                     fullW = ${heroConfig?.full_width == true},
+                     overlay = ${heroConfig?.bg_overlay != null and !#strings.isEmpty(heroConfig.bg_overlay) ? heroConfig.bg_overlay : 'medium'},
+                     heroH = ${heroConfig?.min_height}"
+           th:if="${heroConfig == null or heroConfig.show_hero != false}"
            th:classappend="${(hasBg or carousel) ? 'has-custom-bg' : ''} + ' ' + ${fullW ? 'full-width' : ''} + ' overlay-' + ${overlay} + ${carousel ? ' has-bg-carousel' : ''}"
            th:style="${heroH != null} ? 'min-height:' + ${heroH} + 'px' : ''"
            th:data-bg-interval="${carousel} ? ${bgInterval} : null">
@@ -63,19 +65,32 @@
   </section>
 
   <div class="home-sections"
-       th:with="homeOrder=${theme.config.home?.section_blocks != null ? theme.config.home.section_blocks.![type] : theme.config.home?.section_order}"
+       th:with="homeBlocks=${theme.config.home?.section_blocks},
+                homeOrder=${homeBlocks != null ? homeBlocks.![type] : theme.config.home?.section_order},
+                newsBlocks=${homeBlocks != null ? homeBlocks.?[type == 'news'] : null},
+                memberBlocks=${homeBlocks != null ? homeBlocks.?[type == 'members'] : null},
+                linkBlocks=${homeBlocks != null ? homeBlocks.?[type == 'links'] : null},
+                newsBlock=${newsBlocks != null and !#lists.isEmpty(newsBlocks) ? newsBlocks[0] : null},
+                memberBlock=${memberBlocks != null and !#lists.isEmpty(memberBlocks) ? memberBlocks[0] : null},
+                linkBlock=${linkBlocks != null and !#lists.isEmpty(linkBlocks) ? linkBlocks[0] : null},
+                newsCategories=${newsBlock != null and newsBlock.category_blocks != null ? newsBlock.category_blocks : theme.config.home?.category_blocks},
+                newsLimit=${newsBlock != null and newsBlock.news_limit != null ? newsBlock.news_limit : (theme.config.home?.news_limit ?: 8)},
+                memberLimit=${memberBlock != null and memberBlock.member_limit != null ? memberBlock.member_limit : (theme.config.home?.member_limit ?: 6)},
+                memberPinned=${memberBlock != null and memberBlock.member_pinned != null ? memberBlock.member_pinned : theme.config.home?.member_pinned},
+                linkLimit=${linkBlock != null and linkBlock.link_limit != null ? linkBlock.link_limit : (theme.config.home?.link_limit ?: 8)},
+                linkPinned=${linkBlock != null and linkBlock.link_pinned != null ? linkBlock.link_pinned : theme.config.home?.link_pinned}"
        th:data-section-order="${homeOrder != null ? #strings.listJoin(homeOrder, ',') : 'news,members,links'}">
 
   <!-- 信息公告 -->
   <section class="section" data-home-section="news"
-           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and (theme.config.home?.category_blocks == null or #lists.isEmpty(theme.config.home.category_blocks))}">
+           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and (newsCategories == null or #lists.isEmpty(newsCategories))}">
     <div class="section-container" th:if="${posts != null and posts.items != null and !posts.items.isEmpty()}">
       <div class="section-header-bar">
         <h2 class="section-title-bar">信息公告</h2>
         <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="more-link">更多</a>
       </div>
       <div class="news-list">
-        <a th:each="post, iter : ${posts.items}" th:if="${iter.index < (theme.config.home?.news_limit ?: 8)}"
+        <a th:each="post, iter : ${posts.items}" th:if="${iter.index < newsLimit}"
            th:href="@{${post.status?.permalink}}" target="_blank" rel="noopener noreferrer" class="news-item">
           <span class="news-date" th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}"></span>
           <span class="news-title" th:text="${post.spec?.title}"></span>
@@ -86,10 +101,10 @@
 
   <!-- 首页自选分类栏 -->
   <section class="section" data-home-section="news"
-           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and theme.config.home?.category_blocks != null and !#lists.isEmpty(theme.config.home.category_blocks)}">
+           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and newsCategories != null and !#lists.isEmpty(newsCategories)}">
     <div class="section-container">
       <div class="category-cols-wrapper">
-        <th:block th:each="col : ${theme.config.home.category_blocks}"
+        <th:block th:each="col : ${newsCategories}"
                   th:with="catPostList = ${postFinder.list({page: 1, size: col.limit ?: 6, categoryName: col.category_name})},
                            catInfo = ${categoryFinder.getByName(col.category_name)}">
           <div class="category-col">
@@ -122,8 +137,8 @@
       </div>
       <th:block th:with="groupsResult = ${memberFinder.listApprovedMembers()}">
         <div class="member-grid" th:if="${groupsResult != null and groupsResult.items != null and !#lists.isEmpty(groupsResult.items)}"
-             th:attr="data-limit=${theme.config.home?.member_limit ?: 6},
-                      data-pinned-ids=${#lists.isEmpty(theme.config.home?.member_pinned) ? '' : #strings.listJoin(theme.config.home?.member_pinned, ',')}">
+             th:attr="data-limit=${memberLimit},
+                      data-pinned-ids=${memberPinned == null or #lists.isEmpty(memberPinned) ? '' : #strings.listJoin(memberPinned, ',')}">
           <th:block th:each="group : ${groupsResult.items}">
             <th:block th:each="member : ${group.members}">
               <div class="member-card" th:attr="data-id=${member.metadata?.name ?: ''},data-priority=${member.spec?.priority ?: 0}">
@@ -162,8 +177,8 @@
       </div>
       <th:block th:with="linkGroups = ${linkFinder?.groupBy()}">
         <div class="link-grid" th:if="${linkGroups != null and !#lists.isEmpty(linkGroups)}"
-             th:attr="data-limit=${theme.config.home?.link_limit ?: 8},
-                      data-pinned-ids=${#lists.isEmpty(theme.config.home?.link_pinned) ? '' : #strings.listJoin(theme.config.home?.link_pinned, ',')}">
+             th:attr="data-limit=${linkLimit},
+                      data-pinned-ids=${linkPinned == null or #lists.isEmpty(linkPinned) ? '' : #strings.listJoin(linkPinned, ',')}">
           <th:block th:each="group : ${linkGroups}">
             <th:block th:each="link : ${group?.links}">
               <a th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer"
@@ -201,7 +216,12 @@
   </div>
 
   <!-- 分页 -->
-  <nav class="pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext()) and (theme.config.home?.category_blocks == null or #lists.isEmpty(theme.config.home.category_blocks))}">
+  <nav class="pagination"
+       th:with="homeBlocks=${theme.config.home?.section_blocks},
+                newsBlocks=${homeBlocks != null ? homeBlocks.?[type == 'news'] : null},
+                newsBlock=${newsBlocks != null and !#lists.isEmpty(newsBlocks) ? newsBlocks[0] : null},
+                newsCategories=${newsBlock != null and newsBlock.category_blocks != null ? newsBlock.category_blocks : theme.config.home?.category_blocks}"
+       th:if="${posts != null and (posts.hasPrevious() or posts.hasNext()) and (newsCategories == null or #lists.isEmpty(newsCategories))}">
     <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="page-btn">上一页</a>
     <span class="page-info" th:text="${posts.page} + ' / ' + ${posts.totalPages}"></span>
     <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="page-btn">下一页</a>

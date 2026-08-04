@@ -32,6 +32,10 @@ const groupNames = groups.map((form) => form.group);
 if (new Set(groupNames).size !== groupNames.length) {
   fail('settings.yaml 存在重复设置分组');
 }
+const expectedGroups = ['appearance', 'navigation', 'home', 'sidebar', 'about', 'pages', 'footer'];
+if (JSON.stringify(groupNames) !== JSON.stringify(expectedGroups)) {
+  fail(`设置分组顺序异常：${groupNames.join(', ')}`);
+}
 
 function walkSchema(nodes, visitor) {
   for (const node of nodes || []) {
@@ -49,9 +53,39 @@ for (const form of groups) {
     if (node.$formkit === 'array' && (!node.itemLabels || node.itemLabels.length === 0)) {
       fail(`${form.group}.${node.name} 数组缺少折叠列表显示字段`);
     }
+    if (node.if && !node.key) {
+      fail(`${form.group}.${node.name || node.$el || 'schema'} 条件节点缺少唯一 key`);
+    }
   });
   const duplicates = fieldNames.filter((name, index) => fieldNames.indexOf(name) !== index);
   if (duplicates.length) fail(`${form.group} 设置存在重复字段：${[...new Set(duplicates)].join(', ')}`);
+}
+
+const homeForm = groups.find((form) => form.group === 'home');
+const homeSections = homeForm?.formSchema?.find((node) => node.name === 'section_blocks');
+const homeSectionDefaults = new Map((homeSections?.value || []).map((item) => [item.type, item]));
+const homeSectionChildren = new Map((homeSections?.children || []).map((item) => [item.name, item]));
+for (const type of ['news', 'members', 'links']) {
+  if (!homeSectionDefaults.has(type)) fail(`首页区块默认值缺少 ${type}`);
+}
+for (const [name, type] of [
+  ['news_limit', 'news'], ['category_blocks', 'news'],
+  ['member_limit', 'members'], ['member_pinned', 'members'],
+  ['link_limit', 'links'], ['link_pinned', 'links'],
+]) {
+  const child = homeSectionChildren.get(name);
+  if (!child) fail(`首页区块子表单缺少 ${name}`);
+  if (child?.if !== `$value.type === '${type}'`) fail(`首页区块子表单 ${name} 条件异常`);
+  if (!child?.key) fail(`首页区块子表单 ${name} 缺少唯一 key`);
+}
+if (homeSectionChildren.get('category_blocks')?.$formkit !== 'array') {
+  fail('首页文章分类栏必须使用内层 array');
+}
+for (const name of ['member_pinned', 'link_pinned']) {
+  const field = homeSectionChildren.get(name);
+  if (field?.multiple !== true || field?.sortable !== true) {
+    fail(`首页内容排序 ${name} 必须支持多选和拖动`);
+  }
 }
 
 if (/^templates\/$/m.test(gitignore)) {
@@ -97,6 +131,14 @@ for (const path of templates) {
 }
 
 const allTemplates = templates.map(read).join('\n');
+for (const retiredCdn of [
+  'cdnjs.cloudflare.com',
+  'cdn.jsdelivr.net',
+  'unpkg.com',
+]) {
+  if (allTemplates.includes(retiredCdn)) fail(`模板仍引用高延迟 CDN：${retiredCdn}`);
+}
+
 for (const staleKey of [
   'enable_search', 'enable_theme_toggle', 'enable_back_to_top',
   'enable_post_comment', 'enable_page_comment', 'enable_links_comment',
@@ -105,6 +147,24 @@ for (const staleKey of [
   'navigation.header_links', 'footer.custom_items', 'footer.custom_title',
 ]) {
   if (allTemplates.includes(staleKey)) fail(`模板仍引用旧设置字段：${staleKey}`);
+}
+
+for (const compatibilityMarker of [
+  'theme.config.hero',
+  'theme.config.carousel',
+  'theme.config.content?.auto_toc',
+  'theme.config.content?.post_comment_enabled',
+  'theme.config.navigation?.footer_menu',
+  'theme.config.home?.member_limit',
+  'theme.config.home?.link_limit',
+  'theme.config.home?.category_blocks',
+  'newsBlock.category_blocks',
+  'memberBlock.member_pinned',
+  'linkBlock.link_pinned',
+]) {
+  if (!allTemplates.includes(compatibilityMarker)) {
+    fail(`模板缺少旧配置回退：${compatibilityMarker}`);
+  }
 }
 
 const contracts = [
@@ -124,6 +184,23 @@ for (const marker of ['rel="canonical"', 'property="og:title"', 'name="twitter:c
   if (!layout.includes(marker)) fail(`统一 SEO Head 缺少 ${marker}`);
 }
 
+const mainScript = read('src/js/main.js');
+const linksTemplate = read('templates/links.html');
+const postTemplate = read('templates/post.html');
+for (const [feature, source, markers] of [
+  ['文章阅读进度', layout + mainScript, ['id="readingProgress"', 'initReadingProgress']],
+  ['移动端文章目录', layout + mainScript, ['id="mobileTocDrawer"', 'id="mobileToc"', 'initArticleToc']],
+  ['文章图片查看器', layout + mainScript, ['id="articleImageViewer"', 'initArticleImageViewer']],
+  ['友链实时搜索', linksTemplate + mainScript, ['data-link-search', 'id="linkSearchEmpty"', 'initLinkSearch']],
+]) {
+  for (const marker of markers) {
+    if (!source.includes(marker)) fail(`${feature} 缺少标记：${marker}`);
+  }
+}
+if (postTemplate.includes('目录生成脚本')) {
+  fail('标准文章模板仍包含旧的内联目录脚本');
+}
+
 if (built) {
   for (const path of ['templates/assets/css/main.css', 'templates/assets/js/main.js', 'templates/assets/build-info.json']) {
     if (!existsSync(join(root, path))) fail(`构建产物不存在：${path}`);
@@ -131,6 +208,12 @@ if (built) {
   if (existsSync(join(root, 'templates/assets/build-info.json'))) {
     const info = JSON.parse(read('templates/assets/build-info.json'));
     if (info.version !== packageJson.version) fail('build-info.json 版本与 package.json 不一致');
+  }
+  if (existsSync(join(root, 'templates/assets/js/main.js'))) {
+    const builtScript = read('templates/assets/js/main.js');
+    for (const marker of ['readingProgress', 'mobileTocDrawer', 'articleImageViewer', 'linkSearchInput']) {
+      if (!builtScript.includes(marker)) fail(`构建脚本缺少阅读体验标记：${marker}`);
+    }
   }
   const maps = walk('templates/assets', '.map');
   if (maps.length) fail(`主题包不得包含 Sourcemap：${maps.join(', ')}`);
