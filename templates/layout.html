@@ -293,32 +293,43 @@
           </svg>
         </button>
       </div>
-      <nav class="mobile-nav">
+      <nav class="mobile-nav" aria-label="移动端导航">
         <th:block th:if="${theme.config.navigation?.header_menu != null and !#strings.isEmpty(theme.config.navigation?.header_menu)}"
                   th:with="menu = ${menuFinder.getByName(theme.config.navigation?.header_menu)}">
-          <th:block th:if="${menu != null and menu.menuItems != null}">
-            <a th:each="item : ${menu.menuItems}"
-               th:href="@{${item.status?.href}}"
-               th:text="${item.status?.displayName}"
-               th:target="${item.spec?.target?.value}"
-               @click="mobileMenuOpen = false"></a>
+          <th:block th:if="${menu != null and !#lists.isEmpty(menu.menuItems)}">
+            <div class="mobile-nav-section mobile-nav-section--menu" role="group" aria-label="菜单导航">
+              <div class="mobile-nav-label">菜单导航</div>
+              <div class="mobile-menu-links">
+                <a th:each="item : ${menu.menuItems}"
+                   class="mobile-nav-link mobile-nav-link--menu"
+                   th:href="@{${item.status?.href}}"
+                   th:text="${item.status?.displayName}"
+                   th:target="${item.spec?.target?.value}"
+                   @click="mobileMenuOpen = false"></a>
+              </div>
+            </div>
           </th:block>
         </th:block>
-        <th:block th:with="mobileHeaderLinks=${theme.config.navigation?.custom_links != null ? theme.config.navigation.custom_links : theme.config.carousel?.custom_links}"
-                  th:if="${mobileHeaderLinks != null and !#lists.isEmpty(mobileHeaderLinks)}">
-          <div class="mobile-custom-links">
-            <a th:each="link : ${mobileHeaderLinks}"
-               th:if="${link.url != null and !#strings.isEmpty(link.url) and (link.text != null and !#strings.isEmpty(link.text) or link.image != null and !#strings.isEmpty(link.image))}"
-               th:href="${link.url}"
-               th:target="${link.target ?: '_blank'}"
-               @click="mobileMenuOpen = false"
-               th:aria-label="${link.text}"
-               style="display: flex; align-items: center; gap: 8px;">
-              <img th:if="${link.image != null and !#strings.isEmpty(link.image)}"
-                   th:src="${link.image}" th:alt="${link.text}" width="36" height="36" style="object-fit:contain;"/>
-              <span th:if="${link.text != null and !#strings.isEmpty(link.text)}" th:text="${link.text}"></span>
-            </a>
-          </div>
+        <th:block th:with="mobileHeaderLinks=${theme.config.navigation?.custom_links != null ? theme.config.navigation.custom_links : theme.config.carousel?.custom_links}">
+          <th:block th:if="${mobileHeaderLinks != null and !#lists.isEmpty(mobileHeaderLinks)}">
+            <div class="mobile-nav-section mobile-nav-section--custom" role="group" aria-label="自定义链接">
+              <div class="mobile-custom-links">
+                <a th:each="link : ${mobileHeaderLinks}"
+                   th:if="${link.url != null and !#strings.isEmpty(link.url) and (link.text != null and !#strings.isEmpty(link.text) or link.image != null and !#strings.isEmpty(link.image))}"
+                   class="mobile-nav-link mobile-nav-link--custom"
+                   th:href="${link.url}"
+                   th:target="${link.target ?: '_blank'}"
+                   @click="mobileMenuOpen = false"
+                   th:aria-label="${link.text != null and !#strings.isEmpty(link.text) ? link.text : link.url}">
+                  <img th:if="${link.image != null and !#strings.isEmpty(link.image)}"
+                       th:src="${link.image}"
+                       th:alt="${link.text != null ? link.text : ''}"
+                       width="42" height="42" />
+                  <span th:if="${link.text != null and !#strings.isEmpty(link.text)}" th:text="${link.text}"></span>
+                </a>
+              </div>
+            </div>
+          </th:block>
         </th:block>
       </nav>
     </div>
@@ -454,19 +465,35 @@
           </div>
         </div>
 
-        <!-- 快捷导航（使用 Halo 内置菜单） -->
-        <th:block th:with="footerMenuName = ${theme.config.footer?.footer_menu != null ? theme.config.footer.footer_menu : (theme.config.navigation?.footer_menu ?: '')}">
-          <div class="footer-col"
-               th:if="${!#strings.isEmpty(footerMenuName)}"
-               th:with="menu = ${menuFinder.getByName(footerMenuName)}">
-            <div class="footer-col-title">快捷导航</div>
-            <nav class="footer-nav" th:if="${menu != null and menu.menuItems != null}">
-              <a th:each="item : ${menu.menuItems}"
-                 th:href="@{${item.status?.href}}"
-                 th:text="${item.status?.displayName}"
-                 th:target="${item.spec?.target?.value}"></a>
-            </nav>
-          </div>
+        <!-- 页脚菜单栏目：新列表优先，保留旧单菜单配置作为回退。 -->
+        <th:block th:with="footerMenus = ${theme.config.footer?.footer_menus}">
+          <th:block th:if="${footerMenus != null and !#lists.isEmpty(footerMenus)}"
+                    th:each="footerColumn : ${footerMenus}"
+                    th:with="menu = ${footerColumn.menu != null and !#strings.isEmpty(footerColumn.menu) ? menuFinder.getByName(footerColumn.menu) : null}">
+            <div class="footer-col" th:if="${menu != null and menu.menuItems != null}">
+              <div class="footer-col-title" th:text="${footerColumn.title ?: '快捷导航'}">快捷导航</div>
+              <nav class="footer-nav">
+                <a th:each="item : ${menu.menuItems}"
+                   th:href="@{${item.status?.href}}"
+                   th:text="${item.status?.displayName}"
+                   th:target="${item.spec?.target?.value}"></a>
+              </nav>
+            </div>
+          </th:block>
+          <th:block th:unless="${footerMenus != null and !#lists.isEmpty(footerMenus)}"
+                    th:with="footerMenuName = ${theme.config.footer?.footer_menu != null ? theme.config.footer.footer_menu : (theme.config.navigation?.footer_menu ?: '')}">
+            <div class="footer-col"
+                 th:if="${!#strings.isEmpty(footerMenuName)}"
+                 th:with="menu = ${menuFinder.getByName(footerMenuName)}">
+              <div class="footer-col-title">快捷导航</div>
+              <nav class="footer-nav" th:if="${menu != null and menu.menuItems != null}">
+                <a th:each="item : ${menu.menuItems}"
+                   th:href="@{${item.status?.href}}"
+                   th:text="${item.status?.displayName}"
+                   th:target="${item.spec?.target?.value}"></a>
+              </nav>
+            </div>
+          </th:block>
         </th:block>
 
         <!-- 自定义内容 -->

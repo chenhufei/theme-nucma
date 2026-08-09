@@ -1,7 +1,7 @@
 {
   "name": "theme-nucma",
-  "version": "3.27.0",
-  "description": "\u9762\u5411\u9ad8\u6821\u4e0e\u7ec4\u7ec7\u7ad9\u70b9\u7684 Halo \u4e3b\u9898\uff0c\u63d0\u4f9b\u4e13\u9898\u5185\u5bb9\u6a21\u677f\u3001\u6210\u5458\u4e0e\u53cb\u94fe\u5c55\u793a\u53ca\u54cd\u5e94\u5f0f\u9605\u8bfb\u4f53\u9a8c",
+  "version": "3.27.6",
+  "description": "面向高校与组织站点的 Halo 主题，提供专题内容模板、成员与友链展示及响应式阅读体验",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -26,8 +26,12 @@
     "halo",
     "halo-theme",
     "nucma",
-    "\u6821\u56ed\u4e3b\u9898"
+    "校园主题"
   ],
   "author": "NUCMA",
-  "homepage": "https://nucma.cn"
+  "homepage": "https://nucma.cn",
+  "dependencies": {
+    "pinyin-pro": "3.16.4",
+    "qrcode": "1.5.4"
+  }
 }

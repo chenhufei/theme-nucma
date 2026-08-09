@@ -608,11 +608,34 @@ spec:
     - group: footer
       label: 页脚设置
       formSchema:
+        - $formkit: array
+          name: footer_menus
+          label: 页脚菜单栏目
+          value: []
+          addLabel: 添加菜单栏目
+          emptyText: 暂无菜单栏目
+          help: 可添加多个带标题的 Halo 菜单栏目；设置后优先于下方的旧页脚菜单。
+          itemLabels:
+            - type: text
+              label: $value.title
+            - type: text
+              label: $value.menu
+          children:
+            - $formkit: text
+              name: title
+              label: 栏目标题
+              value: ""
+              validation: required
+            - $formkit: menuSelect
+              name: menu
+              label: 菜单
+              clearable: true
+              validation: required
         - $formkit: menuSelect
           name: footer_menu
-          label: 页脚菜单
+          label: 旧页脚菜单
           clearable: true
-          help: 选择页脚快捷导航使用的菜单，清空则不显示
+          help: 兼容已有配置；新增“页脚菜单栏目”后，此项不再显示。
         - $formkit: textarea
           name: copyright
           label: 版权信息

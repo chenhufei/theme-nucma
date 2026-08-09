@@ -4,20 +4,42 @@
 <th:block th:fragment="content">
 
   <div class="page-header">
-    <div class="page-header-row">
+    <div class="page-header-row page-header-row--with-tools">
       <div>
         <h1 class="page-title" th:text="${linksTitle} ?: '友情链接'">友情链接</h1>
         <p class="page-desc">协同传播的校园伙伴</p>
       </div>
-      <button th:if="${pluginFinder.available('link-submit-next')}"
-              type="button"
-              class="apply-btn"
-              onclick="LinkSubmitWidget.open()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <path d="M12 5v14M5 12h14"></path>
-        </svg>
-        申请友链
-      </button>
+      <div class="page-header-tools">
+        <div class="page-search link-search" data-link-search>
+          <label class="visually-hidden" for="linkSearchInput">搜索友链</label>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input id="linkSearchInput"
+                 type="search"
+                 placeholder="搜索名称、简介或网址"
+                 autocomplete="off"
+                 spellcheck="false"
+                 aria-controls="linkSearchResults" />
+          <span id="linkSearchCount" class="link-search__count" aria-live="polite"></span>
+          <button type="button" class="link-search__clear" data-link-search-clear aria-label="清空搜索" hidden>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <button th:if="${pluginFinder.available('link-submit-next')}"
+                type="button"
+                class="apply-btn"
+                onclick="LinkSubmitWidget.open()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"></path>
+          </svg>
+          申请友链
+        </button>
+      </div>
     </div>
   </div>
 
@@ -47,26 +69,6 @@
         <span th:text="${g.spec?.displayName}">分组</span>
       </a>
     </nav>
-
-    <div class="link-search" data-link-search>
-      <label class="visually-hidden" for="linkSearchInput">搜索友链</label>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <circle cx="11" cy="11" r="8"></circle>
-        <path d="m21 21-4.35-4.35"></path>
-      </svg>
-      <input id="linkSearchInput"
-             type="search"
-             placeholder="搜索名称、简介或网址"
-             autocomplete="off"
-             spellcheck="false"
-             aria-controls="linkSearchResults" />
-      <span id="linkSearchCount" class="link-search__count" aria-live="polite"></span>
-      <button type="button" class="link-search__clear" data-link-search-clear aria-label="清空搜索" hidden>
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path d="M18 6 6 18M6 6l12 12"></path>
-        </svg>
-      </button>
-    </div>
 
     <!-- 按分组展示（无 group 参数时） -->
     <div th:if="${group == null or #strings.isEmpty(group)}"

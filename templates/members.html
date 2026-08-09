@@ -4,35 +4,32 @@
 <th:block th:fragment="content">
 
   <div class="page-header">
-    <div class="page-header-row" style="display: flex; flex-direction: column; gap: var(--space-md);">
-      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: var(--space-md);">
-        <div>
-          <h1 class="page-title">成员公示</h1>
-          <p class="page-desc">共同维护校园沟通秩序</p>
-        </div>
+    <div class="page-header-row page-header-row--with-tools">
+      <div>
+        <h1 class="page-title">成员公示</h1>
+        <p class="page-desc">共同维护校园沟通秩序</p>
+      </div>
 
-        <div style="display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap;">
-          <!-- 搜索框 -->
-          <div class="member-search-box" style="position: relative; min-width: 250px;">
-            <input type="text" id="memberSearchInput" placeholder="搜索名称、学校、QQ号..."
-                   style="width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); outline: none; transition: all 0.3s; font-size: 0.9rem;"
-                   oninput="filterMembers()" />
-            <svg style="position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary);" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="M21 21l-4.3-4.3"></path>
-            </svg>
-          </div>
+      <div class="page-header-tools">
+        <label class="page-search member-search-box">
+          <span class="visually-hidden">搜索成员</span>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="M21 21l-4.3-4.3"></path>
+          </svg>
+          <input type="search" id="memberSearchInput" placeholder="搜索名称、学校、QQ号..."
+                 autocomplete="off" spellcheck="false" />
+        </label>
 
-          <button th:if="${pluginFinder.available('PluginMembers')}"
-                  type="button"
-                  class="apply-btn"
-                  onclick="MemberApplyWidget.open()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path d="M12 5v14M5 12h14"></path>
-            </svg>
-            申请加入
-          </button>
-        </div>
+        <button th:if="${pluginFinder.available('PluginMembers')}"
+                type="button"
+                class="apply-btn"
+                onclick="MemberApplyWidget.open()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"></path>
+          </svg>
+          申请加入
+        </button>
       </div>
     </div>
   </div>
@@ -105,10 +102,12 @@
                   <div class="member-school member-school-empty"
                        th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}">暂无简介</div>
                 </div>
-                <!-- 悬停显示 QQ 链接二维码 -->
-                <div class="member-qr-popup">
-                  <img th:src="'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' + ${member.spec.qqFriendLink}"
-                       th:alt="'添加 ' + ${member.spec.displayName} + ' 的 QQ 二维码'" width="120" height="120" />
+                <!-- 桌面端聚焦时在浏览器本地生成 QQ 链接二维码 -->
+                <div class="member-qr-popup" data-member-qr-popup aria-hidden="true">
+                  <canvas data-member-qr
+                          th:attr="data-qr-text=${member.spec.qqFriendLink},aria-label='添加 ' + ${member.spec.displayName} + ' 的 QQ 二维码'"
+                          width="240" height="240" role="img"></canvas>
+                  <span class="member-qr-status" data-member-qr-status>生成中</span>
                 </div>
               </a>
 
@@ -171,10 +170,12 @@
                 <div class="member-school member-school-empty"
                      th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}">暂无简介</div>
               </div>
-              <!-- 悬停显示 QQ 链接二维码 -->
-              <div class="member-qr-popup">
-                <img th:src="'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' + ${member.spec.qqFriendLink}"
-                     th:alt="'添加 ' + ${member.spec.displayName} + ' 的 QQ 二维码'" width="120" height="120" />
+              <!-- 桌面端聚焦时在浏览器本地生成 QQ 链接二维码 -->
+              <div class="member-qr-popup" data-member-qr-popup aria-hidden="true">
+                <canvas data-member-qr
+                        th:attr="data-qr-text=${member.spec.qqFriendLink},aria-label='添加 ' + ${member.spec.displayName} + ' 的 QQ 二维码'"
+                        width="240" height="240" role="img"></canvas>
+                <span class="member-qr-status" data-member-qr-status>生成中</span>
               </div>
             </a>
 
@@ -240,67 +241,6 @@
 
   </th:block>
 
-  <script th:if="${pluginFinder.available('PluginMembers')}">
-    // 引入 pinyin-pro 处理拼音首字母匹配
-    const pinyinScript = document.createElement('script');
-    pinyinScript.src = 'https://cdn.staticfile.net/pinyin-pro/3.16.4/index.js';
-    document.head.appendChild(pinyinScript);
-
-    let searchTimeout;
-    function filterMembers() {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        const input = document.getElementById('memberSearchInput');
-        const filter = input.value.toLowerCase().trim();
-        const cards = document.querySelectorAll('.member-card');
-        const searchEmpty = document.getElementById('memberSearchEmpty');
-        const groupCounts = document.querySelectorAll('.member-group-count');
-
-        if (!filter) {
-          cards.forEach(card => card.style.display = '');
-          document.querySelectorAll('.member-group').forEach(group => group.style.display = '');
-          groupCounts.forEach(count => {
-            if (count.dataset.total) count.textContent = count.dataset.total;
-          });
-          if (searchEmpty) searchEmpty.hidden = true;
-          return;
-        }
-
-        const isAscii = /^[a-z0-9]+$/i.test(filter);
-        const pinyinFn = window.pinyinPro ? window.pinyinPro.pinyin : null;
-
-        cards.forEach(function(card) {
-          const name = card.querySelector('.member-name')?.textContent?.toLowerCase() || '';
-          const school = card.querySelector('.member-school')?.textContent?.toLowerCase() || '';
-          const qq = card.getAttribute('data-qq') || '';
-
-          let isMatch = name.includes(filter) || school.includes(filter) || qq.includes(filter);
-
-          if (!isMatch && isAscii && pinyinFn) {
-            const namePinyin = pinyinFn(name, { pattern: 'first', type: 'array' }).join('').toLowerCase();
-            const schoolPinyin = pinyinFn(school, { pattern: 'first', type: 'array' }).join('').toLowerCase();
-            if (namePinyin.includes(filter) || schoolPinyin.includes(filter)) {
-              isMatch = true;
-            }
-          }
-
-          card.style.display = isMatch ? '' : 'none';
-        });
-
-        const groups = document.querySelectorAll('.member-group');
-        groups.forEach(function(group) {
-          const visibleCards = Array.from(group.querySelectorAll('.member-card')).filter(card => card.style.display !== 'none');
-          const hasVisibleCards = visibleCards.length > 0;
-          group.style.display = hasVisibleCards ? '' : 'none';
-          const count = group.querySelector('.member-group-count');
-          if (count) count.textContent = String(visibleCards.length);
-        });
-        const matches = Array.from(cards).filter(card => card.style.display !== 'none').length;
-        if (searchEmpty) searchEmpty.hidden = matches > 0;
-      }, 150);
-    }
-  </script>
-
   <div th:unless="${pluginFinder.available('PluginMembers')}" class="empty-state"
        role="status" data-plugin-status="missing" data-plugin="PluginMembers">
     <div class="empty-icon">
@@ -311,6 +251,10 @@
     <p class="empty-text">成员管理插件未启用</p>
     <p class="empty-sub">请在后台安装并启用「成员管理」插件</p>
   </div>
+
+  <script th:if="${pluginFinder.available('PluginMembers')}"
+          type="module"
+          th:src="@{/assets/js/members.js(v=${theme.spec.version})}"></script>
 
 </th:block>
 </html>

@@ -27,10 +27,13 @@ export default defineConfig({
       buildStart: () => {
         rmSync(resolve(rootDir, 'templates/assets/css/main.css'), { force: true })
         rmSync(resolve(rootDir, 'templates/assets/js/main.js'), { force: true })
+        rmSync(resolve(rootDir, 'templates/assets/js/members.js'), { force: true })
+        rmSync(resolve(rootDir, 'templates/assets/js/chunks'), { recursive: true, force: true })
         rmSync(resolve(rootDir, 'templates/assets/build-info.json'), { force: true })
       },
       closeBundle: async () => {
         const jsSrc = resolve(rootDir, 'src/js/main.js')
+        const membersSrc = resolve(rootDir, 'src/js/members.js')
         const outDir = resolve(rootDir, 'templates/assets/js')
         if (!existsSync(jsSrc)) return
         mkdirSync(outDir, { recursive: true })
@@ -44,9 +47,24 @@ export default defineConfig({
           legalComments: 'none',
           logLevel: 'info',
         })
+        if (existsSync(membersSrc)) {
+          await esbuild({
+            entryPoints: [membersSrc],
+            bundle: true,
+            outdir: outDir,
+            format: 'esm',
+            splitting: true,
+            entryNames: '[name]',
+            chunkNames: 'chunks/[name]-[hash]',
+            target: 'es2018',
+            minify: true,
+            legalComments: 'none',
+            logLevel: 'info',
+          })
+        }
         writeFileSync(
           resolve(rootDir, 'templates/assets/build-info.json'),
-          `${JSON.stringify({ theme: packageJson.name, version: packageJson.version, assets: ['css/main.css', 'js/main.js'] }, null, 2)}\n`,
+          `${JSON.stringify({ theme: packageJson.name, version: packageJson.version, assets: ['css/main.css', 'js/main.js', 'js/members.js'] }, null, 2)}\n`,
           'utf8',
         )
         console.log('\nJS bundle completed!')

@@ -180,18 +180,44 @@ for (const [name, ...markers] of contracts) {
 }
 
 const layout = read('templates/layout.html');
+const mainCss = read('src/css/main.css');
 for (const marker of ['rel="canonical"', 'property="og:title"', 'name="twitter:card"', 'application/ld+json']) {
   if (!layout.includes(marker)) fail(`统一 SEO Head 缺少 ${marker}`);
 }
+for (const marker of [
+  'class="mobile-nav-section mobile-nav-section--menu"',
+  'aria-label="菜单导航"',
+  'class="mobile-nav-section mobile-nav-section--custom"',
+  'aria-label="自定义链接"',
+]) {
+  if (!layout.includes(marker)) fail(`移动端导航缺少分区标记：${marker}`);
+}
+if (!layout.includes('class="mobile-nav-link mobile-nav-link--custom"\n                   th:href="${link.url}"')) {
+  fail('mobile custom links must keep their configured URL');
+}
+if (/<th:block[^>]*th:with="mobileHeaderLinks[^>]*th:if=/s.test(layout)) {
+  fail('移动端自定义链接不得在同一节点用 th:if 读取 th:with 局部变量');
+}
+if (!mainCss.includes('.mobile-nav-section + .mobile-nav-section')) {
+  fail('移动端菜单导航与自定义链接之间缺少分隔样式');
+}
+const mobileCustomLinkRule = mainCss.match(/\.mobile-nav-link--custom\s*\{[^}]*\}/s)?.[0] || '';
+if (/\b(?:border|background)\s*:/.test(mobileCustomLinkRule)) {
+  fail('移动端自定义链接不得使用卡片边框或背景');
+}
 
 const mainScript = read('src/js/main.js');
+const membersScript = read('src/js/members.js');
 const linksTemplate = read('templates/links.html');
+const membersTemplate = read('templates/members.html');
 const postTemplate = read('templates/post.html');
 for (const [feature, source, markers] of [
   ['文章阅读进度', layout + mainScript, ['id="readingProgress"', 'initReadingProgress']],
   ['移动端文章目录', layout + mainScript, ['id="mobileTocDrawer"', 'id="mobileToc"', 'initArticleToc']],
   ['文章图片查看器', layout + mainScript, ['id="articleImageViewer"', 'initArticleImageViewer']],
   ['友链实时搜索', linksTemplate + mainScript, ['data-link-search', 'id="linkSearchEmpty"', 'initLinkSearch']],
+  ['成员本地搜索', membersTemplate + membersScript, ['id="memberSearchInput"', "import('pinyin-pro')", 'initMemberSearch', 'assets/js/members.js']],
+  ['成员本地二维码', membersTemplate + membersScript, ['data-member-qr', 'data-qr-text', "import('qrcode')", 'initMemberQrPopups', "removeProperty('width')", "removeProperty('height')"]],
 ]) {
   for (const marker of markers) {
     if (!source.includes(marker)) fail(`${feature} 缺少标记：${marker}`);
@@ -200,9 +226,51 @@ for (const [feature, source, markers] of [
 if (postTemplate.includes('目录生成脚本')) {
   fail('标准文章模板仍包含旧的内联目录脚本');
 }
+for (const externalMemberResource of [
+  'cdn.staticfile.net/pinyin-pro',
+  'api.qrserver.com',
+  'uapis.cn/api/v1/image/qrcode',
+]) {
+  if (membersTemplate.includes(externalMemberResource)) {
+    fail(`成员页不得依赖外部搜索或二维码资源：${externalMemberResource}`);
+  }
+}
+for (const dependency of ['pinyin-pro', 'qrcode']) {
+  if (!packageJson.dependencies?.[dependency]) fail(`成员页本地能力缺少依赖：${dependency}`);
+}
+if (mainScript.includes('pinyin-pro') || mainScript.includes("import('qrcode')")) {
+  fail('成员页专用依赖不得打入全站主脚本');
+}
+for (const [pageName, template] of [['成员页', membersTemplate], ['友链页', linksTemplate]]) {
+  for (const marker of ['page-header-row--with-tools', 'page-header-tools', 'page-search']) {
+    if (!template.includes(marker)) fail(`${pageName}页头搜索工具栏缺少标记：${marker}`);
+  }
+}
+if (linksTemplate.indexOf('data-link-search') > linksTemplate.indexOf('class="link-filters"')) {
+  fail('友链搜索框应与成员页一致放在页头工具栏');
+}
+if (!mainCss.includes('.page-search input:focus-visible')) {
+  fail('page search input focus style is not isolated');
+}
+const footerForm = groups.find((form) => form.group === 'footer');
+const footerMenus = footerForm?.formSchema?.find((node) => node.name === 'footer_menus');
+if (footerMenus?.$formkit !== 'array' || !footerMenus.children?.some((node) => node.$formkit === 'menuSelect' && node.name === 'menu')) {
+  fail('footer menus must be an array with menuSelect children');
+}
+if (!layout.includes('theme.config.footer?.footer_menus') || !layout.includes('theme.config.navigation?.footer_menu')) {
+  fail('footer menu rendering must include multi-column and legacy fallback settings');
+}
+
+for (const marker of [
+  '--member-card-height',
+  'width: var(--member-card-height)',
+  'height: var(--member-card-height)',
+]) {
+  if (!mainCss.includes(marker)) fail(`成员二维码等高尺寸缺少样式：${marker}`);
+}
 
 if (built) {
-  for (const path of ['templates/assets/css/main.css', 'templates/assets/js/main.js', 'templates/assets/build-info.json']) {
+  for (const path of ['templates/assets/css/main.css', 'templates/assets/js/main.js', 'templates/assets/js/members.js', 'templates/assets/build-info.json']) {
     if (!existsSync(join(root, path))) fail(`构建产物不存在：${path}`);
   }
   if (existsSync(join(root, 'templates/assets/build-info.json'))) {
@@ -214,6 +282,13 @@ if (built) {
     for (const marker of ['readingProgress', 'mobileTocDrawer', 'articleImageViewer', 'linkSearchInput']) {
       if (!builtScript.includes(marker)) fail(`构建脚本缺少阅读体验标记：${marker}`);
     }
+  }
+  if (existsSync(join(root, 'templates/assets/js/members.js'))) {
+    const builtMembersScript = read('templates/assets/js/members.js');
+    for (const marker of ['memberSearchInput', 'data-member-qr']) {
+      if (!builtMembersScript.includes(marker)) fail(`成员页构建脚本缺少标记：${marker}`);
+    }
+    if (!walk('templates/assets/js/chunks', '.js').length) fail('成员页按需依赖分包不存在');
   }
   const maps = walk('templates/assets', '.map');
   if (maps.length) fail(`主题包不得包含 Sourcemap：${maps.join(', ')}`);
