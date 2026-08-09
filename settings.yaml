@@ -8,6 +8,20 @@ spec:
       label: 全局设置
       formSchema:
         - $formkit: select
+          name: visual_style
+          label: 全站视觉风格
+          value: portal
+          help: 统一控制全站色彩、标题、边角和组件气质；专题分类与专题文章仍保留各自的独立风格。
+          options:
+            - label: 标准门户
+              value: portal
+            - label: 青年活力
+              value: youth
+            - label: 清新公益
+              value: civic
+            - label: 编辑纪实
+              value: editorial
+        - $formkit: select
           name: default_theme_mode
           label: 默认明暗模式
           value: system
@@ -20,8 +34,9 @@ spec:
               value: dark
         - $formkit: color
           name: primary_color
-          label: 主色调
+          label: 自定义主色
           value: "#D13E43"
+          help: 保持默认值时跟随所选视觉风格；改为其他颜色后覆盖预设主色。
         - $formkit: checkbox
           name: back_to_top_enabled
           label: 显示返回顶部按钮

@@ -1,7 +1,7 @@
 {
   "name": "theme-nucma",
-  "version": "3.28.0",
-  "description": "面向校园、公益与组织门户的 Halo 主题，提供专题内容模板、成员与友链展示及响应式阅读体验",
+  "version": "3.29.0",
+  "description": "面向校园、青年组织与公共服务门户的多风格 Halo 主题，提供专题模板与响应式阅读体验",
   "license": "GPL-3.0-only",
   "type": "module",
   "engines": {

@@ -37,6 +37,13 @@ if (JSON.stringify(groupNames) !== JSON.stringify(expectedGroups)) {
   fail(`设置分组顺序异常：${groupNames.join(', ')}`);
 }
 
+const appearanceForm = groups.find((form) => form.group === 'appearance');
+const visualStyle = appearanceForm?.formSchema?.find((node) => node.name === 'visual_style');
+const visualStyleValues = visualStyle?.options?.map((option) => option.value) || [];
+if (JSON.stringify(visualStyleValues) !== JSON.stringify(['portal', 'youth', 'civic', 'editorial'])) {
+  fail(`全站视觉风格选项异常：${visualStyleValues.join(', ')}`);
+}
+
 function walkSchema(nodes, visitor) {
   for (const node of nodes || []) {
     visitor(node);
@@ -194,6 +201,17 @@ for (const [name, ...markers] of contracts) {
 
 const layout = read('templates/layout.html');
 const mainCss = read('src/css/main.css');
+if (!layout.includes('th:data-visual-style="${theme.config.appearance?.visual_style ?: \'portal\'}"')) {
+  fail('layout 缺少全站视觉风格数据属性');
+}
+if (!layout.includes("setProperty('--primary-rgb'")) {
+  fail('自定义主色未同步 primary-rgb');
+}
+for (const style of ['youth', 'civic', 'editorial']) {
+  if (!mainCss.includes(`[data-visual-style="${style}"]`)) {
+    fail(`主样式缺少视觉预设 ${style}`);
+  }
+}
 for (const marker of ['rel="canonical"', 'property="og:title"', 'name="twitter:card"', 'application/ld+json']) {
   if (!layout.includes(marker)) fail(`统一 SEO Head 缺少 ${marker}`);
 }
