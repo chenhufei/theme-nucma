@@ -1,6 +1,6 @@
 {
   "name": "theme-nucma",
-  "version": "3.27.6",
+  "version": "3.27.7",
   "description": "面向高校与组织站点的 Halo 主题，提供专题内容模板、成员与友链展示及响应式阅读体验",
   "license": "MIT",
   "type": "module",
@@ -31,6 +31,9 @@
   "author": "NUCMA",
   "homepage": "https://nucma.cn",
   "dependencies": {
+    "@alpinejs/collapse": "3.15.12",
+    "alpinejs": "3.15.12",
+    "gsap": "3.12.5",
     "pinyin-pro": "3.16.4",
     "qrcode": "1.5.4"
   }

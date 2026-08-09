@@ -1,4 +1,15 @@
+import Alpine from 'alpinejs';
+import collapse from '@alpinejs/collapse';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { initDiagnostics } from './modules/diagnostics.js';
+
+Alpine.plugin(collapse);
+window.Alpine = Alpine;
+window.gsap = gsap;
+window.ScrollTrigger = ScrollTrigger;
+gsap.registerPlugin(ScrollTrigger);
+Alpine.start();
 
 /**
  * NUCMA 国风主题 - 主脚本

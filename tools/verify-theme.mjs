@@ -133,6 +133,7 @@ for (const path of templates) {
 const allTemplates = templates.map(read).join('\n');
 for (const retiredCdn of [
   'cdnjs.cloudflare.com',
+  'cdn.bootcdn.net',
   'cdn.jsdelivr.net',
   'unpkg.com',
 ]) {
@@ -217,7 +218,7 @@ for (const [feature, source, markers] of [
   ['文章图片查看器', layout + mainScript, ['id="articleImageViewer"', 'initArticleImageViewer']],
   ['友链实时搜索', linksTemplate + mainScript, ['data-link-search', 'id="linkSearchEmpty"', 'initLinkSearch']],
   ['成员本地搜索', membersTemplate + membersScript, ['id="memberSearchInput"', "import('pinyin-pro')", 'initMemberSearch', 'assets/js/members.js']],
-  ['成员本地二维码', membersTemplate + membersScript, ['data-member-qr', 'data-qr-text', "import('qrcode')", 'initMemberQrPopups', "removeProperty('width')", "removeProperty('height')"]],
+  ['成员本地二维码', membersTemplate + membersScript, ['data-member-qr', 'data-qr-text', "import('qrcode')", 'initMemberQrPopups', "removeProperty('width')", "removeProperty('height')", "setAttribute('aria-hidden'", 'pointerleave', 'focusout']],
 ]) {
   for (const marker of markers) {
     if (!source.includes(marker)) fail(`${feature} 缺少标记：${marker}`);
@@ -240,6 +241,22 @@ for (const dependency of ['pinyin-pro', 'qrcode']) {
 }
 if (mainScript.includes('pinyin-pro') || mainScript.includes("import('qrcode')")) {
   fail('成员页专用依赖不得打入全站主脚本');
+}
+for (const dependency of ['alpinejs', '@alpinejs/collapse', 'gsap']) {
+  if (!packageJson.dependencies?.[dependency]) fail(`全站交互本地化缺少依赖：${dependency}`);
+}
+for (const marker of [
+  "import Alpine from 'alpinejs'",
+  "import collapse from '@alpinejs/collapse'",
+  "import { gsap } from 'gsap'",
+  'window.Alpine = Alpine',
+  'window.gsap = gsap',
+  'Alpine.start()',
+]) {
+  if (!mainScript.includes(marker)) fail(`全站交互本地化缺少初始化标记：${marker}`);
+}
+if (layout.includes('alpinejs') || layout.includes('gsap.min.js') || layout.includes('ScrollTrigger.min.js')) {
+  fail('布局模板不得再通过外部脚本标签加载 Alpine 或 GSAP');
 }
 for (const [pageName, template] of [['成员页', membersTemplate], ['友链页', linksTemplate]]) {
   for (const marker of ['page-header-row--with-tools', 'page-header-tools', 'page-search']) {

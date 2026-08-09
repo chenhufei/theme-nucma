@@ -74,9 +74,6 @@
       }
     })();
   </script>
-  <!-- 引入 Alpine.js 处理交互（插件需在核心之前加载） -->
-  <script defer src="https://cdn.bootcdn.net/ajax/libs/alpinejs-collapse/3.15.12/cdn.min.js"></script>
-  <script defer src="https://cdn.bootcdn.net/ajax/libs/alpinejs/3.15.12/cdn.min.js"></script>
   <th:block th:with="customCss=${theme.config.appearance?.custom_css != null ? theme.config.appearance.custom_css : theme.config.content?.custom_css}"
             th:if="${customCss != null and !#strings.isEmpty(customCss)}">
     <style th:utext="${customCss}"></style>
@@ -549,16 +546,13 @@
   </footer>
 
   <halo:footer />
-  <!-- GSAP 动画库（统一动画引擎） -->
-  <script src="https://cdn.bootcdn.net/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdn.bootcdn.net/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script th:inline="javascript">
     window.NUCMA_RUNTIME = {
       debug: /*[[${theme.config.appearance?.developer_mode != null ? theme.config.appearance.developer_mode : theme.config.content?.developer_mode == true}]]*/ false,
       version: /*[[${theme.spec.version}]]*/ "development"
     };
   </script>
-  <script th:src="@{/assets/js/main.js(v=${theme.spec.version})}" defer></script>
+  <script th:src="@{/assets/js/main.js(v=${theme.spec.version})}"></script>
   <th:block th:with="customJs=${theme.config.appearance?.custom_js != null ? theme.config.appearance.custom_js : theme.config.content?.custom_js}"
             th:if="${customJs != null and !#strings.isEmpty(customJs)}">
     <script th:utext="${customJs}"></script>

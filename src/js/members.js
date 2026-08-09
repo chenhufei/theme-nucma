@@ -132,9 +132,29 @@
 
     canvases.forEach(function(canvas) {
       var card = canvas.closest('.member-card');
-      if (!card) return;
-      card.addEventListener('pointerenter', function() { renderQr(canvas); }, { passive: true });
-      card.addEventListener('focusin', function() { renderQr(canvas); });
+      var popup = canvas.closest('[data-member-qr-popup]');
+      if (!card || !popup) return;
+
+      function setPopupVisible(visible) {
+        popup.setAttribute('aria-hidden', visible && desktopMedia.matches ? 'false' : 'true');
+      }
+
+      setPopupVisible(false);
+      card.addEventListener('pointerenter', function() {
+        setPopupVisible(true);
+        renderQr(canvas);
+      }, { passive: true });
+      card.addEventListener('pointerleave', function() { setPopupVisible(false); }, { passive: true });
+      card.addEventListener('focusin', function() {
+        setPopupVisible(true);
+        renderQr(canvas);
+      });
+      card.addEventListener('focusout', function(event) {
+        if (!card.contains(event.relatedTarget)) setPopupVisible(false);
+      });
+      desktopMedia.addEventListener('change', function(event) {
+        if (!event.matches) setPopupVisible(false);
+      });
     });
   }
 
