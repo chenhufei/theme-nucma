@@ -113,6 +113,55 @@
           </div>
         </section>
 
+        <section th:if="${block.type == 'timeline' and theme.config.about?.timeline_items != null and !#lists.isEmpty(theme.config.about.timeline_items)}"
+                 class="about-section about-timeline-section">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '发展历程'}"></h2></div>
+          <ol class="about-timeline">
+            <li class="about-timeline-item" th:each="item : ${theme.config.about.timeline_items}">
+              <time class="about-timeline-period" th:text="${item.period}"></time>
+              <div class="about-timeline-content">
+                <a th:if="${item.url != null and !#strings.isEmpty(item.url)}"
+                   class="about-timeline-title"
+                   th:href="@{${item.url}}"
+                   th:text="${item.title}"></a>
+                <strong th:unless="${item.url != null and !#strings.isEmpty(item.url)}"
+                        class="about-timeline-title"
+                        th:text="${item.title}"></strong>
+                <p th:if="${item.description != null and !#strings.isEmpty(item.description)}"
+                   th:text="${item.description}"></p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section th:if="${block.type == 'services' and theme.config.about?.service_items != null and !#lists.isEmpty(theme.config.about.service_items)}"
+                 class="about-section about-services-section">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '服务入口'}"></h2></div>
+          <div class="about-service-list">
+            <th:block th:each="item, stat : ${theme.config.about.service_items}">
+              <a th:if="${item.url != null and !#strings.isEmpty(item.url)}"
+                 class="about-service-item"
+                 th:href="@{${item.url}}">
+                <span class="about-service-index" th:text="${#numbers.formatInteger(stat.count, 2)}"></span>
+                <span class="about-service-content">
+                  <strong th:text="${item.title}"></strong>
+                  <small th:if="${item.description != null and !#strings.isEmpty(item.description)}" th:text="${item.description}"></small>
+                </span>
+                <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="about-service-badge" th:text="${item.badge}"></span>
+                <span class="about-service-arrow" aria-hidden="true">→</span>
+              </a>
+              <div th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="about-service-item about-service-item--static">
+                <span class="about-service-index" th:text="${#numbers.formatInteger(stat.count, 2)}"></span>
+                <span class="about-service-content">
+                  <strong th:text="${item.title}"></strong>
+                  <small th:if="${item.description != null and !#strings.isEmpty(item.description)}" th:text="${item.description}"></small>
+                </span>
+                <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="about-service-badge" th:text="${item.badge}"></span>
+              </div>
+            </th:block>
+          </div>
+        </section>
+
         <section th:if="${block.type == 'members' and pluginFinder.available('PluginMembers')}" class="about-section"
                  th:with="memberGroups = ${memberFinder.listApprovedMembers()}">
           <div class="section-header-bar">

@@ -416,7 +416,8 @@ Alpine.start();
     if (!hasST) return;
 
     var selector = '.news-item, .member-card, .link-card, .category-card, ' +
-      '.faq-item, .archive-timeline-item, .moment-item, .photo-item, ' +
+      '.faq-item, .archive-timeline-item, .about-timeline-item, .about-service-item, ' +
+      '.moment-item, .photo-item, ' +
       '.sidebar-card, .section-header-bar, .post-card, .intro-stat';
     var items = document.querySelectorAll(selector);
     if (!items.length) return;

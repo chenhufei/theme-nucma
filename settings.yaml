@@ -481,6 +481,10 @@ spec:
                   value: latest
                 - label: 内容分类
                   value: categories
+                - label: 发展历程
+                  value: timeline
+                - label: 服务入口
+                  value: services
                 - label: 成员展示
                   value: members
                 - label: 友情链接
@@ -547,6 +551,77 @@ spec:
               label: 启用此项
               value: true
               help: 临时隐藏可取消勾选，不必删除条目
+        - $formkit: array
+          name: timeline_items
+          label: 发展历程列表
+          value: []
+          addLabel: 添加历程
+          emptyText: 暂无发展历程
+          help: 适合展示组织沿革、项目阶段、年度成果或重要节点；添加“发展历程”区块后生效。
+          itemLabels:
+            - type: text
+              label: $value.period
+            - type: text
+              label: $value.title
+          children:
+            - $formkit: text
+              name: period
+              label: 时间或阶段
+              value: ""
+              placeholder: 如：2024、2023—至今、筹备阶段
+              validation: required
+            - $formkit: text
+              name: title
+              label: 节点标题
+              value: ""
+              placeholder: 如：项目正式启动
+              validation: required
+            - $formkit: textarea
+              name: description
+              label: 节点说明（可选）
+              value: ""
+              rows: 3
+              placeholder: 简要说明这一阶段发生的事情或取得的成果
+            - $formkit: url
+              name: url
+              label: 详情链接（可选）
+              value: ""
+              placeholder: https://example.com/history
+        - $formkit: array
+          name: service_items
+          label: 服务入口列表
+          value: []
+          addLabel: 添加入口
+          emptyText: 暂无服务入口
+          help: 适合放置报名、资料下载、办事指南、项目查询和常用系统入口；添加“服务入口”区块后生效。
+          itemLabels:
+            - type: text
+              label: $value.title
+            - type: text
+              label: $value.description
+          children:
+            - $formkit: text
+              name: title
+              label: 入口名称
+              value: ""
+              placeholder: 如：活动报名
+              validation: required
+            - $formkit: textarea
+              name: description
+              label: 入口说明（可选）
+              value: ""
+              rows: 2
+              placeholder: 说明入口提供的服务或适用对象
+            - $formkit: text
+              name: badge
+              label: 辅助标签（可选）
+              value: ""
+              placeholder: 如：长期开放、校内访问
+            - $formkit: url
+              name: url
+              label: 入口链接（可选）
+              value: ""
+              placeholder: https://example.com/service
         - $formkit: array
           name: faq_list
           label: 常见问题列表

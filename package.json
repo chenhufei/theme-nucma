@@ -1,8 +1,8 @@
 {
   "name": "theme-nucma",
-  "version": "3.27.7",
-  "description": "面向高校与组织站点的 Halo 主题，提供专题内容模板、成员与友链展示及响应式阅读体验",
-  "license": "MIT",
+  "version": "3.28.0",
+  "description": "面向校园、公益与组织门户的 Halo 主题，提供专题内容模板、成员与友链展示及响应式阅读体验",
+  "license": "GPL-3.0-only",
   "type": "module",
   "engines": {
     "node": ">=22.12.0"
@@ -26,7 +26,9 @@
     "halo",
     "halo-theme",
     "nucma",
-    "校园主题"
+    "校园主题",
+    "组织门户",
+    "公益主题"
   ],
   "author": "NUCMA",
   "homepage": "https://nucma.cn",

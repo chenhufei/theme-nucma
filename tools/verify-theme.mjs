@@ -88,6 +88,18 @@ for (const name of ['member_pinned', 'link_pinned']) {
   }
 }
 
+const aboutForm = groups.find((form) => form.group === 'about');
+const aboutBlocks = aboutForm?.formSchema?.find((node) => node.name === 'about_blocks');
+const aboutBlockTypes = new Set(aboutBlocks?.children
+  ?.find((node) => node.name === 'type')?.options?.map((option) => option.value) || []);
+for (const type of ['timeline', 'services']) {
+  if (!aboutBlockTypes.has(type)) fail(`关于页区块类型缺少 ${type}`);
+}
+for (const name of ['timeline_items', 'service_items']) {
+  const field = aboutForm?.formSchema?.find((node) => node.name === name);
+  if (field?.$formkit !== 'array') fail(`关于页 ${name} 必须使用 array`);
+}
+
 if (/^templates\/$/m.test(gitignore)) {
   fail('.gitignore 不得排除整个 templates 目录，否则主题源码无法完整提交');
 }

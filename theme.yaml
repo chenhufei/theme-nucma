@@ -7,17 +7,17 @@ spec:
   author:
     name: NUCMA
     website: https://nucma.cn
-  description: 面向高校与组织站点的 Halo 主题，提供专题内容模板、成员与友链展示及响应式阅读体验
+  description: 面向校园、公益与组织门户的 Halo 主题，提供专题内容模板、成员与友链展示及响应式阅读体验
   logo: /themes/theme-nucma/assets/avatar-nucma.svg
   homepage: https://nucma.cn
   repo: https://github.com/chenhufei/theme-nucma
   issues: https://qm.qq.com/q/YEqkx4fa0M
-  version: "3.27.7"
+  version: "3.28.0"
   requires: ">=2.22.0"
   settingName: theme-nucma-setting
   configMapName: theme-nucma-config
   license:
-    - name: "MIT"
+    - name: "GPL-3.0"
       url: "https://github.com/chenhufei/theme-nucma/blob/main/LICENSE"
   customTemplates:
     page:
