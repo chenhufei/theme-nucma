@@ -22,8 +22,8 @@
     <div class="photo-main">
       <img th:src="${photo?.spec?.url ?: photo?.spec?.cover}"
            th:alt="${photo?.spec?.displayName}"
-           class="photo-full" loading="lazy"
-           th:width="${photo?.exif?.imageWidth}" th:height="${photo?.exif?.imageHeight}" />
+           class="photo-full" loading="lazy" decoding="async"
+           th:width="${photo?.exif?.imageWidth ?: 1200}" th:height="${photo?.exif?.imageHeight ?: 800}" />
       <!-- 上/下一张导航按钮 -->
       <a th:if="${prev != null}" th:href="@{${photoUrl.detail(prev)}}"
          class="photo-nav-btn photo-nav-prev" aria-label="上一张">
@@ -87,7 +87,8 @@
            th:href="@{${photoUrl.detail(neighbor)}}"
            class="neighbor-thumb"
            th:classappend="${neighbor.metadata.name == photo.metadata.name} ? 'is-current' : ''"
-           th:title="${neighbor.spec?.displayName}">
+           th:title="${neighbor.spec?.displayName}"
+           th:aria-label="${neighbor.spec?.displayName ?: '查看相邻照片'}">
           <img th:src="${neighbor.spec?.cover ?: neighbor.spec?.url}"
                th:alt="${neighbor.spec?.displayName}"
                loading="lazy" width="100" height="75" />

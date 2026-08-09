@@ -11,7 +11,7 @@
     <article class="post-card" th:each="post : ${posts.items}">
       <a th:href="@{${post.status?.permalink}}" class="post-card-link">
         <div class="post-cover" th:if="${post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}">
-          <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}" loading="lazy" />
+          <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}" loading="lazy" decoding="async" width="320" height="180" />
         </div>
         <div class="post-info">
           <time th:text="${#temporals.format(post.spec?.publishTime, 'yyyy-MM-dd')}"></time>

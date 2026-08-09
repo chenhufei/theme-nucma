@@ -106,7 +106,7 @@
            th:classappend="${'nav-align-' + navAlign}">
         <a th:href="@{/}" class="logo">
           <img th:if="${site.logo != null and !#strings.isEmpty(site.logo)}"
-               th:src="${site.logo}" th:alt="${site.title}" height="32" />
+               th:src="${site.logo}" th:alt="${site.title}" width="32" height="32" decoding="async" />
           <span th:text="${site.title}"></span>
         </a>
         <nav class="main-nav"
@@ -135,9 +135,10 @@
                          th:target="${link.target ?: '_blank'}"
                          class="header-link"
                          th:title="${link.text}"
-                         th:aria-label="${link.text}">
+                     th:aria-label="${link.text != null and !#strings.isEmpty(link.text) ? link.text : link.url}">
                         <img th:if="${link.image != null and !#strings.isEmpty(link.image)}"
-                             th:src="${link.image}" th:alt="${link.text}" class="header-link-img" height="20" />
+                             th:src="${link.image}" th:alt="${link.text != null and !#strings.isEmpty(link.text) ? link.text : link.url}"
+                             class="header-link-img" width="20" height="20" loading="lazy" decoding="async" />
                         <span th:if="${(link.image == null or #strings.isEmpty(link.image)) and link.text != null and !#strings.isEmpty(link.text)}"
                               th:text="${link.text}"></span>
                       </a>
@@ -151,9 +152,10 @@
                      th:target="${link.target ?: '_blank'}"
                      class="header-link"
                      th:title="${link.text}"
-                     th:aria-label="${link.text}">
+                     th:aria-label="${link.text != null and !#strings.isEmpty(link.text) ? link.text : link.url}">
                       <img th:if="${link.image != null and !#strings.isEmpty(link.image)}"
-                           th:src="${link.image}" th:alt="${link.text}" class="header-link-img" height="20" />
+                           th:src="${link.image}" th:alt="${link.text != null and !#strings.isEmpty(link.text) ? link.text : link.url}"
+                           class="header-link-img" width="20" height="20" loading="lazy" decoding="async" />
                       <span th:if="${(link.image == null or #strings.isEmpty(link.image)) and link.text != null and !#strings.isEmpty(link.text)}"
                             th:text="${link.text}"></span>
                     </a>
@@ -396,7 +398,7 @@
           </svg>
         </button>
         <div id="articleImageViewerCanvas" class="article-image-viewer__canvas">
-          <img id="articleImageViewerImage" alt="" draggable="false" />
+      <img id="articleImageViewerImage" alt="" width="1200" height="800" decoding="async" draggable="false" />
         </div>
         <button type="button" class="viewer-nav viewer-nav--next" data-image-viewer-next aria-label="下一张图片">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -431,26 +433,14 @@
 
   <!-- 页脚 -->
   <footer class="site-footer">
-    <!-- 返回顶部山形三角（footer顶部突出，与顶线融合） -->
+    <!-- 返回顶部 -->
     <div th:if="${theme.config.appearance?.back_to_top_enabled != false}"
          id="backToTop" class="back-to-top-wrap" aria-label="返回顶部" role="button" tabindex="0">
-      <!-- 粒子层：粒子从此容器（三角顶边沿线）向上飞升 -->
-      <div class="bttp-particles-layer" aria-hidden="true"></div>
-      <div class="back-to-top-mountain side side-5"></div>
-      <div class="back-to-top-mountain side side-4"></div>
-      <div class="back-to-top-mountain side side-3"></div>
-      <div class="back-to-top-mountain side side-2"></div>
-      <div class="back-to-top-mountain side side-1"></div>
-      <div class="back-to-top-mountain center bttp-mountain-center" aria-hidden="true">
+      <span class="back-to-top-icon" aria-hidden="true">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 15l-6-6-6 6"></path>
         </svg>
-      </div>
-      <div class="back-to-top-mountain side side-1"></div>
-      <div class="back-to-top-mountain side side-2"></div>
-      <div class="back-to-top-mountain side side-3"></div>
-      <div class="back-to-top-mountain side side-4"></div>
-      <div class="back-to-top-mountain side side-5"></div>
+      </span>
     </div>
     <div class="container">
       <div class="footer-inner">
@@ -506,12 +496,12 @@
                  th:target="${item.target ?: '_blank'}"
                  class="footer-custom-item">
                 <img th:if="${item.image != null and !#strings.isEmpty(item.image)}"
-                     th:src="${item.image}" th:alt="${item.title}" class="footer-custom-img" width="80" height="80" />
+                     th:src="${item.image}" th:alt="${item.title}" class="footer-custom-img" width="80" height="80" loading="lazy" decoding="async" />
                 <span th:text="${item.title}" class="footer-custom-text"></span>
               </a>
               <div th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="footer-custom-item footer-custom-static">
                 <img th:if="${item.image != null and !#strings.isEmpty(item.image)}"
-                     th:src="${item.image}" th:alt="${item.title}" class="footer-custom-img" width="80" height="80" />
+                     th:src="${item.image}" th:alt="${item.title}" class="footer-custom-img" width="80" height="80" loading="lazy" decoding="async" />
                 <span th:text="${item.title}" class="footer-custom-text"></span>
               </div>
             </th:block>

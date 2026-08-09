@@ -38,6 +38,7 @@ if (JSON.stringify(groupNames) !== JSON.stringify(expectedGroups)) {
 }
 
 const appearanceForm = groups.find((form) => form.group === 'appearance');
+const navigationForm = groups.find((form) => form.group === 'navigation');
 const visualStyle = appearanceForm?.formSchema?.find((node) => node.name === 'visual_style');
 const visualStyleValues = visualStyle?.options?.map((option) => option.value) || [];
 if (JSON.stringify(visualStyleValues) !== JSON.stringify(['portal', 'youth', 'civic', 'editorial'])) {
@@ -309,6 +310,13 @@ if (footerForm?.formSchema?.some((node) => node.name === 'footer_menu')) {
 }
 if (!layout.includes('theme.config.footer?.footer_menus')) {
   fail('footer menu rendering must include multi-column settings');
+}
+const customLinks = navigationForm?.formSchema?.find((node) => node.name === 'custom_links');
+if (!customLinks?.itemLabels?.some((label) => label.type === 'image' && label.label === '$value.image')) {
+  fail('custom navigation links must show configured images in the list label');
+}
+if (layout.includes('back-to-top-mountain') || layout.includes('bttp-particles-layer')) {
+  fail('back-to-top decorative triangles must not remain in the layout');
 }
 
 for (const marker of [

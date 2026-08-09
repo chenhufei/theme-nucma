@@ -31,7 +31,8 @@
     <a th:each="photo : ${photos.items}"
        th:href="@{${photoUrl.detail(photo)}}"
        class="photo-item"
-       th:title="${photo.spec?.displayName}">
+       th:title="${photo.spec?.displayName}"
+       th:aria-label="${photo.spec?.displayName ?: '查看照片'}">
       <img th:src="${photo.spec?.cover ?: photo.spec?.url}"
            th:alt="${photo.spec?.displayName}"
            loading="lazy" width="250" height="200" />

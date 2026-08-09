@@ -122,6 +122,8 @@ spec:
           itemLabels:
             - type: text
               label: $value.text
+            - type: image
+              label: $value.image
             - type: text
               label: $value.url
           children:

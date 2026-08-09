@@ -60,12 +60,10 @@ Alpine.start();
     localStorage.setItem('theme', actual);
   }
 
-  // ===== 返回顶部：粒子飞升动画 =====
+  // ===== 返回顶部 =====
   function initBackToTop() {
     var wrap = document.getElementById('backToTop');
     if (!wrap) return;
-
-    var particleLayer = wrap.querySelector('.bttp-particles-layer');
 
     window.addEventListener('scroll', function() {
       wrap.classList.toggle('visible', window.scrollY > 300);
@@ -79,92 +77,6 @@ Alpine.start();
       }
     });
 
-    if (!hasGSAP || prefersReduced) return;
-
-    // --------- 粒子：从一排三角的山顶沿线向上飞升并淡化 ---------
-    // 中心三角的山顶坐标（相对 particleLayer，particleLayer 左=0 top=0 与 wrap 同起点）
-    // 一排三角的各山顶 x 位置（相对 wrap 左侧）：中心三角左侧 4 个，中心三角，右侧 4 个。
-    // 根据 CSS：side-1 宽 48 / side-2 40 / side-3 34 / side-4 28 / side-5 22，margin 均为负数
-    // 中心三角 center 宽 72，top=0 在 y=0
-    // 粒子发射点 x 大致分布在 wrap 内，从左到右 5+1+5=11 个山峰
-    function mountParticle() {
-      if (!wrap.classList.contains('visible')) return;
-      if (!particleLayer) return;
-      if (!document.hasFocus() && Math.random() > 0.25) return; // 非前台少发
-
-      var wrapWidth = wrap.offsetWidth || 260;
-      var peaks = 11;
-      var peakIdx = Math.floor(Math.random() * peaks); // 0..10
-      // 随机加一点抖动，不要每个粒子都对齐山顶正上方
-      var jitterX = (Math.random() - 0.5) * 6;
-      var startX = (peakIdx + 0.5) / peaks * wrapWidth + jitterX;
-
-      var p = document.createElement('span');
-      p.className = 'bttp-particle';
-      var size = 2 + Math.random() * 3; // 2..5
-      p.style.width = size + 'px';
-      p.style.height = size + 'px';
-      // 从左到右的颜色微变（主色系—亮色系）
-      var hueVar = Math.random() > 0.5 ? 'var(--primary)' : 'var(--primary-light)';
-      p.style.background = hueVar;
-      p.style.left = startX + 'px';
-      p.style.top = '0px';
-      p.style.transform = 'translate(-50%, 0)';
-      p.style.opacity = '0';
-      particleLayer.appendChild(p);
-
-      var riseY = -24 - Math.random() * 22; // 上升 24..46 px
-      var sideJitter = (Math.random() - 0.5) * 10;
-
-      // 淡出后立刻 remove
-      var tl = gsap.timeline({
-        defaults: { ease: 'power1.out' },
-        onComplete: function() { p.remove(); }
-      });
-      tl.fromTo(p,
-        { y: 0, x: 0, opacity: 0, scale: 0.4 },
-        { y: 0, x: 0, opacity: 0.75 + Math.random() * 0.25, scale: 1, duration: 0.12 + Math.random() * 0.08 }
-      );
-      tl.to(p, {
-        y: riseY,
-        x: sideJitter,
-        opacity: 0,
-        scale: 0.3,
-        duration: 1.3 + Math.random() * 0.9,
-        ease: 'power2.out'
-      }, '<');
-    }
-
-    // 周期性发射粒子（总量可控，柔和不抢眼）
-    var burstTimer = 0;
-    function loopParticles() {
-      if (wrap.classList.contains('visible')) {
-        mountParticle();
-        burstTimer++;
-        if (burstTimer % 2 === 0) mountParticle();
-        if (burstTimer % 7 === 0) {
-          // 偶尔连发 3 个（小喷发）
-          setTimeout(mountParticle, 60);
-          setTimeout(mountParticle, 130);
-        }
-      }
-      var next = 750 + Math.random() * 850; // 0.75~1.6s 间隔
-      setTimeout(loopParticles, next);
-    }
-    setTimeout(loopParticles, 400);
-
-    // wrap 刚进入可见态时触发一次小爆发（视觉反馈）
-    var lastSeen = false;
-    var rafObserved = setInterval(function() {
-      var seen = wrap.classList.contains('visible');
-      if (seen && !lastSeen) {
-        for (var i = 0; i < 5; i++) {
-          setTimeout(mountParticle, i * 70);
-        }
-      }
-      lastSeen = seen;
-    }, 120);
-    try { window.addEventListener('beforeunload', function() { clearInterval(rafObserved); }); } catch (_) {}
   }
 
   // ===== Header 滚动阴影 =====
