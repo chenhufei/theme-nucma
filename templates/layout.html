@@ -465,7 +465,7 @@
           </div>
         </div>
 
-        <!-- 页脚菜单栏目：新列表优先，保留旧单菜单配置作为回退。 -->
+        <!-- 页脚菜单栏目：新列表优先，旧配置仅作为无界面兼容回退。 -->
         <th:block th:with="footerMenus = ${theme.config.footer?.footer_menus}">
           <th:block th:if="${footerMenus != null and !#lists.isEmpty(footerMenus)}"
                     th:each="footerColumn : ${footerMenus}"

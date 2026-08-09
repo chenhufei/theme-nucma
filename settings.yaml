@@ -704,7 +704,7 @@ spec:
           value: []
           addLabel: 添加菜单栏目
           emptyText: 暂无菜单栏目
-          help: 可添加多个带标题的 Halo 菜单栏目；设置后优先于下方的旧页脚菜单。
+          help: 可添加多个带标题的 Halo 菜单栏目；每个栏目对应一个菜单。
           itemLabels:
             - type: text
               label: $value.title
@@ -721,11 +721,6 @@ spec:
               label: 菜单
               clearable: true
               validation: required
-        - $formkit: menuSelect
-          name: footer_menu
-          label: 旧页脚菜单
-          clearable: true
-          help: 兼容已有配置；新增“页脚菜单栏目”后，此项不再显示。
         - $formkit: textarea
           name: copyright
           label: 版权信息

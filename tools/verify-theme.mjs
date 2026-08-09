@@ -304,8 +304,11 @@ const footerMenus = footerForm?.formSchema?.find((node) => node.name === 'footer
 if (footerMenus?.$formkit !== 'array' || !footerMenus.children?.some((node) => node.$formkit === 'menuSelect' && node.name === 'menu')) {
   fail('footer menus must be an array with menuSelect children');
 }
-if (!layout.includes('theme.config.footer?.footer_menus') || !layout.includes('theme.config.navigation?.footer_menu')) {
-  fail('footer menu rendering must include multi-column and legacy fallback settings');
+if (footerForm?.formSchema?.some((node) => node.name === 'footer_menu')) {
+  fail('legacy footer menu must not remain visible in the settings form');
+}
+if (!layout.includes('theme.config.footer?.footer_menus')) {
+  fail('footer menu rendering must include multi-column settings');
 }
 
 for (const marker of [
