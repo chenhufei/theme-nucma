@@ -29,6 +29,7 @@ export default defineConfig({
         rmSync(resolve(rootDir, 'templates/assets/js/main.js'), { force: true })
         rmSync(resolve(rootDir, 'templates/assets/js/members.js'), { force: true })
         rmSync(resolve(rootDir, 'templates/assets/js/chunks'), { recursive: true, force: true })
+        rmSync(resolve(rootDir, 'templates/assets/fonts/KuaiKanShiJieTi.woff2'), { force: true })
         rmSync(resolve(rootDir, 'templates/assets/build-info.json'), { force: true })
       },
       closeBundle: async () => {
