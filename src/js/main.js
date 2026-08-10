@@ -990,6 +990,16 @@ Alpine.start();
     update();
   }
 
+  function initHistoryBackLinks() {
+    document.querySelectorAll('[data-history-back]').forEach(function(link) {
+      link.addEventListener('click', function(event) {
+        if (window.history.length <= 1) return;
+        event.preventDefault();
+        window.history.back();
+      });
+    });
+  }
+
   // ===== 初始化 =====
   document.addEventListener('DOMContentLoaded', function() {
     initDiagnostics();
@@ -1005,6 +1015,7 @@ Alpine.start();
     initArticleToc();
     initArticleImageViewer();
     initLinkSearch();
+    initHistoryBackLinks();
     initBannerAnimation();
     initHeaderLinksCarousel();
     initHeroBgCarousel();

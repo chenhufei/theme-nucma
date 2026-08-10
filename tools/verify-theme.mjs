@@ -26,6 +26,22 @@ const packageJson = JSON.parse(read('package.json'));
 const theme = yaml.load(read('theme.yaml'));
 const settings = yaml.load(read('settings.yaml'));
 const gitignore = read('.gitignore');
+const packageLock = read('package-lock.json');
+const ciWorkflow = read('.github/workflows/ci.yaml');
+
+const packageCliVersion = packageJson.devDependencies?.['@halo-dev/theme-package-cli'];
+if (!/^\d+\.\d+\.\d+$/.test(packageCliVersion || '')) {
+  fail('主题打包工具必须使用固定版本');
+}
+if (!packageJson.scripts?.package?.includes('theme-package') || packageJson.scripts.package.includes('npx ')) {
+  fail('主题打包必须使用本地固定版本的 theme-package');
+}
+if (packageLock.includes('registry.npmmirror.com')) {
+  fail('package-lock.json 不得固化第三方镜像下载地址');
+}
+for (const marker of ['actions/setup-node@v4', 'npm ci', 'npm run package']) {
+  if (!ciWorkflow.includes(marker)) fail(`主题 CI 缺少 ${marker}`);
+}
 
 const groups = settings.spec?.forms || [];
 const groupNames = groups.map((form) => form.group);
@@ -151,6 +167,9 @@ for (const path of templates) {
 }
 
 const allTemplates = templates.map(read).join('\n');
+if (/href=["']javascript:/i.test(allTemplates)) {
+  fail('模板不得使用 javascript: 链接');
+}
 for (const retiredCdn of [
   'cdnjs.cloudflare.com',
   'cdn.bootcdn.net',
@@ -239,6 +258,13 @@ if (/\b(?:border|background)\s*:/.test(mobileCustomLinkRule)) {
 }
 
 const mainScript = read('src/js/main.js');
+const notFoundTemplate = read('templates/error/404.html');
+if (!notFoundTemplate.includes('th:href="@{/}"') || !notFoundTemplate.includes('data-history-back')) {
+  fail('404 页面返回链接必须提供首页回退');
+}
+if (!mainScript.includes('initHistoryBackLinks')) {
+  fail('主脚本缺少历史返回链接增强逻辑');
+}
 const membersScript = read('src/js/members.js');
 const linksTemplate = read('templates/links.html');
 const membersTemplate = read('templates/members.html');

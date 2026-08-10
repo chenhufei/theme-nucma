@@ -1,6 +1,6 @@
 {
   "name": "theme-nucma",
-  "version": "3.29.3",
+  "version": "3.29.4",
   "description": "面向校园、青年组织与公共服务门户的多风格 Halo 主题，提供专题模板与响应式阅读体验",
   "license": "GPL-3.0-only",
   "type": "module",
@@ -11,9 +11,10 @@
     "dev": "vite build --watch",
     "check": "node tools/verify-theme.mjs",
     "build": "npm run check && vite build && node tools/verify-theme.mjs --built",
-    "package": "npm run build && npx @halo-dev/theme-package-cli && node tools/verify-package.mjs"
+    "package": "npm run build && theme-package && node tools/verify-package.mjs"
   },
   "devDependencies": {
+    "@halo-dev/theme-package-cli": "1.1.1",
     "adm-zip": "^0.6.0",
     "autoprefixer": "^10.4.0",
     "esbuild": "^0.28.1",

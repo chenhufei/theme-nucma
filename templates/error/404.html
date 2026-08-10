@@ -5,7 +5,7 @@
   <div class="error-page">
     <h1 class="error-code">404</h1>
     <p class="error-message">页面未找到</p>
-    <a href="javascript:history.back()" class="error-link">返回上一页</a>
+    <a th:href="@{/}" class="error-link" data-history-back>返回上一页</a>
   </div>
 </th:block>
 </html>
