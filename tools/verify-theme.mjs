@@ -28,6 +28,8 @@ const settings = yaml.load(read('settings.yaml'));
 const gitignore = read('.gitignore');
 const packageLock = read('package-lock.json');
 const ciWorkflow = read('.github/workflows/ci.yaml');
+const postcssConfig = read('postcss.config.js');
+const viteConfig = read('vite.config.ts');
 
 const packageCliVersion = packageJson.devDependencies?.['@halo-dev/theme-package-cli'];
 if (!/^\d+\.\d+\.\d+$/.test(packageCliVersion || '')) {
@@ -38,6 +40,29 @@ if (!packageJson.scripts?.package?.includes('theme-package') || packageJson.scri
 }
 if (packageLock.includes('registry.npmmirror.com')) {
   fail('package-lock.json 不得固化第三方镜像下载地址');
+}
+for (const [name, version] of [
+  ['tailwindcss', '4.3.3'],
+  ['@tailwindcss/postcss', '4.3.3'],
+  ['daisyui', '5.7.16'],
+]) {
+  if (packageJson.devDependencies?.[name] !== version) {
+    fail(`${name} 必须锁定为 ${version}`);
+  }
+}
+if (!postcssConfig.includes("'@tailwindcss/postcss'")) {
+  fail('PostCSS 未使用 Tailwind CSS 4 官方适配器');
+}
+if (!viteConfig.includes("base: './'")) {
+  fail('Vite 必须使用相对资源基址，避免主题字体被构建为站点根路径');
+}
+if (existsSync(join(root, 'tailwind.config.js'))) {
+  fail('Tailwind CSS 4 不应保留旧版 tailwind.config.js');
+}
+for (const obsoletePackageManagerFile of ['pnpm-lock.yaml', 'pnpm-workspace.yaml', 'yarn.lock']) {
+  if (existsSync(join(root, obsoletePackageManagerFile))) {
+    fail(`项目统一使用 npm，不应保留第二套包管理器文件：${obsoletePackageManagerFile}`);
+  }
 }
 for (const marker of ['actions/setup-node@v4', 'npm ci', 'npm run package']) {
   if (!ciWorkflow.includes(marker)) fail(`主题 CI 缺少 ${marker}`);
@@ -163,12 +188,16 @@ for (const path of templates) {
   const imageTags = read(path).match(/<img\b[\s\S]*?>/gi) || [];
   imageTags.forEach((tag, index) => {
     if (!/\b(?:alt|th:alt)=/i.test(tag)) fail(`${path} 第 ${index + 1} 个 img 缺少 alt`);
+    if (!/\bwidth=/i.test(tag) || !/\bheight=/i.test(tag)) fail(`${path} 第 ${index + 1} 个 img 缺少稳定尺寸`);
   });
 }
 
 const allTemplates = templates.map(read).join('\n');
 if (/href=["']javascript:/i.test(allTemplates)) {
   fail('模板不得使用 javascript: 链接');
+}
+if (/\b(?:onmouseover|onmouseout|th:onclick|onclick)=/i.test(allTemplates)) {
+  fail('模板不得使用内联鼠标或导航事件');
 }
 for (const retiredCdn of [
   'cdnjs.cloudflare.com',
@@ -210,8 +239,8 @@ for (const compatibilityMarker of [
 const contracts = [
   ['PluginMembers', "pluginFinder.available('PluginMembers')", 'memberFinder.listApprovedMembers()'],
   ['PluginLinks', "pluginFinder.available('PluginLinks')", 'linkFinder?.groupBy()'],
-  ['link-submit-next', "pluginFinder.available('link-submit-next')", 'LinkSubmitWidget.open()'],
-  ['PluginSearchWidget', "pluginFinder.available('PluginSearchWidget')", 'SearchWidget.open()'],
+  ['link-submit-next', "pluginFinder.available('link-submit-next')", 'data-widget-open="LinkSubmitWidget"'],
+  ['PluginSearchWidget', "pluginFinder.available('PluginSearchWidget')", 'data-widget-open="SearchWidget"'],
 ];
 for (const [name, ...markers] of contracts) {
   for (const marker of markers) {
@@ -221,6 +250,42 @@ for (const [name, ...markers] of contracts) {
 
 const layout = read('templates/layout.html');
 const mainCss = read('src/css/main.css');
+if (/transition:\s*all\b/i.test(mainCss)) {
+  fail('样式不得使用 transition: all');
+}
+if (!mainCss.includes('@media (prefers-reduced-motion: reduce)')) {
+  fail('动效缺少 prefers-reduced-motion 兜底');
+}
+for (const marker of [
+  "font-family: 'KuaiKanShiJieTi'",
+  "url('../fonts/KuaiKanShiJieTi.woff2')",
+  "--font-display: 'KuaiKanShiJieTi'",
+]) {
+  if (!mainCss.includes(marker)) fail(`快看世界体源码声明缺少：${marker}`);
+}
+for (const marker of ['rel="preload"', 'assets/css/KuaiKanShiJieTi.woff2', 'as="font"', 'type="font/woff2"']) {
+  if (!layout.includes(marker)) fail(`快看世界体预加载缺少：${marker}`);
+}
+for (const marker of [
+  '@import "tailwindcss" source(none)',
+  '@plugin "daisyui"',
+  'themes: false',
+  '--color-base-100: var(--bg-primary)',
+  '--color-primary: var(--primary)',
+]) {
+  if (!mainCss.includes(marker)) fail(`DaisyUI 设计系统缺少 ${marker}`);
+}
+for (const [path, markers] of [
+  ['templates/layout.html', ['btn btn-ghost btn-circle', 'menu menu-sm login-dropdown']],
+  ['templates/members.html', ['input input-bordered page-search', 'btn btn-primary apply-btn', 'card card-border member-card']],
+  ['templates/links.html', ['input input-bordered page-search', 'btn btn-primary apply-btn', 'card card-border link-card']],
+  ['templates/post.html', ['badge badge-primary badge-soft', 'card card-border sidebar-card']],
+]) {
+  const template = read(path);
+  for (const marker of markers) {
+    if (!template.includes(marker)) fail(`${path} 缺少 DaisyUI 组件 ${marker}`);
+  }
+}
 if (!layout.includes('th:data-visual-style="${theme.config.appearance?.visual_style ?: \'portal\'}"')) {
   fail('layout 缺少全站视觉风格数据属性');
 }
@@ -234,6 +299,9 @@ for (const style of ['youth', 'civic', 'editorial']) {
 }
 for (const marker of ['rel="canonical"', 'property="og:title"', 'name="twitter:card"', 'application/ld+json']) {
   if (!layout.includes(marker)) fail(`统一 SEO Head 缺少 ${marker}`);
+}
+for (const marker of ['name="theme-color"', 'rawSeoImage=', 'class="skip-link"', 'id="mainContent"']) {
+  if (!layout.includes(marker)) fail(`统一页面基线缺少 ${marker}`);
 }
 for (const marker of [
   'class="mobile-nav-section mobile-nav-section--menu"',
@@ -258,6 +326,33 @@ if (/\b(?:border|background)\s*:/.test(mobileCustomLinkRule)) {
 }
 
 const mainScript = read('src/js/main.js');
+if (!mainScript.includes('initDaisyUIAdapters')) {
+  fail('通用页面状态缺少 DaisyUI 适配逻辑');
+}
+for (const marker of [
+  "document.readyState === 'loading'",
+  "dataset.nucmaInitialized === 'true'",
+  "wrap.classList.add('is-authenticated')",
+]) {
+  if (!mainScript.includes(marker)) fail(`主题初始化或登录状态契约缺少：${marker}`);
+}
+for (const marker of [
+  '.login-entry-wrap.is-authenticated .login-icon',
+  '.category-cols-wrapper.category-cols--count-3',
+  '.home-sections > .section[data-home-section="members"] .member-grid',
+  'transition-property: color, background-color, border-color, box-shadow, fill, stroke, opacity',
+]) {
+  if (!mainCss.includes(marker)) fail(`主题响应式或切换契约缺少：${marker}`);
+}
+if (!read('templates/index.html').includes('category-cols--count-')) {
+  fail('首页分类栏缺少确定性列数标记');
+}
+for (const marker of ["classList.add('join')", "'join-item'"]) {
+  if (!mainScript.includes(marker)) fail(`分页缺少 DaisyUI 语义：${marker}`);
+}
+if (!mainScript.includes('initWidgetOpeners')) {
+  fail('插件 Widget 入口缺少统一事件适配');
+}
 const notFoundTemplate = read('templates/error/404.html');
 if (!notFoundTemplate.includes('th:href="@{/}"') || !notFoundTemplate.includes('data-history-back')) {
   fail('404 页面返回链接必须提供首页回退');
@@ -265,7 +360,28 @@ if (!notFoundTemplate.includes('th:href="@{/}"') || !notFoundTemplate.includes('
 if (!mainScript.includes('initHistoryBackLinks')) {
   fail('主脚本缺少历史返回链接增强逻辑');
 }
+const sidebarRule = mainCss.match(/\.post-sidebar\s*\{[^}]*\}/s)?.[0] || '';
+if (!sidebarRule.includes('position: sticky') || !sidebarRule.includes('top: 86px') || !sidebarRule.includes('overflow: visible') || !sidebarRule.includes('max-height: none')) {
+  fail('桌面文章侧栏必须保持粘性定位，且不得创建独立滚动容器');
+}
+if (mainCss.includes('.post-sidebar.post-sidebar--flow') || mainScript.includes('initPostSidebar()')) {
+  fail('文章侧栏不得因内容高度自动取消粘性定位');
+}
+if (mainScript.includes('initPostSidebarSizing') || mainScript.includes('--post-sidebar-sticky-top')) {
+  fail('文章侧栏不得用脚本动态改写 sticky top');
+}
+if (!mainCss.includes('[data-visual-style="portal"] .home-sections > .section') || !mainCss.includes('padding-block: var(--space-lg)')) {
+  fail('标准门户首页必须使用紧凑区块间距');
+}
+for (const style of ['portal', 'youth', 'civic', 'editorial']) {
+  for (const marker of ['.banner-content', '.news-item', '.member-card', '.page-header', '.intro-stat', '.link-group-title', '.pagination', '.site-footer']) {
+    if (!mainCss.includes(`[data-visual-style="${style}"] ${marker}`)) {
+      fail(`视觉风格 ${style} 缺少结构差异 ${marker}`);
+    }
+  }
+}
 const membersScript = read('src/js/members.js');
+const linksScript = read('src/js/links.js');
 const linksTemplate = read('templates/links.html');
 const membersTemplate = read('templates/members.html');
 const postTemplate = read('templates/post.html');
@@ -273,7 +389,7 @@ for (const [feature, source, markers] of [
   ['文章阅读进度', layout + mainScript, ['id="readingProgress"', 'initReadingProgress']],
   ['移动端文章目录', layout + mainScript, ['id="mobileTocDrawer"', 'id="mobileToc"', 'initArticleToc']],
   ['文章图片查看器', layout + mainScript, ['id="articleImageViewer"', 'initArticleImageViewer']],
-  ['友链实时搜索', linksTemplate + mainScript, ['data-link-search', 'id="linkSearchEmpty"', 'initLinkSearch']],
+  ['友链拼音搜索', linksTemplate + linksScript, ['data-link-search', 'id="linkSearchEmpty"', 'initLinkSearch', "import('pinyin-pro')", "pattern: 'first'", 'assets/js/links.js']],
   ['成员本地搜索', membersTemplate + membersScript, ['id="memberSearchInput"', "import('pinyin-pro')", 'initMemberSearch', 'assets/js/members.js']],
   ['成员本地二维码', membersTemplate + membersScript, ['data-member-qr', 'data-qr-text', "import('qrcode')", 'initMemberQrPopups', "removeProperty('width')", "removeProperty('height')", "setAttribute('aria-hidden'", 'pointerleave', 'focusout']],
 ]) {
@@ -297,23 +413,35 @@ for (const dependency of ['pinyin-pro', 'qrcode']) {
   if (!packageJson.dependencies?.[dependency]) fail(`成员页本地能力缺少依赖：${dependency}`);
 }
 if (mainScript.includes('pinyin-pro') || mainScript.includes("import('qrcode')")) {
-  fail('成员页专用依赖不得打入全站主脚本');
+  fail('页面专用依赖不得打入全站主脚本');
 }
 for (const dependency of ['alpinejs', '@alpinejs/collapse', 'gsap']) {
-  if (!packageJson.dependencies?.[dependency]) fail(`全站交互本地化缺少依赖：${dependency}`);
+  if (packageJson.dependencies?.[dependency] || packageJson.devDependencies?.[dependency]) {
+    fail(`全站交互已改用原生 API，不得重新引入：${dependency}`);
+  }
 }
 for (const marker of [
-  "import Alpine from 'alpinejs'",
-  "import collapse from '@alpinejs/collapse'",
-  "import { gsap } from 'gsap'",
-  'window.Alpine = Alpine',
-  'window.gsap = gsap',
-  'Alpine.start()',
+  'initMobileMenu',
+  'initLoginMenu',
+  'IntersectionObserver',
+  'requestAnimationFrame',
+  'Element.prototype.animate',
 ]) {
-  if (!mainScript.includes(marker)) fail(`全站交互本地化缺少初始化标记：${marker}`);
+  if (!mainScript.includes(marker)) fail(`原生交互实现缺少标记：${marker}`);
 }
-if (layout.includes('alpinejs') || layout.includes('gsap.min.js') || layout.includes('ScrollTrigger.min.js')) {
-  fail('布局模板不得再通过外部脚本标签加载 Alpine 或 GSAP');
+for (const forbiddenMarker of ['alpinejs', '@alpinejs/collapse', "from 'gsap'", 'ScrollTrigger', 'window.gsap', 'Alpine.start']) {
+  if ((mainScript + allTemplates).includes(forbiddenMarker)) {
+    fail(`源码仍残留旧交互库标记：${forbiddenMarker}`);
+  }
+}
+for (const alpineDirective of ['x-data=', 'x-show=', 'x-if=', 'x-init=', 'x-collapse', 'x-cloak', '@click=', '@mouseenter=', '@mouseleave=']) {
+  if (allTemplates.includes(alpineDirective)) fail(`模板仍残留 Alpine 指令：${alpineDirective}`);
+}
+for (const marker of ['id="mobileMenuToggle"', 'data-mobile-menu-close', 'aria-hidden="true"']) {
+  if (!layout.includes(marker)) fail(`移动菜单原生交互缺少标记：${marker}`);
+}
+for (const marker of ['<details class="collapse faq-item"', '<summary class="collapse-title faq-question"']) {
+  if (!read('templates/page_about.html').includes(marker)) fail(`关于页 FAQ 缺少原生折叠标记：${marker}`);
 }
 for (const [pageName, template] of [['成员页', membersTemplate], ['友链页', linksTemplate]]) {
   for (const marker of ['page-header-row--with-tools', 'page-header-tools', 'page-search']) {
@@ -341,8 +469,19 @@ const customLinks = navigationForm?.formSchema?.find((node) => node.name === 'cu
 if (!customLinks?.itemLabels?.some((label) => label.type === 'image' && label.label === '$value.image')) {
   fail('custom navigation links must show configured images in the list label');
 }
-if (layout.includes('back-to-top-mountain') || layout.includes('bttp-particles-layer')) {
-  fail('back-to-top decorative triangles must not remain in the layout');
+if (!layout.includes('back-to-top-mountain') || layout.includes('bttp-particles-layer')) {
+  fail('返回顶部必须保留静态山丘序列，且不得恢复鼠标粒子层');
+}
+if (!layout.includes('<button th:if="${theme.config.appearance?.back_to_top_enabled != false}"') || !layout.includes('type="button" aria-label="返回顶部"')) {
+  fail('返回顶部必须使用具有可访问名称的原生按钮');
+}
+const faqRule = mainCss.match(/\.faq-item\s*\{[^}]*\}/s)?.[0] || '';
+if (!faqRule.includes('border-left: 4px solid transparent') || !mainCss.includes('.faq-item[open],') || !mainCss.includes('border-left-color: var(--primary)')) {
+  fail('FAQ 展开或聚焦后必须保持左侧强调边框');
+}
+if (mainCss.includes('[data-visual-style="portal"] .member-card:hover { border-top') ||
+    mainCss.includes('[data-visual-style="portal"] .link-card:hover { border-top')) {
+  fail('标准门户的成员与友链卡片不得在聚焦时出现顶部边框');
 }
 
 for (const marker of [
@@ -354,8 +493,17 @@ for (const marker of [
 }
 
 if (built) {
-  for (const path of ['templates/assets/css/main.css', 'templates/assets/js/main.js', 'templates/assets/js/members.js', 'templates/assets/build-info.json']) {
+  for (const path of ['templates/assets/css/main.css', 'templates/assets/css/KuaiKanShiJieTi.woff2', 'templates/assets/js/main.js', 'templates/assets/js/members.js', 'templates/assets/js/links.js', 'templates/assets/build-info.json']) {
     if (!existsSync(join(root, path))) fail(`构建产物不存在：${path}`);
+  }
+  if (existsSync(join(root, 'templates/assets/css/main.css'))) {
+    const builtCss = read('templates/assets/css/main.css');
+    if (!builtCss.includes('@font-face') || !builtCss.includes('KuaiKanShiJieTi.woff2')) {
+      fail('构建样式缺少快看世界体声明');
+    }
+    if (/url\(["']?\/css\/KuaiKanShiJieTi\.woff2/.test(builtCss)) {
+      fail('快看世界体被错误构建为站点根路径');
+    }
   }
   if (existsSync(join(root, 'templates/assets/build-info.json'))) {
     const info = JSON.parse(read('templates/assets/build-info.json'));
@@ -363,7 +511,7 @@ if (built) {
   }
   if (existsSync(join(root, 'templates/assets/js/main.js'))) {
     const builtScript = read('templates/assets/js/main.js');
-    for (const marker of ['readingProgress', 'mobileTocDrawer', 'articleImageViewer', 'linkSearchInput']) {
+    for (const marker of ['readingProgress', 'mobileTocDrawer', 'articleImageViewer']) {
       if (!builtScript.includes(marker)) fail(`构建脚本缺少阅读体验标记：${marker}`);
     }
   }
@@ -373,6 +521,12 @@ if (built) {
       if (!builtMembersScript.includes(marker)) fail(`成员页构建脚本缺少标记：${marker}`);
     }
     if (!walk('templates/assets/js/chunks', '.js').length) fail('成员页按需依赖分包不存在');
+  }
+  if (existsSync(join(root, 'templates/assets/js/links.js'))) {
+    const builtLinksScript = read('templates/assets/js/links.js');
+    for (const marker of ['linkSearchInput', 'linkSearchResults']) {
+      if (!builtLinksScript.includes(marker)) fail(`友链页构建脚本缺少标记：${marker}`);
+    }
   }
   const maps = walk('templates/assets', '.map');
   if (maps.length) fail(`主题包不得包含 Sourcemap：${maps.join(', ')}`);

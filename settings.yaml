@@ -11,7 +11,7 @@ spec:
           name: visual_style
           label: 全站视觉风格
           value: portal
-          help: 统一控制全站色彩、标题、边角和组件气质；专题分类与专题文章仍保留各自的独立风格。
+          help: 同时调整首屏构图、标题体系、列表密度、卡片边界、文章排版和页脚结构；自定义主色只覆盖强调色，专题模板仍保留独立风格。
           options:
             - label: 标准门户
               value: portal

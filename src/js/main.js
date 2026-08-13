@@ -1,27 +1,169 @@
-import Alpine from 'alpinejs';
-import collapse from '@alpinejs/collapse';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { initDiagnostics } from './modules/diagnostics.js';
-
-Alpine.plugin(collapse);
-window.Alpine = Alpine;
-window.gsap = gsap;
-window.ScrollTrigger = ScrollTrigger;
-gsap.registerPlugin(ScrollTrigger);
-Alpine.start();
 
 /**
  * NUCMA 国风主题 - 主脚本
- * 统一使用 GSAP 作为动画引擎（入场/滚动显现/计数）
+ * 使用浏览器原生 API 实现全站交互与动画。
  */
 (function() {
   'use strict';
 
   var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var hasGSAP = typeof gsap !== 'undefined';
-  var hasST = hasGSAP && typeof ScrollTrigger !== 'undefined';
-  if (hasST) gsap.registerPlugin(ScrollTrigger);
+
+  function setElementOpen(element, open) {
+    if (!element) return;
+    element.classList.toggle('is-open', open);
+    element.setAttribute('aria-hidden', String(!open));
+  }
+
+  // ===== 移动端菜单 =====
+  function initMobileMenu() {
+    var menu = document.getElementById('mobileMenu');
+    var toggle = document.getElementById('mobileMenuToggle');
+    if (!menu || !toggle) return;
+
+    var closeButton = menu.querySelector('[data-mobile-menu-close]');
+    var overlay = menu.querySelector('.mobile-menu-overlay');
+    var links = menu.querySelectorAll('a');
+    var desktop = window.matchMedia('(min-width: 769px)');
+    var lastFocused = null;
+
+    function openMenu() {
+      lastFocused = document.activeElement;
+      setElementOpen(menu, true);
+      toggle.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('menu-open');
+      window.requestAnimationFrame(function() {
+        if (closeButton) closeButton.focus();
+      });
+    }
+
+    function closeMenu(restoreFocus) {
+      setElementOpen(menu, false);
+      toggle.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('menu-open');
+      if (restoreFocus !== false && lastFocused instanceof HTMLElement) lastFocused.focus();
+    }
+
+    toggle.addEventListener('click', openMenu);
+    if (closeButton) closeButton.addEventListener('click', function() { closeMenu(); });
+    if (overlay) overlay.addEventListener('click', function() { closeMenu(); });
+    links.forEach(function(link) {
+      link.addEventListener('click', function() { closeMenu(false); });
+    });
+    desktop.addEventListener('change', function(event) {
+      if (event.matches) closeMenu(false);
+    });
+    menu.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeMenu();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      var focusable = Array.from(menu.querySelectorAll('a[href], button:not([disabled])'))
+        .filter(function(element) { return !element.hidden && element.offsetParent !== null; });
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
+  // ===== 登录入口与用户菜单 =====
+  function initLoginMenu() {
+    var wrap = document.getElementById('loginEntryWrap');
+    var entry = document.getElementById('loginEntry');
+    var dropdown = document.getElementById('loginDropdown');
+    if (!wrap || !entry || !dropdown) return;
+
+    var icon = entry.querySelector('.login-icon');
+    var avatar = entry.querySelector('.login-avatar');
+    var placeholder = entry.querySelector('.login-avatar-placeholder');
+    var loggedIn = false;
+    var pinned = false;
+    var openTimer = null;
+    var closeTimer = null;
+
+    function clearTimers() {
+      window.clearTimeout(openTimer);
+      window.clearTimeout(closeTimer);
+    }
+
+    function setOpen(open) {
+      clearTimers();
+      setElementOpen(dropdown, open);
+      entry.setAttribute('aria-expanded', String(open));
+    }
+
+    function showMenu() {
+      if (!loggedIn) return;
+      clearTimers();
+      openTimer = window.setTimeout(function() { setOpen(true); }, 140);
+    }
+
+    function hideMenu() {
+      clearTimers();
+      if (!pinned) closeTimer = window.setTimeout(function() { setOpen(false); }, 200);
+    }
+
+    function closeMenu() {
+      pinned = false;
+      setOpen(false);
+    }
+
+    entry.addEventListener('click', function(event) {
+      event.preventDefault();
+      if (!loggedIn) {
+        window.location.href = '/console';
+        return;
+      }
+      pinned = !pinned;
+      setOpen(pinned);
+    });
+    wrap.addEventListener('pointerenter', showMenu);
+    wrap.addEventListener('pointerleave', hideMenu);
+    wrap.addEventListener('focusin', showMenu);
+    wrap.addEventListener('focusout', function(event) {
+      if (!wrap.contains(event.relatedTarget)) hideMenu();
+    });
+    dropdown.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', closeMenu);
+    });
+    document.addEventListener('pointerdown', function(event) {
+      if (!wrap.contains(event.target)) closeMenu();
+    });
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') closeMenu();
+    });
+
+    fetch('/apis/api.console.halo.run/v1alpha1/users/-', { credentials: 'include' })
+      .then(function(response) { return response.ok ? response.json() : null; })
+      .then(function(data) {
+        if (!data || !data.user) return;
+        loggedIn = true;
+        wrap.classList.add('is-authenticated');
+        var user = data.user;
+        var name = user.spec?.displayName || user.metadata?.name || '用户';
+        var avatarUrl = user.spec?.avatar;
+        entry.title = name;
+        entry.setAttribute('aria-label', name);
+        if (icon) icon.hidden = true;
+        if (avatarUrl && avatar) {
+          avatar.src = avatarUrl;
+          avatar.alt = name;
+          avatar.hidden = false;
+        } else if (placeholder) {
+          placeholder.hidden = false;
+        }
+      })
+      .catch(function() {});
+  }
 
   // ===== 主题切换 =====
   var themeTransitionTimer = null;
@@ -113,25 +255,19 @@ Alpine.start();
         track.appendChild(clone);
       }
 
-      if (hasGSAP && !prefersReduced) gsap.set(track, { y: 0 });
-
       function goTo(i) {
-        if (hasGSAP && !prefersReduced) {
-          gsap.to(track, {
-            y: -i * slideH,
-            duration: 0.55,
-            ease: 'expo.inOut',
-            overwrite: true,
-            onComplete: function() {
-              // 滚到克隆时无缝回到 0
-              if (i >= slides.length) {
-                gsap.set(track, { y: 0 });
-                current = 0;
-              }
-            }
-          });
-        } else {
-          track.style.transform = 'translateY(' + (-i * slideH) + 'px)';
+        var duration = prefersReduced ? 0 : 550;
+        track.style.transition = duration
+          ? 'transform 550ms cubic-bezier(0.16, 1, 0.3, 1)'
+          : 'none';
+        track.style.transform = 'translateY(' + (-i * slideH) + 'px)';
+        if (i >= slides.length) {
+          window.setTimeout(function() {
+            track.style.transition = 'none';
+            track.style.transform = 'translateY(0)';
+            current = 0;
+            void track.offsetHeight;
+          }, duration);
         }
       }
 
@@ -323,71 +459,68 @@ Alpine.start();
     } catch (_) {}
   }
 
-  // ===== 滚动显现动画（GSAP ScrollTrigger，一次性 fromTo，不持续应用 transform） =====
+  // ===== 滚动显现动画 =====
   function initScrollReveal() {
-    if (!hasST) return;
-
     var selector = '.news-item, .member-card, .link-card, .category-card, ' +
       '.faq-item, .archive-timeline-item, .about-timeline-item, .about-service-item, ' +
       '.moment-item, .photo-item, ' +
       '.sidebar-card, .section-header-bar, .post-card, .intro-stat';
     var items = document.querySelectorAll(selector);
-    if (!items.length) return;
+    if (!items.length || prefersReduced || !('IntersectionObserver' in window)) return;
 
-    if (prefersReduced) {
-      // 尊重用户偏好，直接显示
-      items.forEach(function(el) { gsap.set(el, { opacity: 1, y: 0 }); });
-      return;
-    }
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-revealed');
+        observer.unobserve(entry.target);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.01 });
 
-    items.forEach(function(el) {
-      gsap.fromTo(el,
-        { opacity: 0, y: 16 },
-        {
-          opacity: 1, y: 0,
-          duration: 0.6,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 92%',
-            once: true
-          }
-        }
-      );
+    items.forEach(function(element) {
+      element.classList.add('scroll-reveal');
+      observer.observe(element);
     });
   }
 
-  // ===== 数字计数动画（GSAP） =====
+  // ===== 数字计数动画 =====
   function initCountUp() {
-    if (!hasST) return;
     var numbers = document.querySelectorAll('.intro-stat-number, .stat-number');
     if (!numbers.length) return;
 
-    numbers.forEach(function(el) {
-      var target = parseInt(el.textContent) || 0;
-      if (target <= 0 || el.dataset.counted) return;
-      el.dataset.counted = 'true';
+    function animate(element) {
+      var target = parseInt(element.textContent, 10) || 0;
+      if (target <= 0 || element.dataset.counted) return;
+      element.dataset.counted = 'true';
+      if (prefersReduced) return;
+      var startedAt = null;
+      function frame(timestamp) {
+        if (startedAt === null) startedAt = timestamp;
+        var progress = Math.min(1, (timestamp - startedAt) / 1500);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        element.textContent = String(Math.round(target * eased));
+        if (progress < 1) window.requestAnimationFrame(frame);
+      }
+      element.textContent = '0';
+      window.requestAnimationFrame(frame);
+    }
 
-      var counter = { val: 0 };
-      gsap.to(counter, {
-        val: target,
-        duration: 1.5,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: el,
-          start: 'top 90%',
-          once: true
-        },
-        onUpdate: function() {
-          el.textContent = Math.round(counter.val);
-        }
+    if (!('IntersectionObserver' in window)) {
+      numbers.forEach(animate);
+      return;
+    }
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        animate(entry.target);
+        observer.unobserve(entry.target);
       });
-    });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.01 });
+    numbers.forEach(function(element) { observer.observe(element); });
   }
 
   // ===== Banner 入场动画（仅首次加载） =====
   function initBannerAnimation() {
-    if (prefersReduced || !hasGSAP) return;
+    if (prefersReduced || !Element.prototype.animate) return;
     var banner = document.querySelector('.banner');
     if (!banner) return;
 
@@ -395,15 +528,25 @@ Alpine.start();
     var bannerTitle = banner.querySelector('.banner-title');
     var bannerSubtitle = banner.querySelector('.banner-subtitle');
 
-    var tl = gsap.timeline();
-    if (logoItems.length) {
-      tl.fromTo(logoItems, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.15, ease: 'power2.out' });
-    }
+    var delay = 0;
+    logoItems.forEach(function(element, index) {
+      element.animate(
+        [{ opacity: 0, transform: 'translateY(20px)' }, { opacity: 1, transform: 'translateY(0)' }],
+        { duration: 600, delay: index * 120, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards' }
+      );
+      delay = index * 120 + 240;
+    });
     if (bannerTitle) {
-      tl.fromTo(bannerTitle, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }, '-=0.3');
+      bannerTitle.animate(
+        [{ opacity: 0, transform: 'translateY(30px)' }, { opacity: 1, transform: 'translateY(0)' }],
+        { duration: 800, delay: delay, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards' }
+      );
     }
     if (bannerSubtitle) {
-      tl.fromTo(bannerSubtitle, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, '-=0.5');
+      bannerSubtitle.animate(
+        [{ opacity: 0, transform: 'translateY(15px)' }, { opacity: 1, transform: 'translateY(0)' }],
+        { duration: 600, delay: delay + 260, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards' }
+      );
     }
   }
 
@@ -923,73 +1066,6 @@ Alpine.start();
     canvas.addEventListener('pointercancel', stopDragging);
   }
 
-  // ===== 友链实时搜索 =====
-  function initLinkSearch() {
-    var search = document.querySelector('[data-link-search]');
-    if (!search) return;
-    var input = search.querySelector('#linkSearchInput');
-    var clearButton = search.querySelector('[data-link-search-clear]');
-    var resultRoot = document.getElementById('linkSearchResults');
-    var empty = document.getElementById('linkSearchEmpty');
-    var count = document.getElementById('linkSearchCount');
-    if (!input || !clearButton || !resultRoot || !empty || !count) return;
-    var cards = Array.from(resultRoot.querySelectorAll('.link-card'));
-    if (!cards.length) {
-      search.hidden = true;
-      return;
-    }
-
-    function normalize(value) {
-      var text = (value || '').toString().toLowerCase();
-      try { text = text.normalize('NFKC'); } catch (_) {}
-      return text.replace(/\s+/g, ' ').trim();
-    }
-    var indexedCards = cards.map(function(card) {
-      return {
-        card: card,
-        text: normalize([
-          card.querySelector('.link-name')?.textContent,
-          card.querySelector('.link-desc')?.textContent,
-          card.getAttribute('href'),
-        ].filter(Boolean).join(' ')),
-      };
-    });
-    var groups = Array.from(resultRoot.querySelectorAll('.link-group'));
-    function update() {
-      var query = normalize(input.value);
-      var visible = 0;
-      indexedCards.forEach(function(item) {
-        var matched = !query || item.text.includes(query);
-        item.card.hidden = !matched;
-        if (matched) visible++;
-      });
-      groups.forEach(function(group) {
-        var groupCards = Array.from(group.querySelectorAll('.link-card'));
-        var groupVisible = groupCards.filter(function(card) { return !card.hidden; }).length;
-        group.hidden = groupVisible === 0;
-        var groupCount = group.querySelector('.link-group-count');
-        if (groupCount) groupCount.textContent = String(groupVisible);
-      });
-      count.textContent = query ? visible + ' 个结果' : '共 ' + cards.length + ' 个';
-      clearButton.hidden = !query;
-      empty.hidden = !query || visible > 0;
-    }
-    function clear() {
-      input.value = '';
-      update();
-      input.focus();
-    }
-    input.addEventListener('input', update);
-    input.addEventListener('keydown', function(event) {
-      if (event.key === 'Escape' && input.value) {
-        event.preventDefault();
-        clear();
-      }
-    });
-    clearButton.addEventListener('click', clear);
-    update();
-  }
-
   function initHistoryBackLinks() {
     document.querySelectorAll('[data-history-back]').forEach(function(link) {
       link.addEventListener('click', function(event) {
@@ -1000,12 +1076,45 @@ Alpine.start();
     });
   }
 
+  function initWidgetOpeners() {
+    document.querySelectorAll('[data-widget-open]').forEach(function(button) {
+      button.addEventListener('click', function() {
+        var widgetName = button.getAttribute('data-widget-open');
+        var widget = widgetName && window[widgetName];
+        if (widget && typeof widget.open === 'function') widget.open();
+      });
+    });
+  }
+
+  function initDaisyUIAdapters() {
+    document.querySelectorAll('.pagination').forEach(function(element) {
+      element.classList.add('join');
+    });
+    document.querySelectorAll('.empty-state').forEach(function(element) {
+      element.classList.add('alert', 'alert-soft', 'alert-vertical');
+    });
+    document.querySelectorAll('.page-btn').forEach(function(element) {
+      element.classList.add('btn', 'btn-outline', 'btn-sm', 'join-item');
+    });
+    document.querySelectorAll('.page-info').forEach(function(element) {
+      element.classList.add('badge', 'badge-ghost');
+    });
+    document.querySelectorAll('.about-service-badge, .link-filter-count, .member-filter-count, .photo-filter-count, .moment-tag-count').forEach(function(element) {
+      element.classList.add('badge', 'badge-sm', 'badge-soft');
+    });
+  }
+
   // ===== 初始化 =====
-  document.addEventListener('DOMContentLoaded', function() {
+  function initTheme() {
+    if (document.documentElement.dataset.nucmaInitialized === 'true') return;
+    document.documentElement.dataset.nucmaInitialized = 'true';
+
     initDiagnostics();
     initThemeToggle();
     initBackToTop();
     initHeaderScroll();
+    initMobileMenu();
+    initLoginMenu();
     // 先 priority 排序（保留 pinned 顺序），再按 pinned 精确置顶并做数量限制
     initPrioritySort();
     initGridLimit();
@@ -1014,15 +1123,21 @@ Alpine.start();
     initReadingProgress();
     initArticleToc();
     initArticleImageViewer();
-    initLinkSearch();
     initHistoryBackLinks();
+    initWidgetOpeners();
+    initDaisyUIAdapters();
     initBannerAnimation();
     initHeaderLinksCarousel();
     initHeroBgCarousel();
-    // ScrollTrigger 相关动画在 DOM 就绪后注册
     initScrollReveal();
     initCountUp();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTheme, { once: true });
+  } else {
+    initTheme();
+  }
 
 
 })();

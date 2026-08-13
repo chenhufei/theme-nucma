@@ -10,20 +10,21 @@
         <p class="page-desc">协同传播的校园伙伴</p>
       </div>
       <div class="page-header-tools">
-        <div class="page-search link-search" data-link-search>
+        <div class="input input-bordered page-search link-search" data-link-search>
           <label class="visually-hidden" for="linkSearchInput">搜索友链</label>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.35-4.35"></path>
           </svg>
           <input id="linkSearchInput"
+                 name="linkSearch"
                  type="search"
-                 placeholder="搜索名称、简介或网址"
+                 placeholder="搜索名称、拼音首字母、简介或网址…"
                  autocomplete="off"
                  spellcheck="false"
                  aria-controls="linkSearchResults" />
           <span id="linkSearchCount" class="link-search__count" aria-live="polite"></span>
-          <button type="button" class="link-search__clear" data-link-search-clear aria-label="清空搜索" hidden>
+          <button type="button" class="btn btn-ghost btn-circle btn-xs link-search__clear" data-link-search-clear aria-label="清空搜索" hidden>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12"></path>
             </svg>
@@ -32,8 +33,8 @@
 
         <button th:if="${pluginFinder.available('link-submit-next')}"
                 type="button"
-                class="apply-btn"
-                onclick="LinkSubmitWidget.open()">
+                class="btn btn-primary apply-btn"
+                data-widget-open="LinkSubmitWidget">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
             <path d="M12 5v14M5 12h14"></path>
           </svg>
@@ -49,13 +50,15 @@
     页头的「申请友链」按钮调用插件注入的 LinkSubmitWidget.open()。
   -->
 
+  <div class="directory-content directory-content--links">
+
   <th:block th:if="${pluginFinder.available('PluginLinks')}">
 
     <!-- 分组筛选 -->
     <nav class="link-filters"
          th:with="allLinkGroups = ${linkFinder?.groupBy()}">
       <a th:href="@{/links}"
-         class="link-filter-item"
+         class="btn btn-sm btn-soft link-filter-item"
          th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active' : ''"
          th:aria-current="${group == null or #strings.isEmpty(group) ? 'page' : null}">
         全部
@@ -63,7 +66,7 @@
       <a th:each="g : ${allLinkGroups}"
          th:if="${allLinkGroups != null}"
          th:href="@{/links(group=${g.metadata.name})}"
-         class="link-filter-item"
+         class="btn btn-sm btn-soft link-filter-item"
          th:classappend="${group != null and group == g.metadata.name} ? 'is-active' : ''"
          th:aria-current="${group != null and group == g.metadata.name ? 'page' : null}">
         <span th:text="${g.spec?.displayName}">分组</span>
@@ -80,14 +83,14 @@
         <div class="link-group">
           <h2 class="link-group-title">
             <span th:text="${g.spec?.displayName} ?: '未分组'">分组名</span>
-            <span class="link-group-count" th:text="${#lists.size(g.links)}">0</span>
+            <span class="badge badge-primary badge-soft badge-sm link-group-count" th:text="${#lists.size(g.links)}">0</span>
           </h2>
 
           <div class="link-grid">
             <a th:each="link : ${g.links}"
                th:href="${link.spec.url}"
                target="_blank" rel="noopener noreferrer"
-               class="link-card"
+               class="card card-border link-card"
                th:title="${link.spec.description}">
               <div class="link-logo">
                 <img th:if="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
@@ -119,7 +122,7 @@
       <a th:each="link : ${links}"
          th:href="${link.spec.url}"
          target="_blank" rel="noopener noreferrer"
-         class="link-card"
+         class="card card-border link-card"
          th:title="${link.spec.description}">
         <div class="link-logo">
           <img th:if="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
@@ -147,7 +150,7 @@
         </svg>
       </div>
       <p class="empty-text">未找到匹配友链</p>
-      <p class="empty-sub">请尝试其他名称、简介或网址</p>
+      <p class="empty-sub">请尝试名称、拼音首字母、简介或网址</p>
     </div>
 
     <!-- 空状态 -->
@@ -190,6 +193,10 @@
     <p class="empty-text">链接管理插件未启用</p>
     <p class="empty-sub">请在后台安装并启用「链接管理」插件</p>
   </div>
+
+  </div>
+
+  <script type="module" th:src="@{/assets/js/links.js(v=${theme.spec.version})}"></script>
 
 </th:block>
 </html>

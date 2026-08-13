@@ -103,7 +103,8 @@
   <section class="section" data-home-section="news"
            th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and newsCategories != null and !#lists.isEmpty(newsCategories)}">
     <div class="section-container">
-      <div class="category-cols-wrapper">
+      <div class="category-cols-wrapper"
+           th:classappend="${'category-cols--count-' + #lists.size(newsCategories)}">
         <th:block th:each="col : ${newsCategories}"
                   th:with="catPostList = ${postFinder.list({page: 1, size: col.limit ?: 6, categoryName: col.category_name})},
                            catInfo = ${categoryFinder.getByName(col.category_name)}">
@@ -141,7 +142,7 @@
                       data-pinned-ids=${memberPinned == null or #lists.isEmpty(memberPinned) ? '' : #strings.listJoin(memberPinned, ',')}">
           <th:block th:each="group : ${groupsResult.items}">
             <th:block th:each="member : ${group.members}">
-              <div class="member-card" th:attr="data-id=${member.metadata?.name ?: ''},data-priority=${member.spec?.priority ?: 0}">
+              <div class="card card-border member-card" th:attr="data-id=${member.metadata?.name ?: ''},data-priority=${member.spec?.priority ?: 0}">
                 <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
                       class="member-card-background" aria-hidden="true"
                       th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
@@ -182,7 +183,7 @@
           <th:block th:each="group : ${linkGroups}">
             <th:block th:each="link : ${group?.links}">
               <a th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer"
-                 class="link-card" th:title="${link.spec?.description}"
+                 class="card card-border link-card" th:title="${link.spec?.description}"
                  th:attr="data-id=${link.metadata?.name ?: ''}">
                 <div class="link-logo">
                   <img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec?.logo)}"

@@ -7,7 +7,7 @@
   </div>
   
   <div class="category-grid" th:if="${categories != null and !categories.isEmpty()}">
-    <a th:each="cat : ${categories}" th:href="@{${cat.status?.permalink}}" class="category-card">
+    <a th:each="cat : ${categories}" th:href="@{${cat.status?.permalink}}" class="card card-border category-card">
       <h3 th:text="${cat.spec?.displayName}"></h3>
       <p th:text="${cat.status?.postCount ?: 0} + ' 篇文章'"></p>
     </a>

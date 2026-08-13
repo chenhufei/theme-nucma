@@ -11,13 +11,13 @@
   <!-- 分组筛选 -->
   <div class="photo-filters" th:if="${groups != null and !#lists.isEmpty(groups)}">
     <a th:href="@{${photoUrl.list()}}"
-       class="photo-filter-item"
+       class="btn btn-sm btn-soft photo-filter-item"
        th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active' : ''">
       全部
     </a>
     <a th:each="g : ${groups}"
        th:href="@{${photoUrl.list(g.metadata.name)}}"
-       class="photo-filter-item"
+       class="btn btn-sm btn-soft photo-filter-item"
        th:classappend="${group != null and group == g.metadata.name} ? 'is-active' : ''">
       <span th:text="${g.spec?.displayName}">分组</span>
       <span class="photo-filter-count" th:if="${g.status?.photoCount != null}"

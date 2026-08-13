@@ -21,13 +21,13 @@
         <section class="about-section about-stats"
                  th:with="stats = ${siteStatsFinder.getStats()}, memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null}">
           <div class="section-header-bar"><h2 class="section-title-bar">数据统计</h2></div>
-          <div class="intro-stats">
-            <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span><span class="intro-stat-label">发布文章</span></div>
-            <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.visit ?: 0}"></span><span class="intro-stat-label">站点访问</span></div>
-            <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span><span class="intro-stat-label">内容分类</span></div>
-            <div class="intro-stat" th:if="${memberGroups != null and memberGroups.items != null}">
-              <span class="intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
-              <span class="intro-stat-label">成员数量</span>
+          <div class="stats intro-stats">
+            <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.post ?: 0}"></span><span class="stat-title intro-stat-label">发布文章</span></div>
+            <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.visit ?: 0}"></span><span class="stat-title intro-stat-label">站点访问</span></div>
+            <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.category ?: 0}"></span><span class="stat-title intro-stat-label">内容分类</span></div>
+            <div class="stat intro-stat" th:if="${memberGroups != null and memberGroups.items != null}">
+              <span class="stat-value intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
+              <span class="stat-title intro-stat-label">成员数量</span>
             </div>
           </div>
         </section>
@@ -35,13 +35,13 @@
         <section class="about-section">
           <div class="section-header-bar"><h2 class="section-title-bar">常见问题</h2></div>
           <div class="faq-list">
-            <div class="faq-item" th:each="item : ${theme.config.about?.faq_list}" x-data="{ open: false }">
-              <button class="faq-question" @click="open = !open" type="button" :aria-expanded="open">
+            <details class="collapse faq-item" th:each="item : ${theme.config.about?.faq_list}">
+              <summary class="collapse-title faq-question">
                 <span th:text="${item.question}"></span>
-                <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''"><path d="M6 9l6 6 6-6"></path></svg>
-              </button>
-              <div class="faq-answer" x-show="open" x-collapse><p th:text="${item.answer}"></p></div>
-            </div>
+                <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+              </summary>
+              <div class="collapse-content faq-answer"><p th:text="${item.answer}"></p></div>
+            </details>
           </div>
         </section>
       </th:block>
@@ -59,30 +59,30 @@
                           linkCount = ${pluginFinder.available('PluginLinks') ? linkFinder.count() : null},
                           hasCustomStats = ${theme.config.about?.stat_items != null and !#lists.isEmpty(theme.config.about.stat_items)}">
           <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '数据统计'}"></h2></div>
-          <div class="intro-stats">
+          <div class="stats intro-stats">
             <th:block th:if="${hasCustomStats}" th:each="item : ${theme.config.about.stat_items}">
-              <div class="intro-stat"
+              <div class="stat intro-stat"
                    th:if="${item.enabled != false and (item.type != 'member' or memberGroups != null) and (item.type != 'link' or linkCount != null)}">
-                <span class="intro-stat-number" th:if="${item.type == 'post'}" th:text="${stats?.post ?: 0}"></span>
-                <span class="intro-stat-number" th:if="${item.type == 'category'}" th:text="${stats?.category ?: 0}"></span>
-                <span class="intro-stat-number" th:if="${item.type == 'comment'}" th:text="${stats?.comment ?: 0}"></span>
-                <span class="intro-stat-number" th:if="${item.type == 'upvote'}" th:text="${stats?.upvote ?: 0}"></span>
-                <span class="intro-stat-number" th:if="${item.type == 'visit'}" th:text="${stats?.visit ?: 0}"></span>
-                <span class="intro-stat-number" th:if="${item.type == 'member' and memberGroups != null and memberGroups.items != null}"
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'post'}" th:text="${stats?.post ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'category'}" th:text="${stats?.category ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'comment'}" th:text="${stats?.comment ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'upvote'}" th:text="${stats?.upvote ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'visit'}" th:text="${stats?.visit ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'member' and memberGroups != null and memberGroups.items != null}"
                       th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
-                <span class="intro-stat-number" th:if="${item.type == 'link'}" th:text="${linkCount ?: 0}"></span>
-                <span class="intro-stat-number" th:if="${item.type == 'custom'}" th:text="${item.custom_number ?: 0}"></span>
-                <span class="intro-stat-label"
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'link'}" th:text="${linkCount ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'custom'}" th:text="${item.custom_number ?: 0}"></span>
+                <span class="stat-title intro-stat-label"
                       th:text="${item.label != null and !#strings.isEmpty(item.label)} ? ${item.label} : ${item.type == 'post' ? '发布文章数' : item.type == 'category' ? '内容分类数' : item.type == 'comment' ? '用户评论数' : item.type == 'upvote' ? '点赞数' : item.type == 'visit' ? '站点访问量' : item.type == 'member' ? '成员数量' : item.type == 'link' ? '友情链接数' : '自定义数值'}"></span>
               </div>
             </th:block>
             <th:block th:unless="${hasCustomStats}">
-              <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.post ?: 0}"></span><span class="intro-stat-label">发布文章</span></div>
-              <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.visit ?: 0}"></span><span class="intro-stat-label">站点访问</span></div>
-              <div class="intro-stat"><span class="intro-stat-number" th:text="${stats?.category ?: 0}"></span><span class="intro-stat-label">内容分类</span></div>
-              <div class="intro-stat" th:if="${memberGroups != null and memberGroups.items != null}">
-                <span class="intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
-                <span class="intro-stat-label">成员数量</span>
+              <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.post ?: 0}"></span><span class="stat-title intro-stat-label">发布文章</span></div>
+              <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.visit ?: 0}"></span><span class="stat-title intro-stat-label">站点访问</span></div>
+              <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.category ?: 0}"></span><span class="stat-title intro-stat-label">内容分类</span></div>
+              <div class="stat intro-stat" th:if="${memberGroups != null and memberGroups.items != null}">
+                <span class="stat-value intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
+                <span class="stat-title intro-stat-label">成员数量</span>
               </div>
             </th:block>
           </div>
@@ -183,7 +183,7 @@
             <a th:href="@{/links}" class="more-link">更多</a>
           </div>
           <div class="link-grid" th:if="${randomLinks != null}">
-            <a class="link-card" th:each="link : ${randomLinks}" th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer">
+            <a class="card card-border link-card" th:each="link : ${randomLinks}" th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer">
               <div class="link-logo">
                 <img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:src="${link.spec.logo}" th:alt="${link.spec?.displayName}" width="48" height="48" loading="lazy" />
                 <span class="link-logo-text" th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:text="${#strings.substring(link.spec?.displayName ?: '?', 0, 1)}"></span>
@@ -196,13 +196,13 @@
         <section th:if="${block.type == 'faq'}" class="about-section">
           <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '常见问题'}"></h2></div>
           <div class="faq-list">
-            <div class="faq-item" th:each="item : ${theme.config.about?.faq_list}" x-data="{ open: false }">
-              <button class="faq-question" @click="open = !open" type="button" :aria-expanded="open">
+            <details class="collapse faq-item" th:each="item : ${theme.config.about?.faq_list}">
+              <summary class="collapse-title faq-question">
                 <span th:text="${item.question}"></span>
-                <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="open ? 'transform: rotate(180deg)' : ''"><path d="M6 9l6 6 6-6"></path></svg>
-              </button>
-              <div class="faq-answer" x-show="open" x-collapse><p th:text="${item.answer}"></p></div>
-            </div>
+                <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+              </summary>
+              <div class="collapse-content faq-answer"><p th:text="${item.answer}"></p></div>
+            </details>
           </div>
         </section>
       </th:block>

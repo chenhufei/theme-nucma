@@ -7,7 +7,7 @@
   </div>
   
   <div class="tag-cloud" th:if="${tags != null and !tags.isEmpty()}">
-    <a th:each="tag : ${tags}" th:href="@{${tag.status?.permalink}}" class="tag-item"
+    <a th:each="tag : ${tags}" th:href="@{${tag.status?.permalink}}" class="badge badge-outline tag-item"
        th:text="${tag.spec?.displayName}"></a>
   </div>
   

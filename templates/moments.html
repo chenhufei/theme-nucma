@@ -9,8 +9,8 @@
 
   <!-- 标签筛选 -->
   <div class="moment-tags" th:if="${tags != null and !tags.isEmpty()}">
-    <a th:href="@{/moments}" class="moment-tag" th:classappend="${param.tag == null ? 'active' : ''}">全部</a>
-    <a th:each="tag : ${tags}" th:href="@{|/moments?tag=${tag.name}|}" class="moment-tag"
+    <a th:href="@{/moments}" class="btn btn-sm btn-soft moment-tag" th:classappend="${param.tag == null ? 'active' : ''}">全部</a>
+    <a th:each="tag : ${tags}" th:href="@{|/moments?tag=${tag.name}|}" class="btn btn-sm btn-soft moment-tag"
        th:classappend="${param.tag == tag.name ? 'active' : ''}"
        th:text="${tag.name}"></a>
   </div>

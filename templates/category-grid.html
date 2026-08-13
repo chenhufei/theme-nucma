@@ -9,14 +9,14 @@
   </div>
 
   <div class="category-grid" th:if="${posts != null and posts.items != null and !posts.items.isEmpty()}">
-    <article class="category-card" th:each="post : ${posts.items}" th:onclick="|window.location.href='@{${post.status?.permalink}}'|">
+    <a class="card card-border category-card" th:each="post : ${posts.items}" th:href="@{${post.status?.permalink}}">
       <div class="news-cover-box" th:if="${post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}" style="width: 100%; height: 160px; border-radius: var(--radius-sm); overflow: hidden; margin-bottom: var(--space-md);">
         <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" width="320" height="160" />
       </div>
       <h3 th:text="${post.spec?.title}"></h3>
       <p th:if="${post.spec?.excerpt != null and post.spec?.excerpt.raw != null}" th:text="${post.spec?.excerpt.raw}" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"></p>
       <div style="margin-top: var(--space-sm); font-size: 0.8rem; color: var(--text-tertiary);" th:text="${#temporals.format(post.spec?.publishTime, 'yyyy-MM-dd')}"></div>
-    </article>
+    </a>
   </div>
 
   <style>

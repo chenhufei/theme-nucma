@@ -7,11 +7,11 @@
     <p class="page-desc">规章制度与操作指南</p>
   </div>
 
-  <div class="docs-list" th:if="${docs != null and docs.items != null and !#lists.isEmpty(docs.items)}" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-xl);">
-    <a th:each="doc : ${docs.items}" th:href="@{${doc.status?.permalink ?: '#'}}" style="display: flex; flex-direction: column; padding: var(--space-xl); background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); text-decoration: none; transition: all var(--transition-normal); box-shadow: var(--shadow-sm);" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='var(--primary)'; this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-color)'; this.style.boxShadow='var(--shadow-sm)'">
-      <h3 th:text="${doc.spec?.title}" style="margin: 0 0 var(--space-sm) 0; font-size: 1.2rem; color: var(--text-primary);"></h3>
-      <p th:if="${doc.spec?.description != null}" th:text="${doc.spec?.description}" style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"></p>
-      <div style="margin-top: auto; padding-top: var(--space-md); color: var(--text-tertiary); font-size: 0.85rem;">
+  <div class="docs-list" th:if="${docs != null and docs.items != null and !#lists.isEmpty(docs.items)}">
+    <a class="card card-border doc-card" th:each="doc : ${docs.items}" th:href="@{${doc.status?.permalink}}">
+      <h3 th:text="${doc.spec?.title}"></h3>
+      <p th:if="${doc.spec?.description != null}" th:text="${doc.spec?.description}"></p>
+      <div class="doc-card__action">
         查看详情 →
       </div>
     </a>
