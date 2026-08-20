@@ -41,7 +41,7 @@
           </svg>
           申请友链
         </button>
-        <a th:if="${!pluginFinder.available('link-submit-next') and pluginFinder.available('PluginLinks') and linkApplicationEnabled}"
+        <a th:if="${!pluginFinder.available('link-submit-next') and pluginFinder.available('PluginLinks') and #vars.get('linkApplicationEnabled') == true}"
            class="btn btn-primary apply-btn"
            href="#link-application-form">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
@@ -65,7 +65,7 @@
 
     <!-- 分组筛选 -->
     <nav class="link-filters"
-         th:with="allLinkGroups = ${simpleGroups}">
+         th:with="allLinkGroups = ${#vars.get('simpleGroups')}">
       <a th:href="@{/links}"
          class="btn btn-sm btn-soft link-filter-item"
          th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active btn-active' : ''"
@@ -187,7 +187,7 @@
 
     <section id="link-application" class="link-application"
              th:classappend="${pluginFinder.available('link-submit-next') ? ' link-application--hidden' : ''}"
-             th:if="${linkApplicationEnabled}" aria-labelledby="link-application-title">
+             th:if="${#vars.get('linkApplicationEnabled') == true}" aria-labelledby="link-application-title">
       <div class="link-application__header">
         <p class="eyebrow">加入链接目录</p>
         <h2 id="link-application-title">提交你的站点</h2>
@@ -201,7 +201,7 @@
         提交失败，请检查表单后重试
       </div>
       <form id="link-application-form" class="link-application__form" method="post" th:action="@{/links/apply/submit}">
-        <input type="hidden" name="_csrf" th:value="${csrfToken}" />
+        <input type="hidden" name="_csrf" th:value="${#vars.get('csrfToken')}" />
         <div class="link-application__fields">
           <label class="form-control">
             <span class="label-text">网站地址 <span aria-hidden="true">*</span></span>
