@@ -1211,7 +1211,17 @@ import { initDiagnostics } from './modules/diagnostics.js';
       button.addEventListener('click', function() {
         var widgetName = button.getAttribute('data-widget-open');
         var widget = widgetName && window[widgetName];
-        if (widget && typeof widget.open === 'function') widget.open();
+        if (widget && typeof widget.open === 'function') {
+          widget.open();
+          return;
+        }
+        var fallbackSelector = button.getAttribute('data-widget-fallback');
+        var fallback = fallbackSelector && document.querySelector(fallbackSelector);
+        if (!fallback) return;
+        fallback.classList.remove('link-application--hidden');
+        fallback.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        var firstField = fallback.querySelector('input, textarea, select, button');
+        if (firstField) window.setTimeout(function() { firstField.focus(); }, 250);
       });
     });
   }

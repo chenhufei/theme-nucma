@@ -17,7 +17,7 @@ NUCMA 的产品定位是校园、青年组织与公共服务门户，不是 `nuc
 - 友链页支持按名称、简介或网址实时搜索，结果数量和分组数量会随筛选同步更新。
 - 支持浅色、深色和跟随系统模式，统一明暗切换和滚动动画节奏。
 - 桌面、平板与手机使用同一套响应式布局；手机端使用带动画的汉堡导航，并将 Halo 菜单与页头自定义链接分区显示。
-- 关于页支持正文、统计、最新内容、分类、发展历程、服务入口、成员、友链和常见问题自由排序，适配组织介绍与公共服务场景。
+- 关于页支持正文、统计、最新内容、分类、发展历程、服务入口、项目展示、成员、友链和常见问题自由排序，适配组织介绍、公共服务和专题项目展示场景。
 
 ### 专题模板
 
@@ -72,8 +72,8 @@ NUCMA 只负责展示、布局和调用公开 Widget / Finder，不在主题内�
 | 组件 | 在主题中的作用 | 未安装时的表现 |
 | --- | --- | --- |
 | [成员管理](https://github.com/chenhufei/plugin-members) | 成员页、首页成员公示、`MemberApplyWidget` 申请入口 | 成员区块与申请入口安全降级，不影响其他页面 |
-| [官方链接管理 PluginLinks](https://www.halo.run/store/apps/app-hfbQg) | 友链数据、分组和展示 | 友链区块为空或显示引导，不会由主题另建数据存储 |
-| [友链自助提交 Next](https://github.com/chenhufei/plugin-link-submit-next) | `/links` 页的 `LinkSubmitWidget` 自助提交入口 | 仅隐藏提交入口，官方友链展示仍可使用 |
+| [官方链接管理 PluginLinks](https://www.halo.run/store/apps/app-hfbQg) | 友链数据、分组、展示和官方申请表单 | 仅官方插件存在时，主题使用原生同源申请；未启用时显示安全引导，不会另建数据存储 |
+| [友链自助提交 Next](https://github.com/chenhufei/plugin-link-submit-next) | `/links` 页的 `LinkSubmitWidget` 申请增强入口 | 与官方插件共存时优先增强弹窗；资源关闭或增强插件不可用时回退到官方申请表单 |
 | PluginSearchWidget | 页头搜索入口 | 自动隐藏搜索按钮 |
 | 评论插件 | 文章和独立页面评论区 | 自动不渲染评论区 |
 

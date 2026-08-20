@@ -238,7 +238,7 @@ for (const compatibilityMarker of [
 
 const contracts = [
   ['PluginMembers', "pluginFinder.available('PluginMembers')", 'memberFinder.listApprovedMembers()'],
-  ['PluginLinks', "pluginFinder.available('PluginLinks')", 'linkFinder?.groupBy()'],
+  ['PluginLinks', "pluginFinder.available('PluginLinks')", 'simpleGroups', 'groups'],
   ['link-submit-next', "pluginFinder.available('link-submit-next')", 'data-widget-open="LinkSubmitWidget"'],
   ['PluginSearchWidget', "pluginFinder.available('PluginSearchWidget')", 'data-widget-open="SearchWidget"'],
 ];
@@ -252,6 +252,26 @@ const layout = read('templates/layout.html');
 const mainCss = read('src/css/main.css');
 if (/transition:\s*all\b/i.test(mainCss)) {
   fail('样式不得使用 transition: all');
+}
+
+for (const marker of [
+  'linkApplicationEnabled',
+  'csrfToken',
+  '/links/apply/captcha',
+  '/links/apply/submit',
+  'data-refresh-link-captcha',
+  'data-widget-fallback="#link-application"',
+]) {
+  if (!allTemplates.includes(marker)) fail(`官方友链申请契约缺少标记：${marker}`);
+}
+for (const marker of ['about-timeline-section', 'timeline_items', "#lists.contains(theme.config.about.about_blocks.![type], 'timeline')", 'about-services-section', 'about-projects-section', 'project_items']) {
+  if (!allTemplates.includes(marker)) fail(`关于页发展历程兼容回退缺少标记：${marker}`);
+}
+for (const marker of ['value: projects', 'name: project_items', 'about-project-list', 'about-project-cover']) {
+  if (!read('settings.yaml').includes(marker) && !allTemplates.includes(marker)) fail(`关于页项目展示契约缺少：${marker}`);
+}
+if (allTemplates.includes('allLinkGroups = ${linkFinder?.groupBy()}')) {
+  fail('友链筛选应使用 simpleGroups，不能重复加载完整链接分组');
 }
 if (!mainCss.includes('@media (prefers-reduced-motion: reduce)')) {
   fail('动效缺少 prefers-reduced-motion 兜底');
@@ -336,6 +356,10 @@ if (/\b(?:border|background)\s*:/.test(mobileCustomLinkRule)) {
 }
 
 const mainScript = read('src/js/main.js');
+if (!mainCss.includes('.link-application--hidden')) fail('官方友链申请回退缺少隐藏样式');
+if (!mainScript.includes('fallbackSelector') || !mainScript.includes('scrollIntoView')) {
+  fail('增强 Widget 不可用时缺少官方申请表单回退逻辑');
+}
 for (const marker of [
   "document.readyState === 'loading'",
   "dataset.nucmaInitialized === 'true'",
@@ -502,8 +526,9 @@ if (!layout.includes('<button th:if="${theme.config.appearance?.back_to_top_enab
   fail('返回顶部必须使用具有可访问名称的原生按钮');
 }
 const faqRule = mainCss.match(/\.faq-item\s*\{[^}]*\}/s)?.[0] || '';
-if (!faqRule.includes('border-left: 4px solid transparent') || !mainCss.includes('.faq-item[open],') || !mainCss.includes('border-left-color: var(--primary)')) {
-  fail('FAQ 展开或聚焦后必须保持左侧强调边框');
+const faqInteractiveCss = mainCss.match(/\.faq-item:hover\s*\{[^}]*\}[\s\S]*?\.faq-item\[open\],[\s\S]*?\{[^}]*\}/s)?.[0] || '';
+if (!faqRule.includes('border-left: 4px solid var(--border-color)') || !faqInteractiveCss.includes('.faq-item[open],') || faqInteractiveCss.includes('border-left-color: var(--primary)') || faqInteractiveCss.includes('border-left-color: var(--primary-light)')) {
+  fail('FAQ 必须保持常驻左侧边框，展开或聚焦时不得播放红色边框动画');
 }
 if (mainCss.includes('[data-visual-style="portal"] .member-card:hover { border-top') ||
     mainCss.includes('[data-visual-style="portal"] .link-card:hover { border-top')) {

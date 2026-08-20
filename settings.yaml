@@ -477,6 +477,12 @@ spec:
               title: 数据统计
             - type: latest
               title: 最新内容
+            - type: timeline
+              title: 发展历程
+            - type: services
+              title: 服务入口
+            - type: projects
+              title: 项目展示
             - type: faq
               title: 常见问题
           itemLabels:
@@ -502,6 +508,8 @@ spec:
                   value: timeline
                 - label: 服务入口
                   value: services
+                - label: 项目展示
+                  value: projects
                 - label: 成员展示
                   value: members
                 - label: 友情链接
@@ -639,6 +647,52 @@ spec:
               label: 入口链接（可选）
               value: ""
               placeholder: https://example.com/service
+        - $formkit: array
+          name: project_items
+          label: 项目展示列表
+          value: []
+          addLabel: 添加项目
+          emptyText: 暂无项目
+          help: 展示校园实践、公益行动、研究项目或专题成果；添加“项目展示”区块后生效。
+          itemLabels:
+            - type: text
+              label: $value.title
+            - type: text
+              label: $value.status
+          children:
+            - $formkit: text
+              name: title
+              label: 项目名称
+              value: ""
+              placeholder: 如：乡村振兴实践计划
+              validation: required
+            - $formkit: textarea
+              name: description
+              label: 项目简介
+              value: ""
+              rows: 3
+              placeholder: 用一两句话说明项目目标、对象或成果
+              validation: required
+            - $formkit: text
+              name: tag
+              label: 项目标签（可选）
+              value: ""
+              placeholder: 如：三下乡、公益、科研
+            - $formkit: text
+              name: status
+              label: 项目状态（可选）
+              value: ""
+              placeholder: 如：进行中、已结项、长期开放
+            - $formkit: attachment
+              name: cover
+              label: 项目封面（可选）
+              value: ""
+              accepts: ["image/*"]
+            - $formkit: url
+              name: url
+              label: 项目链接（可选）
+              value: ""
+              placeholder: https://example.com/project
         - $formkit: array
           name: faq_list
           label: 常见问题列表

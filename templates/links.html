@@ -34,12 +34,21 @@
         <button th:if="${pluginFinder.available('link-submit-next')}"
                 type="button"
                 class="btn btn-primary apply-btn"
-                data-widget-open="LinkSubmitWidget">
+                data-widget-open="LinkSubmitWidget"
+                data-widget-fallback="#link-application">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
             <path d="M12 5v14M5 12h14"></path>
           </svg>
           申请友链
         </button>
+        <a th:if="${!pluginFinder.available('link-submit-next') and pluginFinder.available('PluginLinks') and linkApplicationEnabled}"
+           class="btn btn-primary apply-btn"
+           href="#link-application-form">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"></path>
+          </svg>
+          申请友链
+        </a>
       </div>
     </div>
   </div>
@@ -56,7 +65,7 @@
 
     <!-- 分组筛选 -->
     <nav class="link-filters"
-         th:with="allLinkGroups = ${linkFinder?.groupBy()}">
+         th:with="allLinkGroups = ${simpleGroups}">
       <a th:href="@{/links}"
          class="btn btn-sm btn-soft link-filter-item"
          th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active btn-active' : ''"
@@ -175,6 +184,72 @@
       <p class="empty-text">该分组暂无链接</p>
       <a th:href="@{/links}" class="btn btn-ghost btn-sm more-link">查看全部</a>
     </div>
+
+    <section id="link-application" class="link-application"
+             th:classappend="${pluginFinder.available('link-submit-next') ? ' link-application--hidden' : ''}"
+             th:if="${linkApplicationEnabled}" aria-labelledby="link-application-title">
+      <div class="link-application__header">
+        <p class="eyebrow">加入链接目录</p>
+        <h2 id="link-application-title">提交你的站点</h2>
+        <p>填写站点信息后提交申请，审核通过后会显示在友情链接页面。</p>
+      </div>
+      <div th:if="${param.applied == 'success'}" class="alert alert-success alert-soft" role="status">
+        申请已提交，等待管理员审核。
+      </div>
+      <div th:if="${param.applied == 'error' or param.applied == 'disabled'}" class="alert alert-error alert-soft" role="alert"
+           th:text="${param.message ?: '提交失败，请检查表单后重试'}">
+        提交失败，请检查表单后重试
+      </div>
+      <form id="link-application-form" class="link-application__form" method="post" th:action="@{/links/apply/submit}">
+        <input type="hidden" name="_csrf" th:value="${csrfToken}" />
+        <div class="link-application__fields">
+          <label class="form-control">
+            <span class="label-text">网站地址 <span aria-hidden="true">*</span></span>
+            <input class="input input-bordered" name="url" type="url" required autocomplete="url"
+                   th:value="${param.field == 'url' ? param.value : ''}" placeholder="https://example.com" />
+          </label>
+          <label class="form-control">
+            <span class="label-text">网站名称 <span aria-hidden="true">*</span></span>
+            <input class="input input-bordered" name="displayName" required autocomplete="organization"
+                   th:value="${param.field == 'displayName' ? param.value : ''}" placeholder="站点名称" />
+          </label>
+          <label class="form-control">
+            <span class="label-text">Logo 地址</span>
+            <input class="input input-bordered" name="logo" type="url" autocomplete="url"
+                   th:value="${param.field == 'logo' ? param.value : ''}" placeholder="https://example.com/logo.png" />
+          </label>
+          <label class="form-control">
+            <span class="label-text">联系邮箱</span>
+            <input class="input input-bordered" name="email" type="email" autocomplete="email"
+                   th:value="${param.field == 'email' ? param.value : ''}" placeholder="name@example.com" />
+          </label>
+          <label class="form-control link-application__wide">
+            <span class="label-text">网站描述</span>
+            <textarea class="textarea textarea-bordered" name="description" rows="3"
+                      th:text="${param.field == 'description' ? param.value : ''}" placeholder="用一句话介绍你的站点"></textarea>
+          </label>
+          <label class="form-control link-application__wide">
+            <span class="label-text">反链地址</span>
+            <input class="input input-bordered" name="backlink" type="url" autocomplete="url"
+                   th:value="${param.field == 'backlink' ? param.value : ''}" placeholder="https://example.com/friends" />
+          </label>
+          <label class="form-control link-application__wide">
+            <span class="label-text">订阅地址 <span class="label-text-alt">每行一个，可选</span></span>
+            <textarea class="textarea textarea-bordered" name="feedUrls" rows="2"
+                      th:text="${param.field == 'feedUrls' ? param.value : ''}" placeholder="https://example.com/feed.xml"></textarea>
+          </label>
+          <label class="form-control">
+            <span class="label-text">验证码 <span aria-hidden="true">*</span></span>
+            <input class="input input-bordered" name="captchaCode" required minlength="5" maxlength="5" autocomplete="off" inputmode="text" />
+          </label>
+          <div class="link-application__captcha">
+            <img id="link-application-captcha" src="/links/apply/captcha" alt="友链申请验证码，点击刷新" width="160" height="48" loading="lazy" />
+            <button type="button" class="btn btn-ghost btn-sm" data-refresh-link-captcha aria-label="刷新验证码">刷新</button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">提交申请</button>
+      </form>
+    </section>
 
     <!-- 评论区 -->
     <section th:if="${haloCommentEnabled and (theme.config.pages?.links_comment_enabled != null ? theme.config.pages.links_comment_enabled : theme.config.content?.links_comment_enabled) == true}" class="post-comments">

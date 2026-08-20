@@ -161,6 +161,31 @@
           </div>
         </section>
 
+        <section th:if="${block.type == 'projects' and theme.config.about?.project_items != null and !#lists.isEmpty(theme.config.about.project_items)}"
+                 class="about-section about-projects-section">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '项目展示'}"></h2></div>
+          <div class="about-project-list">
+            <th:block th:each="item : ${theme.config.about.project_items}">
+              <a th:if="${item.url != null and !#strings.isEmpty(item.url)}" class="about-project-item" th:href="@{${item.url}}">
+                <img th:if="${item.cover != null and !#strings.isEmpty(item.cover)}" class="about-project-cover" th:src="${item.cover}" th:alt="${item.title}" loading="lazy" width="640" height="280" />
+                <div class="about-project-body">
+                  <div class="about-project-meta"><span th:if="${item.tag != null and !#strings.isEmpty(item.tag)}" class="badge badge-sm badge-soft" th:text="${item.tag}"></span><span th:if="${item.status != null and !#strings.isEmpty(item.status)}" th:text="${item.status}"></span></div>
+                  <h3 class="about-project-title" th:text="${item.title}"></h3>
+                  <p class="about-project-description" th:text="${item.description}"></p>
+                </div>
+              </a>
+              <article th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="about-project-item">
+                <img th:if="${item.cover != null and !#strings.isEmpty(item.cover)}" class="about-project-cover" th:src="${item.cover}" th:alt="${item.title}" loading="lazy" width="640" height="280" />
+                <div class="about-project-body">
+                  <div class="about-project-meta"><span th:if="${item.tag != null and !#strings.isEmpty(item.tag)}" class="badge badge-sm badge-soft" th:text="${item.tag}"></span><span th:if="${item.status != null and !#strings.isEmpty(item.status)}" th:text="${item.status}"></span></div>
+                  <h3 class="about-project-title" th:text="${item.title}"></h3>
+                  <p class="about-project-description" th:text="${item.description}"></p>
+                </div>
+              </article>
+            </th:block>
+          </div>
+        </section>
+
         <section th:if="${block.type == 'members' and pluginFinder.available('PluginMembers')}" class="about-section"
                  th:with="memberGroups = ${memberFinder.listApprovedMembers()}">
           <div class="section-header-bar">
@@ -211,6 +236,58 @@
         <div class="page-content prose" th:utext="${singlePage.content.content}"></div>
       </section>
     </th:block>
+
+    <!-- 配置兼容：旧排序中没有服务入口或项目展示时，只要数据存在就追加渲染。 -->
+    <section class="about-section about-services-section"
+             th:if="${theme.config.about?.service_items != null and !#lists.isEmpty(theme.config.about.service_items) and (theme.config.about?.about_blocks == null or #lists.isEmpty(theme.config.about.about_blocks) or !#lists.contains(theme.config.about.about_blocks.![type], 'services'))}">
+      <div class="section-header-bar"><h2 class="section-title-bar">服务入口</h2></div>
+      <div class="about-service-list">
+        <th:block th:each="item, stat : ${theme.config.about.service_items}">
+          <a th:if="${item.url != null and !#strings.isEmpty(item.url)}" class="about-service-item" th:href="@{${item.url}}">
+            <span class="about-service-index" th:text="${#numbers.formatInteger(stat.count, 2)}"></span>
+            <span class="about-service-content"><strong th:text="${item.title}"></strong><small th:if="${item.description != null and !#strings.isEmpty(item.description)}" th:text="${item.description}"></small></span>
+            <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="badge badge-sm badge-soft about-service-badge" th:text="${item.badge}"></span><span class="about-service-arrow" aria-hidden="true">→</span>
+          </a>
+          <div th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="about-service-item about-service-item--static">
+            <span class="about-service-index" th:text="${#numbers.formatInteger(stat.count, 2)}"></span>
+            <span class="about-service-content"><strong th:text="${item.title}"></strong><small th:if="${item.description != null and !#strings.isEmpty(item.description)}" th:text="${item.description}"></small></span>
+            <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="badge badge-sm badge-soft about-service-badge" th:text="${item.badge}"></span>
+          </div>
+        </th:block>
+      </div>
+    </section>
+    <section class="about-section about-projects-section"
+             th:if="${theme.config.about?.project_items != null and !#lists.isEmpty(theme.config.about.project_items) and (theme.config.about?.about_blocks == null or #lists.isEmpty(theme.config.about.about_blocks) or !#lists.contains(theme.config.about.about_blocks.![type], 'projects'))}">
+      <div class="section-header-bar"><h2 class="section-title-bar">项目展示</h2></div>
+      <div class="about-project-list">
+        <th:block th:each="item : ${theme.config.about.project_items}">
+          <a th:if="${item.url != null and !#strings.isEmpty(item.url)}" class="about-project-item" th:href="@{${item.url}}"><img th:if="${item.cover != null and !#strings.isEmpty(item.cover)}" class="about-project-cover" th:src="${item.cover}" th:alt="${item.title}" loading="lazy" width="640" height="280" /><div class="about-project-body"><div class="about-project-meta"><span th:if="${item.tag != null and !#strings.isEmpty(item.tag)}" class="badge badge-sm badge-soft" th:text="${item.tag}"></span><span th:if="${item.status != null and !#strings.isEmpty(item.status)}" th:text="${item.status}"></span></div><h3 class="about-project-title" th:text="${item.title}"></h3><p class="about-project-description" th:text="${item.description}"></p></div></a>
+          <article th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="about-project-item"><img th:if="${item.cover != null and !#strings.isEmpty(item.cover)}" class="about-project-cover" th:src="${item.cover}" th:alt="${item.title}" loading="lazy" width="640" height="280" /><div class="about-project-body"><div class="about-project-meta"><span th:if="${item.tag != null and !#strings.isEmpty(item.tag)}" class="badge badge-sm badge-soft" th:text="${item.tag}"></span><span th:if="${item.status != null and !#strings.isEmpty(item.status)}" th:text="${item.status}"></span></div><h3 class="about-project-title" th:text="${item.title}"></h3><p class="about-project-description" th:text="${item.description}"></p></div></article>
+        </th:block>
+      </div>
+    </section>
+
+    <!-- 配置兼容：旧版本已保存的区块排序不会自动包含新加入的“发展历程”，有数据时追加展示。 -->
+    <section class="about-section about-timeline-section"
+             th:if="${theme.config.about?.timeline_items != null and !#lists.isEmpty(theme.config.about.timeline_items) and (theme.config.about?.about_blocks == null or #lists.isEmpty(theme.config.about.about_blocks) or !#lists.contains(theme.config.about.about_blocks.![type], 'timeline'))}">
+      <div class="section-header-bar"><h2 class="section-title-bar">发展历程</h2></div>
+      <ol class="about-timeline">
+        <li class="about-timeline-item" th:each="item : ${theme.config.about.timeline_items}">
+          <time class="about-timeline-period" th:text="${item.period}"></time>
+          <div class="about-timeline-content">
+            <a th:if="${item.url != null and !#strings.isEmpty(item.url)}"
+               class="about-timeline-title"
+               th:href="@{${item.url}}"
+               th:text="${item.title}"></a>
+            <strong th:unless="${item.url != null and !#strings.isEmpty(item.url)}"
+                    class="about-timeline-title"
+                    th:text="${item.title}"></strong>
+            <p th:if="${item.description != null and !#strings.isEmpty(item.description)}"
+               th:text="${item.description}"></p>
+          </div>
+        </li>
+      </ol>
+    </section>
 
     <section th:if="${haloCommentEnabled and (theme.config.pages?.page_comment_enabled != null ? theme.config.pages.page_comment_enabled : theme.config.content?.page_comment_enabled) != false}" class="page-comments">
       <halo:comment group="content.halo.run" kind="SinglePage" th:attr="name=${singlePage?.metadata.name}" />
