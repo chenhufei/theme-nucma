@@ -7,7 +7,30 @@ import { initDiagnostics } from './modules/diagnostics.js';
 (function() {
   'use strict';
 
-  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducedMotionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let prefersReduced = reducedMotionMedia.matches;
+  const scrollSubscribers = new Set();
+  let scrollFrame = null;
+
+  reducedMotionMedia.addEventListener('change', (event) => {
+    prefersReduced = event.matches;
+  });
+
+  function requestScrollUpdate() {
+    if (scrollFrame !== null) return;
+    scrollFrame = window.requestAnimationFrame(() => {
+      scrollFrame = null;
+      scrollSubscribers.forEach((subscriber) => subscriber());
+    });
+  }
+
+  function subscribeScroll(subscriber) {
+    scrollSubscribers.add(subscriber);
+    if (scrollSubscribers.size === 1) {
+      window.addEventListener('scroll', requestScrollUpdate, { passive: true });
+    }
+    subscriber();
+  }
 
   function setElementOpen(element, open) {
     if (!element) return;
@@ -166,7 +189,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
   }
 
   // ===== 主题切换 =====
-  var themeTransitionTimer = null;
+  let themeTransitionTimer = null;
   function initThemeToggle() {
     var toggle = document.getElementById('themeToggle');
     if (!toggle) return;
@@ -204,30 +227,119 @@ import { initDiagnostics } from './modules/diagnostics.js';
 
   // ===== 返回顶部 =====
   function initBackToTop() {
-    var wrap = document.getElementById('backToTop');
+    const wrap = document.getElementById('backToTop');
     if (!wrap) return;
 
-    window.addEventListener('scroll', function() {
+    subscribeScroll(function() {
       wrap.classList.toggle('visible', window.scrollY > 300);
-    }, { passive: true });
+    });
 
-    wrap.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    const scrollToTop = function() {
+      window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
+    };
+    wrap.addEventListener('click', scrollToTop);
     wrap.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollToTop();
       }
     });
+  }
 
+  // ===== 文章移动端操作 =====
+  function initArticleActions() {
+    var actions = document.getElementById('articleMobileActions');
+    if (!actions || !document.body.classList.contains('page-article')) return;
+
+    var status = document.getElementById('articleActionStatus');
+    var title = (document.querySelector('.post-main[data-article-title]')?.dataset.articleTitle
+      || document.querySelector('.post-title')?.textContent || document.title || '文章').trim();
+    var url = window.location.href;
+    var statusTimer = null;
+
+    function announce(message) {
+      if (!status) return;
+      status.textContent = message;
+      window.clearTimeout(statusTimer);
+      statusTimer = window.setTimeout(function() { status.textContent = ''; }, 2400);
+    }
+
+    function copyLink() {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(url);
+      }
+      return new Promise(function(resolve, reject) {
+        var input = document.createElement('textarea');
+        input.value = url;
+        input.setAttribute('readonly', '');
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        document.body.appendChild(input);
+        input.select();
+        try {
+          if (!document.execCommand('copy')) throw new Error('copy failed');
+          resolve();
+        } catch (error) {
+          reject(error);
+        } finally {
+          input.remove();
+        }
+      });
+    }
+
+    var copyButton = actions.querySelector('[data-article-copy]');
+    if (copyButton) {
+      copyButton.addEventListener('click', function() {
+        copyLink().then(function() { announce('文章链接已复制'); })
+          .catch(function() { announce('复制失败，请手动复制地址'); });
+      });
+    }
+
+    var shareButton = actions.querySelector('[data-article-share]');
+    if (shareButton) {
+      shareButton.addEventListener('click', function() {
+        if (navigator.share) {
+          navigator.share({ title: title, url: url }).then(function() {
+            announce('分享面板已打开');
+          }).catch(function(error) {
+            if (error && error.name !== 'AbortError') announce('分享失败，请稍后重试');
+          });
+          return;
+        }
+        copyLink().then(function() { announce('当前浏览器不支持系统分享，链接已复制'); })
+          .catch(function() { announce('分享失败，请手动复制地址'); });
+      });
+    }
+
+    var topButton = actions.querySelector('[data-article-top]');
+    if (topButton) {
+      topButton.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
+      });
+    }
+  }
+
+  // 编辑器或插件输出的图片可能缺少 alt，使用上下文补齐可访问名称。
+  function initImageAccessibility() {
+    var articleTitle = (document.querySelector('.post-title')?.textContent || '').trim();
+    var images = document.querySelectorAll('img:not([alt])');
+    images.forEach(function(image, index) {
+      var linkLabel = image.closest('a')?.getAttribute('aria-label')
+        || image.closest('a')?.getAttribute('title') || '';
+      var figureCaption = image.closest('figure')?.querySelector('figcaption')?.textContent?.trim() || '';
+      var context = figureCaption || linkLabel || (image.closest('.post-content.prose') ? articleTitle : '') || '页面图片';
+      image.setAttribute('alt', images.length > 1 && !figureCaption && !linkLabel
+        ? context + ' - 图片 ' + (index + 1) : context);
+    });
   }
 
   // ===== Header 滚动阴影 =====
   function initHeaderScroll() {
-    var header = document.querySelector('.site-header');
+    const header = document.querySelector('.site-header');
     if (!header) return;
-    window.addEventListener('scroll', function() {
+    subscribeScroll(function() {
       header.classList.toggle('is-scrolled', window.scrollY > 10);
-    }, { passive: true });
+    });
   }
 
 
@@ -235,28 +347,30 @@ import { initDiagnostics } from './modules/diagnostics.js';
 
   // ===== 导航栏自定义链接上下滚动轮播 =====
   function initHeaderLinksCarousel() {
-    var wraps = document.querySelectorAll('.header-links-wrap.is-carousel');
+    const wraps = document.querySelectorAll('.header-links-wrap.is-carousel');
     if (!wraps.length) return;
     wraps.forEach(function(wrap) {
-      var track = wrap.querySelector('.header-links-track');
+      const track = wrap.querySelector('.header-links-track');
       if (!track) return;
-      var slides = track.querySelectorAll('.header-links-slide');
+      const slides = track.querySelectorAll('.header-links-slide');
       if (slides.length <= 1) return;
 
-      var interval = parseInt(wrap.dataset.interval || '3500', 10) || 3500;
-      var current = 0;
-      var slideH = 44; // 与 CSS 保持一致
+      const interval = parseInt(wrap.dataset.interval || '3500', 10) || 3500;
+      let current = 0;
+      const slideH = 44; // 与 CSS 保持一致
+      let timer = null;
+      let hover = false;
 
       // 循环用：在最后复制一张第一张，滚动后无缝回滚
       if (track._carouselInited) return;
       track._carouselInited = true;
       if (slides[0]) {
-        var clone = slides[0].cloneNode(true);
+        const clone = slides[0].cloneNode(true);
         track.appendChild(clone);
       }
 
       function goTo(i) {
-        var duration = prefersReduced ? 0 : 550;
+        const duration = prefersReduced ? 0 : 550;
         track.style.transition = duration
           ? 'transform 550ms cubic-bezier(0.16, 1, 0.3, 1)'
           : 'none';
@@ -280,14 +394,28 @@ import { initDiagnostics } from './modules/diagnostics.js';
         }
       }
 
-      // 悬停时暂停
-      var hover = false;
+      function stop() {
+        if (!timer) return;
+        window.clearInterval(timer);
+        timer = null;
+      }
+
+      function start() {
+        stop();
+        if (prefersReduced || document.hidden) return;
+        timer = window.setInterval(function() {
+          if (!hover) next();
+        }, Math.max(1500, interval));
+      }
+
       wrap.addEventListener('mouseenter', function() { hover = true; });
       wrap.addEventListener('mouseleave', function() { hover = false; });
-
-      setInterval(function() {
-        if (!hover) next();
-      }, Math.max(1500, interval));
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) stop();
+        else start();
+      });
+      reducedMotionMedia.addEventListener('change', start);
+      start();
     });
   }
 
@@ -323,6 +451,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
         }
         image.onload = function() { finish(true); };
         image.onerror = function() { finish(false); };
+        image.decoding = 'async';
         image.src = url;
         if (image.complete) finish(image.naturalWidth > 0);
         setTimeout(function() { finish(false); }, 6000);
@@ -368,6 +497,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
       });
 
       incoming.classList.remove('is-active', 'is-entering');
+      incoming.style.backgroundImage = 'url("' + String(incoming.getAttribute('data-bg-url') || '').replace(/"/g, '\\"') + '")';
       // Commit the transparent state before fading in; the previous image stays underneath.
       void incoming.offsetWidth;
       incoming.classList.add('is-entering');
@@ -376,7 +506,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
         incoming.classList.remove('is-entering');
         incoming.classList.add('is-active');
         transitionCleanup = null;
-      }, 950);
+      }, prefersReduced ? 0 : 760);
 
       current = i;
       updateIndicators(current);
@@ -404,6 +534,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
 
     function start() {
       stop();
+      if (prefersReduced || document.hidden) return;
       timer = setInterval(next, interval);
     }
     function stop() {
@@ -447,16 +578,22 @@ import { initDiagnostics } from './modules/diagnostics.js';
     banner.addEventListener('mouseleave', start);
 
     updateIndicators(0);
-    slides.forEach(function(_, idx) { loadSlide(idx); });
-    Promise.all(loadPromises).then(function() {
+    loadSlide(0).then(function() {
       updateIndicators(current);
       start();
+      slides.forEach(function(_, idx) {
+        if (idx !== 0) loadSlide(idx);
+      });
     });
     try {
       document.addEventListener('visibilitychange', function() {
         if (document.hidden) stop(); else start();
       });
     } catch (_) {}
+    reducedMotionMedia.addEventListener('change', function() {
+      if (prefersReduced) stop();
+      else start();
+    });
   }
 
   // ===== 滚动显现动画 =====
@@ -711,12 +848,12 @@ import { initDiagnostics } from './modules/diagnostics.js';
       frame = window.requestAnimationFrame(update);
     }
 
-    window.addEventListener('scroll', requestUpdate, { passive: true });
+    subscribeScroll(update);
     window.addEventListener('resize', requestUpdate);
     if (typeof ResizeObserver !== 'undefined') {
       new ResizeObserver(requestUpdate).observe(content);
     }
-    update();
+    requestUpdate();
   }
 
   // ===== 文章目录：桌面侧栏与移动抽屉共享同一份标题数据 =====
@@ -845,9 +982,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
     }
 
     var tocLinks = Array.from(document.querySelectorAll('.toc a[data-toc-index]'));
-    var currentFrame = null;
     function updateCurrent() {
-      currentFrame = null;
       var currentIndex = 0;
       headings.forEach(function(heading, index) {
         if (heading.getBoundingClientRect().top <= 110) currentIndex = index;
@@ -859,12 +994,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
         else link.removeAttribute('aria-current');
       });
     }
-    function requestCurrentUpdate() {
-      if (currentFrame !== null) return;
-      currentFrame = window.requestAnimationFrame(updateCurrent);
-    }
-    window.addEventListener('scroll', requestCurrentUpdate, { passive: true });
-    updateCurrent();
+    subscribeScroll(updateCurrent);
   }
 
   // ===== 文章图片查看器 =====
@@ -1086,24 +1216,6 @@ import { initDiagnostics } from './modules/diagnostics.js';
     });
   }
 
-  function initDaisyUIAdapters() {
-    document.querySelectorAll('.pagination').forEach(function(element) {
-      element.classList.add('join');
-    });
-    document.querySelectorAll('.empty-state').forEach(function(element) {
-      element.classList.add('alert', 'alert-soft', 'alert-vertical');
-    });
-    document.querySelectorAll('.page-btn').forEach(function(element) {
-      element.classList.add('btn', 'btn-outline', 'btn-sm', 'join-item');
-    });
-    document.querySelectorAll('.page-info').forEach(function(element) {
-      element.classList.add('badge', 'badge-ghost');
-    });
-    document.querySelectorAll('.about-service-badge, .link-filter-count, .member-filter-count, .photo-filter-count, .moment-tag-count').forEach(function(element) {
-      element.classList.add('badge', 'badge-sm', 'badge-soft');
-    });
-  }
-
   // ===== 初始化 =====
   function initTheme() {
     if (document.documentElement.dataset.nucmaInitialized === 'true') return;
@@ -1112,6 +1224,8 @@ import { initDiagnostics } from './modules/diagnostics.js';
     initDiagnostics();
     initThemeToggle();
     initBackToTop();
+    initArticleActions();
+    initImageAccessibility();
     initHeaderScroll();
     initMobileMenu();
     initLoginMenu();
@@ -1125,7 +1239,6 @@ import { initDiagnostics } from './modules/diagnostics.js';
     initArticleImageViewer();
     initHistoryBackLinks();
     initWidgetOpeners();
-    initDaisyUIAdapters();
     initBannerAnimation();
     initHeaderLinksCarousel();
     initHeroBgCarousel();

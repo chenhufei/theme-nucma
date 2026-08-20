@@ -35,10 +35,9 @@
         <section class="about-section">
           <div class="section-header-bar"><h2 class="section-title-bar">常见问题</h2></div>
           <div class="faq-list">
-            <details class="collapse faq-item" th:each="item : ${theme.config.about?.faq_list}">
+            <details class="collapse collapse-arrow faq-item" th:each="item : ${theme.config.about?.faq_list}">
               <summary class="collapse-title faq-question">
                 <span th:text="${item.question}"></span>
-                <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
               </summary>
               <div class="collapse-content faq-answer"><p th:text="${item.answer}"></p></div>
             </details>
@@ -92,7 +91,7 @@
                  th:with="recentPosts = ${postFinder.list({page: 1, size: 6})}">
           <div class="section-header-bar">
             <h2 class="section-title-bar" th:text="${block.title ?: '最新文章'}"></h2>
-            <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="more-link">更多</a>
+            <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="btn btn-ghost btn-sm more-link">更多</a>
           </div>
           <div class="about-latest-list" th:if="${recentPosts != null and recentPosts.items != null}">
             <a class="news-item" th:each="recent : ${recentPosts.items}" th:href="@{${recent.status?.permalink}}">
@@ -147,7 +146,7 @@
                   <strong th:text="${item.title}"></strong>
                   <small th:if="${item.description != null and !#strings.isEmpty(item.description)}" th:text="${item.description}"></small>
                 </span>
-                <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="about-service-badge" th:text="${item.badge}"></span>
+                <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="badge badge-sm badge-soft about-service-badge" th:text="${item.badge}"></span>
                 <span class="about-service-arrow" aria-hidden="true">→</span>
               </a>
               <div th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="about-service-item about-service-item--static">
@@ -156,7 +155,7 @@
                   <strong th:text="${item.title}"></strong>
                   <small th:if="${item.description != null and !#strings.isEmpty(item.description)}" th:text="${item.description}"></small>
                 </span>
-                <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="about-service-badge" th:text="${item.badge}"></span>
+                <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="badge badge-sm badge-soft about-service-badge" th:text="${item.badge}"></span>
               </div>
             </th:block>
           </div>
@@ -166,7 +165,7 @@
                  th:with="memberGroups = ${memberFinder.listApprovedMembers()}">
           <div class="section-header-bar">
             <h2 class="section-title-bar" th:text="${block.title ?: '成员展示'}"></h2>
-            <a th:href="@{/members}" class="more-link">更多</a>
+            <a th:href="@{/members}" class="btn btn-ghost btn-sm more-link">更多</a>
           </div>
           <div class="about-member-groups" th:if="${memberGroups != null and memberGroups.items != null}">
             <div class="about-member-group" th:each="group : ${memberGroups.items}">
@@ -180,7 +179,7 @@
                  th:with="randomLinks = ${linkFinder.random(8)}">
           <div class="section-header-bar">
             <h2 class="section-title-bar" th:text="${block.title ?: '友情链接'}"></h2>
-            <a th:href="@{/links}" class="more-link">更多</a>
+            <a th:href="@{/links}" class="btn btn-ghost btn-sm more-link">更多</a>
           </div>
           <div class="link-grid" th:if="${randomLinks != null}">
             <a class="card card-border link-card" th:each="link : ${randomLinks}" th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer">
@@ -196,10 +195,9 @@
         <section th:if="${block.type == 'faq'}" class="about-section">
           <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '常见问题'}"></h2></div>
           <div class="faq-list">
-            <details class="collapse faq-item" th:each="item : ${theme.config.about?.faq_list}">
+            <details class="collapse collapse-arrow faq-item" th:each="item : ${theme.config.about?.faq_list}">
               <summary class="collapse-title faq-question">
                 <span th:text="${item.question}"></span>
-                <svg class="faq-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
               </summary>
               <div class="collapse-content faq-answer"><p th:text="${item.answer}"></p></div>
             </details>

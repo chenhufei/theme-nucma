@@ -32,7 +32,7 @@
              class="banner-bg-slide"
              th:classappend="${bgStat.index == 0} ? 'is-active' : ''"
              th:data-bg-url="${bg.url != null and !#strings.isEmpty(bg.url)} ? ${bg.url} : null"
-             th:style="${bg.url != null and !#strings.isEmpty(bg.url)} ? 'background-image: url(' + ${bg.url} + ')' : ''"></div>
+             th:style="${bgStat.index == 0 and bg.url != null and !#strings.isEmpty(bg.url)} ? 'background-image: url(' + ${bg.url} + ')' : ''"></div>
       </div>
       <!-- 条形指示线 -->
       <div class="banner-bg-indicators" role="tablist" aria-label="背景图轮播指示">
@@ -87,7 +87,7 @@
     <div class="section-container" th:if="${posts != null and posts.items != null and !posts.items.isEmpty()}">
       <div class="section-header-bar">
         <h2 class="section-title-bar">信息公告</h2>
-        <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="more-link">更多</a>
+        <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="btn btn-ghost btn-sm more-link">更多</a>
       </div>
       <div class="news-list">
         <a th:each="post, iter : ${posts.items}" th:if="${iter.index < newsLimit}"
@@ -111,7 +111,7 @@
           <div class="category-col">
             <div class="section-header-bar category-col-header">
               <h2 class="section-title-bar" th:text="${col.block_title ?: (catInfo != null ? catInfo.spec?.displayName : '分类文章')}"></h2>
-              <a th:if="${catInfo != null}" th:href="@{${catInfo.status?.permalink}}" class="more-link">更多</a>
+              <a th:if="${catInfo != null}" th:href="@{${catInfo.status?.permalink}}" class="btn btn-ghost btn-sm more-link">更多</a>
             </div>
             <div class="news-list" th:if="${catPostList != null and catPostList.items != null and !catPostList.items.isEmpty()}">
               <a th:each="post : ${catPostList.items}"
@@ -120,7 +120,7 @@
                 <span class="news-title" th:text="${post.spec?.title}"></span>
               </a>
             </div>
-            <div class="empty-state category-col-empty" th:if="${catPostList == null or catPostList.items == null or catPostList.items.isEmpty()}">
+            <div class="alert alert-soft alert-vertical empty-state category-col-empty" th:if="${catPostList == null or catPostList.items == null or catPostList.items.isEmpty()}">
               暂无文章
             </div>
           </div>
@@ -134,7 +134,7 @@
     <div class="section-container">
       <div class="section-header-bar">
         <h2 class="section-title-bar">成员公示</h2>
-        <a th:href="@{/members}" class="more-link">更多</a>
+        <a th:href="@{/members}" class="btn btn-ghost btn-sm more-link">更多</a>
       </div>
       <th:block th:with="groupsResult = ${memberFinder.listApprovedMembers()}">
         <div class="member-grid" th:if="${groupsResult != null and groupsResult.items != null and !#lists.isEmpty(groupsResult.items)}"
@@ -174,7 +174,7 @@
     <div class="section-container">
       <div class="section-header-bar">
         <h2 class="section-title-bar">友情链接</h2>
-        <a th:href="@{/links}" class="more-link">更多</a>
+        <a th:href="@{/links}" class="btn btn-ghost btn-sm more-link">更多</a>
       </div>
       <th:block th:with="linkGroups = ${linkFinder?.groupBy()}">
         <div class="link-grid" th:if="${linkGroups != null and !#lists.isEmpty(linkGroups)}"
@@ -199,7 +199,7 @@
             </th:block>
           </th:block>
         </div>
-        <div th:if="${linkGroups == null or #lists.isEmpty(linkGroups)}" class="empty-state">
+        <div th:if="${linkGroups == null or #lists.isEmpty(linkGroups)}" class="alert alert-soft alert-vertical empty-state">
           <div class="empty-icon">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
@@ -217,15 +217,15 @@
   </div>
 
   <!-- 分页 -->
-  <nav class="pagination"
+  <nav class="join pagination"
        th:with="homeBlocks=${theme.config.home?.section_blocks},
                 newsBlocks=${homeBlocks != null ? homeBlocks.?[type == 'news'] : null},
                 newsBlock=${newsBlocks != null and !#lists.isEmpty(newsBlocks) ? newsBlocks[0] : null},
                 newsCategories=${newsBlock != null and newsBlock.category_blocks != null ? newsBlock.category_blocks : theme.config.home?.category_blocks}"
        th:if="${posts != null and (posts.hasPrevious() or posts.hasNext()) and (newsCategories == null or #lists.isEmpty(newsCategories))}">
-    <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="page-btn">上一页</a>
-    <span class="page-info" th:text="${posts.page} + ' / ' + ${posts.totalPages}"></span>
-    <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="page-btn">下一页</a>
+    <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn">上一页</a>
+    <span class="badge badge-outline join-item page-info" th:text="${posts.page} + ' / ' + ${posts.totalPages}"></span>
+    <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn">下一页</a>
   </nav>
 </th:block>
 </html>

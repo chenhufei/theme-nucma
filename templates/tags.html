@@ -11,7 +11,7 @@
        th:text="${tag.spec?.displayName}"></a>
   </div>
   
-  <div class="empty-state" th:unless="${tags != null and !tags.isEmpty()}">
+  <div class="alert alert-soft alert-vertical empty-state" th:unless="${tags != null and !tags.isEmpty()}">
     <p>暂无标签</p>
   </div>
 </th:block>

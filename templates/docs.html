@@ -17,13 +17,13 @@
     </a>
   </div>
 
-  <div class="empty-state" th:unless="${docs != null and docs.items != null and !#lists.isEmpty(docs.items)}">
+  <div class="alert alert-soft alert-vertical empty-state" th:unless="${docs != null and docs.items != null and !#lists.isEmpty(docs.items)}">
     <p>暂无文档</p>
   </div>
 
-  <nav class="pagination" th:if="${docs != null and (docs.hasPrevious() or docs.hasNext())}">
-    <a th:if="${docs.hasPrevious()}" th:href="@{${docs.prevUrl}}" class="page-btn">上一页</a>
-    <a th:if="${docs.hasNext()}" th:href="@{${docs.nextUrl}}" class="page-btn">下一页</a>
+  <nav class="join pagination" th:if="${docs != null and (docs.hasPrevious() or docs.hasNext())}">
+    <a th:if="${docs.hasPrevious()}" th:href="@{${docs.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn">上一页</a>
+    <a th:if="${docs.hasNext()}" th:href="@{${docs.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn">下一页</a>
   </nav>
 </th:block>
 </html>

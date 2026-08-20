@@ -59,7 +59,7 @@
          th:with="allLinkGroups = ${linkFinder?.groupBy()}">
       <a th:href="@{/links}"
          class="btn btn-sm btn-soft link-filter-item"
-         th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active' : ''"
+         th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active btn-active' : ''"
          th:aria-current="${group == null or #strings.isEmpty(group) ? 'page' : null}">
         全部
       </a>
@@ -67,7 +67,7 @@
          th:if="${allLinkGroups != null}"
          th:href="@{/links(group=${g.metadata.name})}"
          class="btn btn-sm btn-soft link-filter-item"
-         th:classappend="${group != null and group == g.metadata.name} ? 'is-active' : ''"
+         th:classappend="${group != null and group == g.metadata.name} ? 'is-active btn-active' : ''"
          th:aria-current="${group != null and group == g.metadata.name ? 'page' : null}">
         <span th:text="${g.spec?.displayName}">分组</span>
       </a>
@@ -142,7 +142,7 @@
       </a>
     </div>
 
-    <div id="linkSearchEmpty" class="empty-state link-search-empty" role="status" hidden>
+    <div id="linkSearchEmpty" class="alert alert-soft alert-vertical empty-state link-search-empty" role="status" hidden>
       <div class="empty-icon">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="11" cy="11" r="7" stroke-width="1.5"></circle>
@@ -155,7 +155,7 @@
 
     <!-- 空状态 -->
     <div th:if="${(group == null or #strings.isEmpty(group)) and (groups == null or #lists.isEmpty(groups))}"
-         class="empty-state">
+         class="alert alert-soft alert-vertical empty-state">
       <div class="empty-icon">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
@@ -166,14 +166,14 @@
     </div>
 
     <div th:if="${group != null and !#strings.isEmpty(group) and (links == null or #lists.isEmpty(links))}"
-         class="empty-state">
+         class="alert alert-soft alert-vertical empty-state">
       <div class="empty-icon">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
         </svg>
       </div>
       <p class="empty-text">该分组暂无链接</p>
-      <a th:href="@{/links}" class="more-link">查看全部</a>
+      <a th:href="@{/links}" class="btn btn-ghost btn-sm more-link">查看全部</a>
     </div>
 
     <!-- 评论区 -->
@@ -183,7 +183,7 @@
 
   </th:block>
 
-  <div th:unless="${pluginFinder.available('PluginLinks')}" class="empty-state"
+  <div th:unless="${pluginFinder.available('PluginLinks')}" class="alert alert-soft alert-vertical empty-state"
        role="status" data-plugin-status="missing" data-plugin="PluginLinks">
     <div class="empty-icon">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">

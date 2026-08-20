@@ -12,15 +12,15 @@
   <div class="photo-filters" th:if="${groups != null and !#lists.isEmpty(groups)}">
     <a th:href="@{${photoUrl.list()}}"
        class="btn btn-sm btn-soft photo-filter-item"
-       th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active' : ''">
+       th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active btn-active' : ''">
       全部
     </a>
     <a th:each="g : ${groups}"
        th:href="@{${photoUrl.list(g.metadata.name)}}"
        class="btn btn-sm btn-soft photo-filter-item"
-       th:classappend="${group != null and group == g.metadata.name} ? 'is-active' : ''">
+       th:classappend="${group != null and group == g.metadata.name} ? 'is-active btn-active' : ''">
       <span th:text="${g.spec?.displayName}">分组</span>
-      <span class="photo-filter-count" th:if="${g.status?.photoCount != null}"
+      <span class="badge badge-sm badge-soft photo-filter-count" th:if="${g.status?.photoCount != null}"
             th:text="${g.status?.photoCount}">0</span>
     </a>
   </div>
@@ -45,7 +45,7 @@
   </div>
 
   <!-- 空状态 -->
-  <div class="empty-state" th:if="${photos == null or photos.items == null or #lists.isEmpty(photos.items)}">
+  <div class="alert alert-soft alert-vertical empty-state" th:if="${photos == null or photos.items == null or #lists.isEmpty(photos.items)}">
     <div class="empty-icon">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -57,11 +57,11 @@
   </div>
 
   <!-- 分页 -->
-  <nav class="pagination"
+  <nav class="join pagination"
        th:if="${photos != null and (photos.hasPrevious() or photos.hasNext())}">
-    <a th:if="${photos.hasPrevious()}" th:href="@{${photos.prevUrl}}" class="page-btn">上一页</a>
-    <span class="page-info" th:text="${photos.page} + ' / ' + ${photos.totalPages}"></span>
-    <a th:if="${photos.hasNext()}" th:href="@{${photos.nextUrl}}" class="page-btn">下一页</a>
+    <a th:if="${photos.hasPrevious()}" th:href="@{${photos.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn">上一页</a>
+    <span class="badge badge-outline join-item page-info" th:text="${photos.page} + ' / ' + ${photos.totalPages}"></span>
+    <a th:if="${photos.hasNext()}" th:href="@{${photos.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn">下一页</a>
   </nav>
 
 </th:block>

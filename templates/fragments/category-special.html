@@ -75,15 +75,15 @@
       </div>
     </div>
 
-    <div th:if="${posts == null or posts.items == null or posts.items.isEmpty()}" class="empty-state">
+    <div th:if="${posts == null or posts.items == null or posts.items.isEmpty()}" class="alert alert-soft alert-vertical empty-state">
       <p class="empty-text">该专题暂时没有文章</p>
       <p class="empty-sub">内容发布后将在这里集中展示</p>
     </div>
 
-    <nav class="pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext())}">
-      <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="page-btn">上一页</a>
-      <span class="page-info" th:text="${posts.page} + ' / ' + ${posts.totalPages}"></span>
-      <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="page-btn">下一页</a>
+    <nav class="join pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext())}">
+      <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn">上一页</a>
+      <span class="badge badge-outline join-item page-info" th:text="${posts.page} + ' / ' + ${posts.totalPages}"></span>
+      <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn">下一页</a>
     </nav>
   </section>
 </th:block>

@@ -4,7 +4,7 @@
 <th:block th:fragment="content">
   <div class="post-layout">
     <!-- 左侧：文章内容 -->
-    <article class="post-main">
+    <article class="post-main" th:attr="data-article-title=${post?.spec?.title}">
       <!-- 文章头部 -->
       <header class="post-header">
         <div class="post-meta">
@@ -24,7 +24,8 @@
 
       <!-- 文章封面 -->
       <div class="post-cover" th:if="${theme.config.sidebar?.show_cover != false and post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}">
-        <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}" width="16" height="9" />
+        <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}"
+             width="1600" height="900" loading="eager" fetchpriority="high" decoding="async" />
       </div>
 
       <!-- 文章内容 -->

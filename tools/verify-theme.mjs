@@ -275,6 +275,16 @@ for (const marker of [
 ]) {
   if (!mainCss.includes(marker)) fail(`DaisyUI 设计系统缺少 ${marker}`);
 }
+for (const marker of [
+  '[data-theme="dark"][data-visual-style="youth"]',
+  '[data-theme="dark"][data-visual-style="editorial"]',
+  '--shadow-low:',
+  '--shadow-mid:',
+  '--shadow-high:',
+  '.banner-bg-indicator:focus-visible',
+]) {
+  if (!mainCss.includes(marker)) fail(`视觉层级声明缺少 ${marker}`);
+}
 for (const [path, markers] of [
   ['templates/layout.html', ['btn btn-ghost btn-circle', 'menu menu-sm login-dropdown']],
   ['templates/members.html', ['input input-bordered page-search', 'btn btn-primary apply-btn', 'card card-border member-card']],
@@ -326,9 +336,6 @@ if (/\b(?:border|background)\s*:/.test(mobileCustomLinkRule)) {
 }
 
 const mainScript = read('src/js/main.js');
-if (!mainScript.includes('initDaisyUIAdapters')) {
-  fail('通用页面状态缺少 DaisyUI 适配逻辑');
-}
 for (const marker of [
   "document.readyState === 'loading'",
   "dataset.nucmaInitialized === 'true'",
@@ -347,8 +354,15 @@ for (const marker of [
 if (!read('templates/index.html').includes('category-cols--count-')) {
   fail('首页分类栏缺少确定性列数标记');
 }
-for (const marker of ["classList.add('join')", "'join-item'"]) {
-  if (!mainScript.includes(marker)) fail(`分页缺少 DaisyUI 语义：${marker}`);
+for (const [path, markers] of [
+  ['templates/index.html', ['class="join pagination"', 'join-item page-btn', 'join-item page-info']],
+  ['templates/archives.html', ['class="join pagination"', 'join-item page-btn']],
+  ['templates/category-grid.html', ['class="join pagination"', 'join-item page-btn']],
+]) {
+  const template = read(path);
+  for (const marker of markers) {
+    if (!template.includes(marker)) fail(`${path} 分页缺少 DaisyUI 语义：${marker}`);
+  }
 }
 if (!mainScript.includes('initWidgetOpeners')) {
   fail('插件 Widget 入口缺少统一事件适配');
@@ -388,6 +402,8 @@ const postTemplate = read('templates/post.html');
 for (const [feature, source, markers] of [
   ['文章阅读进度', layout + mainScript, ['id="readingProgress"', 'initReadingProgress']],
   ['移动端文章目录', layout + mainScript, ['id="mobileTocDrawer"', 'id="mobileToc"', 'initArticleToc']],
+  ['文章移动操作', layout + mainScript, ['id="articleMobileActions"', 'data-article-share', 'data-article-copy', 'initArticleActions']],
+  ['文章图片可访问性', layout + mainScript, ['initImageAccessibility', "setAttribute('alt'"]],
   ['文章图片查看器', layout + mainScript, ['id="articleImageViewer"', 'initArticleImageViewer']],
   ['友链拼音搜索', linksTemplate + linksScript, ['data-link-search', 'id="linkSearchEmpty"', 'initLinkSearch', "import('pinyin-pro')", "pattern: 'first'", 'assets/js/links.js']],
   ['成员本地搜索', membersTemplate + membersScript, ['id="memberSearchInput"', "import('pinyin-pro')", 'initMemberSearch', 'assets/js/members.js']],
@@ -440,7 +456,7 @@ for (const alpineDirective of ['x-data=', 'x-show=', 'x-if=', 'x-init=', 'x-coll
 for (const marker of ['id="mobileMenuToggle"', 'data-mobile-menu-close', 'aria-hidden="true"']) {
   if (!layout.includes(marker)) fail(`移动菜单原生交互缺少标记：${marker}`);
 }
-for (const marker of ['<details class="collapse faq-item"', '<summary class="collapse-title faq-question"']) {
+for (const marker of ['<details class="collapse collapse-arrow faq-item"', '<summary class="collapse-title faq-question"']) {
   if (!read('templates/page_about.html').includes(marker)) fail(`关于页 FAQ 缺少原生折叠标记：${marker}`);
 }
 for (const [pageName, template] of [['成员页', membersTemplate], ['友链页', linksTemplate]]) {
@@ -464,6 +480,16 @@ if (footerForm?.formSchema?.some((node) => node.name === 'footer_menu')) {
 }
 if (!layout.includes('theme.config.footer?.footer_menus')) {
   fail('footer menu rendering must include multi-column settings');
+}
+for (const marker of [
+  '.footer-inner {',
+  'flex-wrap: nowrap;',
+  'flex: 1 1 0;',
+  '.footer-col > * { width: 100%; text-align: center; }',
+  '.footer-nav { display: flex; flex-direction: column; gap: 0.45rem; align-items: center; }',
+  '.footer-custom-items { display: flex; flex-wrap: wrap; gap: var(--space-md); justify-content: center; }',
+]) {
+  if (!mainCss.includes(marker)) fail(`页脚分栏对齐契约缺少：${marker}`);
 }
 const customLinks = navigationForm?.formSchema?.find((node) => node.name === 'custom_links');
 if (!customLinks?.itemLabels?.some((label) => label.type === 'image' && label.label === '$value.image')) {
@@ -500,6 +526,9 @@ if (built) {
     const builtCss = read('templates/assets/css/main.css');
     if (!builtCss.includes('@font-face') || !builtCss.includes('KuaiKanShiJieTi.woff2')) {
       fail('构建样式缺少快看世界体声明');
+    }
+    for (const marker of ['--shadow-low:', '--shadow-mid:', '--shadow-high:']) {
+      if (!builtCss.includes(marker)) fail(`构建样式缺少层级变量：${marker}`);
     }
     if (/url\(["']?\/css\/KuaiKanShiJieTi\.woff2/.test(builtCss)) {
       fail('快看世界体被错误构建为站点根路径');

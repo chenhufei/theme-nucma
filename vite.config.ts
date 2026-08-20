@@ -51,24 +51,10 @@ export default defineConfig({
           legalComments: 'none',
           logLevel: 'info',
         })
-        if (existsSync(membersSrc)) {
+        const pageEntries = [membersSrc, linksSrc].filter(existsSync)
+        if (pageEntries.length) {
           await esbuild({
-            entryPoints: [membersSrc],
-            bundle: true,
-            outdir: outDir,
-            format: 'esm',
-            splitting: true,
-            entryNames: '[name]',
-            chunkNames: 'chunks/[name]-[hash]',
-            target: 'es2018',
-            minify: true,
-            legalComments: 'none',
-            logLevel: 'info',
-          })
-        }
-        if (existsSync(linksSrc)) {
-          await esbuild({
-            entryPoints: [linksSrc],
+            entryPoints: pageEntries,
             bundle: true,
             outdir: outDir,
             format: 'esm',

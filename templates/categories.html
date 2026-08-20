@@ -13,7 +13,7 @@
     </a>
   </div>
   
-  <div class="empty-state" th:unless="${categories != null and !categories.isEmpty()}">
+  <div class="alert alert-soft alert-vertical empty-state" th:unless="${categories != null and !categories.isEmpty()}">
     <p>暂无分类</p>
   </div>
 </th:block>

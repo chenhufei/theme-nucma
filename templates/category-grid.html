@@ -24,13 +24,13 @@
     .category-card:hover .news-cover-box img { transform: scale(1.05); }
   </style>
 
-  <div class="empty-state" th:unless="${posts != null and posts.items != null and !posts.items.isEmpty()}">
+  <div class="alert alert-soft alert-vertical empty-state" th:unless="${posts != null and posts.items != null and !posts.items.isEmpty()}">
     <p>该分类下暂无文章</p>
   </div>
 
-  <nav class="pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext())}">
-    <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="page-btn">上一页</a>
-    <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="page-btn">下一页</a>
+  <nav class="join pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext())}">
+    <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn">上一页</a>
+    <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn">下一页</a>
   </nav>
 </th:block>
 </html>

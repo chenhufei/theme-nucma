@@ -50,7 +50,7 @@
                   allMemberGroups = ${memberFinder?.listApprovedMembers()?.items}">
       <a th:href="@{/members}"
          class="btn btn-sm btn-soft member-filter-item"
-         th:classappend="${currentGroup == null or #strings.isEmpty(currentGroup)} ? 'is-active' : ''"
+         th:classappend="${currentGroup == null or #strings.isEmpty(currentGroup)} ? 'is-active btn-active' : ''"
          th:aria-current="${currentGroup == null or #strings.isEmpty(currentGroup) ? 'page' : null}">
         全部
       </a>
@@ -58,7 +58,7 @@
                 th:if="${allMemberGroups != null and g.members != null and !#lists.isEmpty(g.members)}">
         <a th:href="@{/members(group=${g.metadata.name})}"
            class="btn btn-sm btn-soft member-filter-item"
-           th:classappend="${currentGroup != null and currentGroup == g.metadata.name} ? 'is-active' : ''"
+           th:classappend="${currentGroup != null and currentGroup == g.metadata.name} ? 'is-active btn-active' : ''"
            th:aria-current="${currentGroup != null and currentGroup == g.metadata.name ? 'page' : null}">
           <span th:text="${g.spec.displayName}">分组</span>
         </a>
@@ -208,25 +208,25 @@
       </div>
 
       <!-- 空状态：该分组无成员 -->
-      <div th:if="${groups == null or #lists.isEmpty(groups)}" class="empty-state">
+      <div th:if="${groups == null or #lists.isEmpty(groups)}" class="alert alert-soft alert-vertical empty-state">
         <div class="empty-icon">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
         </div>
         <p class="empty-text">该分组暂无成员</p>
-        <a th:href="@{/members}" class="more-link">查看全部</a>
+        <a th:href="@{/members}" class="btn btn-ghost btn-sm more-link">查看全部</a>
       </div>
     </th:block>
 
-    <div id="memberSearchEmpty" class="empty-state" role="status" hidden>
+    <div id="memberSearchEmpty" class="alert alert-soft alert-vertical empty-state" role="status" hidden>
       <p class="empty-text">未找到匹配成员</p>
       <p class="empty-sub">请尝试其他名称、学校或 QQ 号</p>
     </div>
 
     <!-- 空状态：无任何分组 -->
     <div th:if="${(currentGroup == null or #strings.isEmpty(currentGroup)) and (groups == null or #lists.isEmpty(groups))}"
-         class="empty-state">
+         class="alert alert-soft alert-vertical empty-state">
       <div class="empty-icon">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -243,7 +243,7 @@
 
   </th:block>
 
-  <div th:unless="${pluginFinder.available('PluginMembers')}" class="empty-state"
+  <div th:unless="${pluginFinder.available('PluginMembers')}" class="alert alert-soft alert-vertical empty-state"
        role="status" data-plugin-status="missing" data-plugin="PluginMembers">
     <div class="empty-icon">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
