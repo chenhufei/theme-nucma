@@ -64,7 +64,7 @@ for (const obsoletePackageManagerFile of ['pnpm-lock.yaml', 'pnpm-workspace.yaml
     fail(`项目统一使用 npm，不应保留第二套包管理器文件：${obsoletePackageManagerFile}`);
   }
 }
-for (const marker of ['actions/setup-node@v4', 'npm ci', 'npm run package']) {
+for (const marker of ['actions/setup-node@v6', 'npm ci', 'npm run package']) {
   if (!ciWorkflow.includes(marker)) fail(`主题 CI 缺少 ${marker}`);
 }
 
@@ -261,6 +261,7 @@ for (const marker of [
   '/links/apply/submit',
   'data-refresh-link-captcha',
   'data-widget-fallback="#link-application"',
+  'data-link-application-enabled',
 ]) {
   if (!allTemplates.includes(marker)) fail(`官方友链申请契约缺少标记：${marker}`);
 }
@@ -272,6 +273,11 @@ for (const marker of ['value: projects', 'name: project_items', 'about-project-l
 }
 if (allTemplates.includes('allLinkGroups = ${linkFinder?.groupBy()}')) {
   fail('友链筛选应使用 simpleGroups，不能重复加载完整链接分组');
+}
+if (allTemplates.includes("#vars.get('simpleGroups')") ||
+    allTemplates.includes("#vars.get('linkApplicationEnabled')") ||
+    allTemplates.includes("#vars.get('csrfToken')")) {
+  fail('官方 PluginLinks 变量必须使用直接变量引用，不能调用 WebEngineContext.get');
 }
 if (!mainCss.includes('@media (prefers-reduced-motion: reduce)')) {
   fail('动效缺少 prefers-reduced-motion 兜底');
