@@ -115,18 +115,7 @@
     apply('', null);
   }
 
-  function initOfficialApplication() {
-    var form = document.getElementById('link-application-form');
-    var captcha = document.getElementById('link-application-captcha');
-    var refresh = document.querySelector('[data-refresh-link-captcha]');
-    if (!form || !captcha || !refresh) return;
-    refresh.addEventListener('click', function() {
-      captcha.src = '/links/apply/captcha?refresh=' + Date.now();
-    });
-  }
-
   document.addEventListener('DOMContentLoaded', function() {
     initLinkSearch();
-    initOfficialApplication();
   });
 })();

@@ -168,10 +168,13 @@ import { initDiagnostics } from './modules/diagnostics.js';
     fetch('/apis/api.console.halo.run/v1alpha1/users/-', { credentials: 'include' })
       .then(function(response) { return response.ok ? response.json() : null; })
       .then(function(data) {
-        if (!data || !data.user) return;
+        var user = data && data.user;
+        // Halo returns the disabled `anonymousUser` record for guests from this
+        // endpoint. Treat that response as logged out; otherwise guests would
+        // incorrectly receive the avatar, account menu and logout action.
+        if (!user || user.metadata?.name === 'anonymousUser' || user.spec?.disabled === true) return;
         loggedIn = true;
         wrap.classList.add('is-authenticated');
-        var user = data.user;
         var name = user.spec?.displayName || user.metadata?.name || '用户';
         var avatarUrl = user.spec?.avatar;
         entry.title = name;
@@ -1213,15 +1216,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
         var widget = widgetName && window[widgetName];
         if (widget && typeof widget.open === 'function') {
           widget.open();
-          return;
         }
-        var fallbackSelector = button.getAttribute('data-widget-fallback');
-        var fallback = fallbackSelector && document.querySelector(fallbackSelector);
-        if (!fallback) return;
-        fallback.classList.remove('link-application--hidden');
-        fallback.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        var firstField = fallback.querySelector('input, textarea, select, button');
-        if (firstField) window.setTimeout(function() { firstField.focus(); }, 250);
       });
     });
   }

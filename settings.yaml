@@ -469,7 +469,7 @@ spec:
           label: 关于页区块排序
           addLabel: 添加区块
           emptyText: 暂无关于页区块
-          help: 拖动调整关于页各个区块的显示顺序
+          help: 拖动调整关于页各个区块的显示顺序；列表中未添加的区块不会显示，每种区块建议只添加一次
           value:
             - type: content
               title: 站点介绍
@@ -477,6 +477,12 @@ spec:
               title: 数据统计
             - type: latest
               title: 最新内容
+            - type: categories
+              title: 内容分类
+            - type: members
+              title: 成员展示
+            - type: links
+              title: 友情链接
             - type: timeline
               title: 发展历程
             - type: services
@@ -706,8 +712,8 @@ spec:
               answer: 本站原创内容版权归原作者所有，转载请联系站长获取授权，并注明来源链接。合作媒体请注明出处。
             - question: 如何联系站长？
               answer: 可通过页脚底部的联系方式（如微信公众号、QQ群）与站长取得联系，也可在成员公示页找到相关成员信息。
-            - question: 成员公示的优先级如何设置？
-              answer: 管理员可在 Halo 后台「成员管理」中编辑成员信息，通过设置「优先级」数值来控制排序。数值越大，排序越靠前。
+            - question: 成员公示的显示顺序如何决定？
+              answer: 成员公示按照后台成员管理中的分组和列表排序显示，主题不会再单独设置成员优先级。
             - question: 友链显示顺序是怎么决定的？
               answer: 友链的显示顺序由后台设置的「优先级」数值决定，数值越大排序越靠前。同时可在主题设置中勾选固定显示的友链，优先排在最前面。
             - question: 提交友链后多久能审核通过？

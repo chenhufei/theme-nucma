@@ -141,8 +141,15 @@ const aboutForm = groups.find((form) => form.group === 'about');
 const aboutBlocks = aboutForm?.formSchema?.find((node) => node.name === 'about_blocks');
 const aboutBlockTypes = new Set(aboutBlocks?.children
   ?.find((node) => node.name === 'type')?.options?.map((option) => option.value) || []);
-for (const type of ['timeline', 'services']) {
+for (const type of ['content', 'stats', 'latest', 'categories', 'timeline', 'services', 'projects', 'members', 'links', 'faq']) {
   if (!aboutBlockTypes.has(type)) fail(`关于页区块类型缺少 ${type}`);
+}
+const aboutDefaultTypes = (aboutBlocks?.value || []).map((item) => item.type);
+if (new Set(aboutDefaultTypes).size !== aboutDefaultTypes.length) {
+  fail('关于页默认区块排序不得包含重复类型');
+}
+for (const type of aboutDefaultTypes) {
+  if (!aboutBlockTypes.has(type)) fail(`关于页默认区块类型未出现在选项中：${type}`);
 }
 for (const name of ['timeline_items', 'service_items']) {
   const field = aboutForm?.formSchema?.find((node) => node.name === name);
@@ -256,17 +263,21 @@ if (/transition:\s*all\b/i.test(mainCss)) {
 
 for (const marker of [
   'linkApplicationEnabled',
-  'csrfToken',
-  '/links/apply/captcha',
-  '/links/apply/submit',
-  'data-refresh-link-captcha',
-  'data-widget-fallback="#link-application"',
   'data-link-application-enabled',
 ]) {
   if (!allTemplates.includes(marker)) fail(`官方友链申请契约缺少标记：${marker}`);
 }
-for (const marker of ['about-timeline-section', 'timeline_items', "#lists.contains(theme.config.about.about_blocks.![type], 'timeline')", 'about-services-section', 'about-projects-section', 'project_items']) {
-  if (!allTemplates.includes(marker)) fail(`关于页发展历程兼容回退缺少标记：${marker}`);
+for (const marker of ['about-timeline-section', 'timeline_items', 'about-services-section', 'about-projects-section', 'project_items', 'about_blocks']) {
+  if (!allTemplates.includes(marker)) fail(`关于页区块逻辑缺少标记：${marker}`);
+}
+for (const marker of [
+  "#lists.contains(theme.config.about.about_blocks.![type], 'timeline')",
+  "#lists.contains(theme.config.about.about_blocks.![type], 'services')",
+  "#lists.contains(theme.config.about.about_blocks.![type], 'projects')",
+  '旧排序中没有服务入口',
+  '旧版本已保存的区块排序',
+]) {
+  if (allTemplates.includes(marker)) fail(`关于页不应保留自动追加区块逻辑：${marker}`);
 }
 for (const marker of ['value: projects', 'name: project_items', 'about-project-list', 'about-project-cover']) {
   if (!read('settings.yaml').includes(marker) && !allTemplates.includes(marker)) fail(`关于页项目展示契约缺少：${marker}`);
@@ -362,14 +373,18 @@ if (/\b(?:border|background)\s*:/.test(mobileCustomLinkRule)) {
 }
 
 const mainScript = read('src/js/main.js');
-if (!mainCss.includes('.link-application--hidden')) fail('官方友链申请回退缺少隐藏样式');
-if (!mainScript.includes('fallbackSelector') || !mainScript.includes('scrollIntoView')) {
-  fail('增强 Widget 不可用时缺少官方申请表单回退逻辑');
+if (allTemplates.includes('/links/apply/') || allTemplates.includes('link-application-form')) {
+  fail('主题不得保留旧的友链申请页面表单，申请必须由增强 Widget 调用官方 API');
+}
+if (mainScript.includes('fallbackSelector') || mainScript.includes('link-application--hidden')) {
+  fail('主题不得保留旧的友链申请回退脚本');
 }
 for (const marker of [
   "document.readyState === 'loading'",
   "dataset.nucmaInitialized === 'true'",
   "wrap.classList.add('is-authenticated')",
+  "user.metadata?.name === 'anonymousUser'",
+  "user.spec?.disabled === true",
 ]) {
   if (!mainScript.includes(marker)) fail(`主题初始化或登录状态契约缺少：${marker}`);
 }
