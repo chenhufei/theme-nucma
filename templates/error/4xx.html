@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title='请求错误 - ' + ${site.title}, content=~{::content}, description='请求无法完成', canonical='', image=${site.logo}, pageType='website', robots='noindex, nofollow')}">
+      th:replace="~{layout :: html(title=|请求错误 - ${site.title}|, content=~{::content}, description='请求无法完成', canonical='', image=${site.logo}, pageType='website', robots='noindex, nofollow')}">
 
 <th:block th:fragment="content">
   <div class="page-container text-center" style="max-width:var(--site-reading-width)">

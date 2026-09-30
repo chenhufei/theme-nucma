@@ -20,7 +20,7 @@
       <div class="post-content prose" th:utext="${post.content?.content}"></div>
 
       <div class="post-tags" th:if="${post.tags != null and !post.tags.isEmpty()}">
-        <a th:each="tag : ${post.tags}" th:href="@{${tag.status?.permalink}}" class="tag" th:text="'#' + ${tag.spec?.displayName}"></a>
+        <a th:each="tag : ${post.tags}" th:href="@{${tag.status?.permalink}}" class="tag" th:text="|#${tag.spec?.displayName}|"></a>
       </div>
 
       <div class="post-nav" th:with="cursor = ${postFinder.cursor(post.metadata.name)}">

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title=(${singlePage.spec.title} ?: '关于') + ' - ' + ${site.title}, content=~{::content}, description=${singlePage?.spec?.excerpt?.raw}, canonical=${singlePage?.status?.permalink}, image=${singlePage?.spec?.cover}, pageType='website', robots=null)}">
+      th:replace="~{layout :: html(title=|${singlePage.spec.title ?: '关于'} - ${site.title}|, content=~{::content}, description=${singlePage?.spec?.excerpt?.raw}, canonical=${singlePage?.status?.permalink}, image=${singlePage?.spec?.cover}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
   <article class="page about-page">
     <header class="page-header">
@@ -37,8 +37,8 @@
           </div>
         </section>
 
+        <th:block th:with="recentPosts = ${postFinder.list({page: 1, size: 6})}">
         <section class="about-section"
-                 th:with="recentPosts = ${postFinder.list({page: 1, size: 6})}"
                  th:if="${recentPosts != null and recentPosts.items != null and !#lists.isEmpty(recentPosts.items)}">
           <div class="section-header-bar"><h2 class="section-title-bar">最新文章</h2><a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="btn btn-ghost btn-sm more-link">更多</a></div>
           <div class="about-latest-list">
@@ -48,9 +48,10 @@
             </a>
           </div>
         </section>
+        </th:block>
 
+        <th:block th:with="allCategories = ${categoryFinder.listAll()}">
         <section class="about-section"
-                 th:with="allCategories = ${categoryFinder.listAll()}"
                  th:if="${allCategories != null and !#lists.isEmpty(allCategories)}">
           <div class="section-header-bar"><h2 class="section-title-bar">内容分类</h2></div>
           <div class="about-category-list">
@@ -60,6 +61,7 @@
             </a>
           </div>
         </section>
+        </th:block>
 
         <section class="about-section about-timeline-section"
                  th:if="${theme.config.about?.timeline_items != null and !#lists.isEmpty(theme.config.about.timeline_items)}">
@@ -113,17 +115,18 @@
           </div>
         </section>
 
+        <th:block th:with="memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null}">
         <section class="about-section"
-                 th:with="memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null}"
                  th:if="${memberGroups != null and memberGroups.items != null and !#lists.isEmpty(memberGroups.items)}">
           <div class="section-header-bar"><h2 class="section-title-bar">成员展示</h2><a th:href="@{/members}" class="btn btn-ghost btn-sm more-link">更多</a></div>
           <div class="about-member-groups" th:if="${memberGroups != null and memberGroups.items != null and !#lists.isEmpty(memberGroups.items)}">
             <div class="about-member-group" th:each="group : ${memberGroups.items}"><span th:text="${group.group?.spec?.displayName ?: '未分组'}"></span><strong th:text="${group.members != null ? #lists.size(group.members) : 0}"></strong></div>
           </div>
         </section>
+        </th:block>
 
+        <th:block th:with="randomLinks = ${pluginFinder.available('PluginLinks') ? linkFinder.random(8) : null}">
         <section class="about-section"
-                 th:with="randomLinks = ${pluginFinder.available('PluginLinks') ? linkFinder.random(8) : null}"
                  th:if="${randomLinks != null and !#lists.isEmpty(randomLinks)}">
           <div class="section-header-bar"><h2 class="section-title-bar">友情链接</h2><a th:href="@{/links}" class="btn btn-ghost btn-sm more-link">更多</a></div>
           <div class="link-grid" th:if="${randomLinks != null and !#lists.isEmpty(randomLinks)}">
@@ -133,6 +136,7 @@
             </a>
           </div>
         </section>
+        </th:block>
 
         <section class="about-section"
                  th:if="${theme.config.about?.faq_list != null and !#lists.isEmpty(theme.config.about.faq_list)}">
@@ -190,8 +194,9 @@
           </div>
         </section>
 
-        <section th:if="${block.type == 'latest' and recentPosts != null and recentPosts.items != null and !#lists.isEmpty(recentPosts.items)}" class="about-section"
-                 th:with="recentPosts = ${postFinder.list({page: 1, size: 6})}">
+        <th:block th:if="${block.type == 'latest'}"
+                  th:with="recentPosts = ${postFinder.list({page: 1, size: 6})}">
+        <section th:if="${recentPosts != null and recentPosts.items != null and !#lists.isEmpty(recentPosts.items)}" class="about-section">
           <div class="section-header-bar">
             <h2 class="section-title-bar" th:text="${block.title ?: '最新文章'}"></h2>
             <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="btn btn-ghost btn-sm more-link">更多</a>
@@ -203,9 +208,11 @@
             </a>
           </div>
         </section>
+        </th:block>
 
-        <section th:if="${block.type == 'categories' and allCategories != null and !#lists.isEmpty(allCategories)}" class="about-section"
-                 th:with="allCategories = ${categoryFinder.listAll()}">
+        <th:block th:if="${block.type == 'categories'}"
+                  th:with="allCategories = ${categoryFinder.listAll()}">
+        <section th:if="${allCategories != null and !#lists.isEmpty(allCategories)}" class="about-section">
           <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '内容分类'}"></h2></div>
           <div class="about-category-list">
             <a th:each="item : ${allCategories}" th:href="@{${item.status?.permalink}}" class="about-category-item">
@@ -214,6 +221,7 @@
             </a>
           </div>
         </section>
+        </th:block>
 
         <section th:if="${block.type == 'timeline' and theme.config.about?.timeline_items != null and !#lists.isEmpty(theme.config.about.timeline_items)}"
                  class="about-section about-timeline-section">
@@ -289,8 +297,9 @@
           </div>
         </section>
 
-        <section th:if="${block.type == 'members' and memberGroups != null and memberGroups.items != null and !#lists.isEmpty(memberGroups.items)}" class="about-section"
-                 th:with="memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null}">
+        <th:block th:if="${block.type == 'members'}"
+                  th:with="memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null}">
+        <section th:if="${memberGroups != null and memberGroups.items != null and !#lists.isEmpty(memberGroups.items)}" class="about-section">
           <div class="section-header-bar">
             <h2 class="section-title-bar" th:text="${block.title ?: '成员展示'}"></h2>
             <a th:href="@{/members}" class="btn btn-ghost btn-sm more-link">更多</a>
@@ -302,9 +311,11 @@
             </div>
           </div>
         </section>
+        </th:block>
 
-        <section th:if="${block.type == 'links' and randomLinks != null and !#lists.isEmpty(randomLinks)}" class="about-section"
-                 th:with="randomLinks = ${pluginFinder.available('PluginLinks') ? linkFinder.random(8) : null}">
+        <th:block th:if="${block.type == 'links'}"
+                  th:with="randomLinks = ${pluginFinder.available('PluginLinks') ? linkFinder.random(8) : null}">
+        <section th:if="${randomLinks != null and !#lists.isEmpty(randomLinks)}" class="about-section">
           <div class="section-header-bar">
             <h2 class="section-title-bar" th:text="${block.title ?: '友情链接'}"></h2>
             <a th:href="@{/links}" class="btn btn-ghost btn-sm more-link">更多</a>
@@ -319,6 +330,7 @@
             </a>
           </div>
         </section>
+        </th:block>
 
         <section th:if="${block.type == 'faq' and theme.config.about?.faq_list != null and !#lists.isEmpty(theme.config.about.faq_list)}" class="about-section">
           <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: '常见问题'}"></h2></div>

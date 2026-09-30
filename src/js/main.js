@@ -749,41 +749,6 @@ import { initDiagnostics } from './modules/diagnostics.js';
     });
   }
 
-  // ===== 按 priority 预排序（只对非 pinned 部分排序，避免打乱 pinned 顺序） =====
-  function initPrioritySort() {
-    var selectors = ['.member-grid', '.link-grid'];
-    selectors.forEach(function(sel) {
-      document.querySelectorAll(sel).forEach(function(grid) {
-        var pinnedRaw = grid.dataset.pinnedIds || '';
-        var pinnedIds = pinnedRaw
-          .split(',')
-          .map(function(s) { return (s || '').trim(); })
-          .filter(function(s) { return s.length > 0; });
-        var cards = Array.from(grid.children);
-
-        // 只按 priority 排序，后续 initGridLimit 会把 pinned 提到最前并固定顺序
-        cards.sort(function(a, b) {
-          var pa = parseInt(a.getAttribute('data-priority') || '0', 10);
-          var pb = parseInt(b.getAttribute('data-priority') || '0', 10);
-          // 首先 pinned 在前，其他在后
-          var idA = (a.getAttribute('data-id') || '').toString().trim();
-          var idB = (b.getAttribute('data-id') || '').toString().trim();
-          var pinnedA = pinnedIds.indexOf(idA) >= 0 ? 0 : 1;
-          var pinnedB = pinnedIds.indexOf(idB) >= 0 ? 0 : 1;
-          if (pinnedA !== pinnedB) return pinnedA - pinnedB;
-          // 同为 pinned 时按 pinned 顺序
-          if (pinnedA === 0) {
-            var ra = pinnedIds.indexOf(idA);
-            var rb = pinnedIds.indexOf(idB);
-            if (ra !== rb) return ra - rb;
-          }
-          return pb - pa;
-        });
-        cards.forEach(function(card) { grid.appendChild(card); });
-      });
-    });
-  }
-
   // ===== 可配置的首页/文章侧栏排序 =====
   function applyConfiguredOrder(container, itemSelector, order) {
     if (!container || !order.length) return;
@@ -1234,8 +1199,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
     initHeaderScroll();
     initMobileMenu();
     initLoginMenu();
-    // 先 priority 排序（保留 pinned 顺序），再按 pinned 精确置顶并做数量限制
-    initPrioritySort();
+    // 先按后台固定项顺序排序，再应用显示数量限制。
     initGridLimit();
     initSectionOrdering();
     initPostTypography();

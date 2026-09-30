@@ -260,6 +260,9 @@ const mainCss = read('src/css/main.css');
 if (/transition:\s*all\b/i.test(mainCss)) {
   fail('样式不得使用 transition: all');
 }
+if (allTemplates.includes('data-priority') || read('src/js/main.js').includes('initPrioritySort')) {
+  fail('主题不得继续依赖已移除的成员 priority 排序字段');
+}
 
 for (const marker of [
   'linkApplicationEnabled',

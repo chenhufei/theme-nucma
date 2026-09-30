@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title=(${title} ?: '图库') + ' - ' + ${site.title}, content=~{::content}, description='浏览本站图库内容', canonical='/photos', image=${site.logo}, pageType='website', robots=null)}">
+      th:replace="~{layout :: html(title=|${title ?: '图库'} - ${site.title}|, content=~{::content}, description='浏览本站图库内容', canonical='/photos', image=${site.logo}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
 
   <div class="page-header">
@@ -60,7 +60,7 @@
   <nav class="join pagination"
        th:if="${photos != null and (photos.hasPrevious() or photos.hasNext())}">
     <a th:if="${photos.hasPrevious()}" th:href="@{${photos.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn">上一页</a>
-    <span class="badge badge-outline join-item page-info" th:text="${photos.page} + ' / ' + ${photos.totalPages}"></span>
+    <span class="badge badge-outline join-item page-info" th:text="|${photos.page} / ${photos.totalPages}|"></span>
     <a th:if="${photos.hasNext()}" th:href="@{${photos.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn">下一页</a>
   </nav>
 

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title='瞬间 - ' + ${site.title}, content=~{::content}, description='浏览本站发布的瞬间动态', canonical='/moments', image=${site.logo}, pageType='website', robots=null)}">
+      th:replace="~{layout :: html(title=|瞬间 - ${site.title}|, content=~{::content}, description='浏览本站发布的瞬间动态', canonical='/moments', image=${site.logo}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
   <div class="page-header">
     <h1 class="page-title">瞬间</h1>
@@ -49,7 +49,7 @@
 
   <nav class="join pagination" th:if="${moments != null and (moments.hasPrevious() or moments.hasNext())}">
     <a th:if="${moments.hasPrevious()}" th:href="@{${moments.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn">上一页</a>
-    <span class="badge badge-outline join-item page-info" th:text="${moments.page} + ' / ' + ${moments.totalPages}"></span>
+    <span class="badge badge-outline join-item page-info" th:text="|${moments.page} / ${moments.totalPages}|"></span>
     <a th:if="${moments.hasNext()}" th:href="@{${moments.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn">下一页</a>
   </nav>
 </th:block>

@@ -15,15 +15,18 @@
                      bgInterval = ${heroConfig?.carousel_interval ?: 5000},
                      fullW = ${heroConfig?.full_width == true},
                      overlay = ${heroConfig?.bg_overlay != null and !#strings.isEmpty(heroConfig.bg_overlay) ? heroConfig.bg_overlay : 'medium'},
-                     heroH = ${heroConfig?.min_height}"
+                     heroH = ${heroConfig?.min_height},
+                     heroClass = ${(hasBg or carousel ? 'has-custom-bg' : '') + ' ' + (fullW ? 'full-width' : '') + ' overlay-' + overlay + (carousel ? ' has-bg-carousel' : '')},
+                     heroStyle = ${heroH != null ? 'min-height:' + heroH + 'px' : ''},
+                     heroInterval = ${carousel ? bgInterval : null}"
            th:if="${heroConfig == null or heroConfig.show_hero != false}"
-           th:classappend="${(hasBg or carousel) ? 'has-custom-bg' : ''} + ' ' + ${fullW ? 'full-width' : ''} + ' overlay-' + ${overlay} + ${carousel ? ' has-bg-carousel' : ''}"
-           th:style="${heroH != null} ? 'min-height:' + ${heroH} + 'px' : ''"
-           th:data-bg-interval="${carousel} ? ${bgInterval} : null">
+           th:classappend="${heroClass}"
+           th:style="${heroStyle}"
+           th:data-bg-interval="${heroInterval}">
     <!-- 单背景 -->
     <th:block th:if="${!carousel}">
       <div class="banner-bg"
-           th:style="${hasBg} ? 'background-image: url(' + ${singleBgUrl} + ')' : ''"></div>
+           th:style="${hasBg ? 'background-image: url(' + singleBgUrl + ')' : ''}"></div>
     </th:block>
     <!-- 多背景轮播 -->
     <th:block th:if="${carousel}">
@@ -31,8 +34,8 @@
         <div th:each="bg, bgStat : ${backgrounds}"
              class="banner-bg-slide"
              th:classappend="${bgStat.index == 0} ? 'is-active' : ''"
-             th:data-bg-url="${bg.url != null and !#strings.isEmpty(bg.url)} ? ${bg.url} : null"
-             th:style="${bgStat.index == 0 and bg.url != null and !#strings.isEmpty(bg.url)} ? 'background-image: url(' + ${bg.url} + ')' : ''"></div>
+             th:data-bg-url="${bg.url != null and !#strings.isEmpty(bg.url) ? bg.url : null}"
+             th:style="${bgStat.index == 0 and bg.url != null and !#strings.isEmpty(bg.url) ? 'background-image: url(' + bg.url + ')' : ''}"></div>
       </div>
       <!-- 条形指示线 -->
       <div class="banner-bg-indicators" role="tablist" aria-label="背景图轮播指示">
@@ -142,7 +145,7 @@
                       data-pinned-ids=${memberPinned == null or #lists.isEmpty(memberPinned) ? '' : #strings.listJoin(memberPinned, ',')}">
           <th:block th:each="group : ${groupsResult.items}">
             <th:block th:each="member : ${group.members}">
-              <div class="card card-border member-card" th:attr="data-id=${member.metadata?.name ?: ''},data-priority=${member.spec?.priority ?: 0}">
+              <div class="card card-border member-card" th:attr="data-id=${member.metadata?.name ?: ''}">
                 <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
                       class="member-card-background" aria-hidden="true"
                       th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
@@ -224,7 +227,7 @@
                 newsCategories=${newsBlock != null and newsBlock.category_blocks != null ? newsBlock.category_blocks : theme.config.home?.category_blocks}"
        th:if="${posts != null and (posts.hasPrevious() or posts.hasNext()) and (newsCategories == null or #lists.isEmpty(newsCategories))}">
     <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn">上一页</a>
-    <span class="badge badge-outline join-item page-info" th:text="${posts.page} + ' / ' + ${posts.totalPages}"></span>
+    <span class="badge badge-outline join-item page-info" th:text="|${posts.page} / ${posts.totalPages}|"></span>
     <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn">下一页</a>
   </nav>
 </th:block>

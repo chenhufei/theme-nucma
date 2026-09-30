@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title='成员公示 - ' + ${site.title}, content=~{::content}, description='成员信息与分组公示', canonical='/members', image=${site.logo}, pageType='website', robots=null)}">
+      th:replace="~{layout :: html(title=|成员公示 - ${site.title}|, content=~{::content}, description='成员信息与分组公示', canonical='/members', image=${site.logo}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
 
   <div class="page-header">
@@ -107,7 +107,7 @@
                 <!-- 桌面端聚焦时在浏览器本地生成 QQ 链接二维码 -->
                 <div class="member-qr-popup" data-member-qr-popup aria-hidden="true">
                   <canvas data-member-qr
-                          th:attr="data-qr-text=${member.spec.qqFriendLink},aria-label='添加 ' + ${member.spec.displayName} + ' 的 QQ 二维码'"
+                          th:attr="data-qr-text=${member.spec.qqFriendLink}" th:aria-label="|添加 ${member.spec.displayName} 的 QQ 二维码|"
                           width="240" height="240" role="img"></canvas>
                   <span class="member-qr-status" data-member-qr-status>生成中</span>
                 </div>
@@ -175,7 +175,7 @@
               <!-- 桌面端聚焦时在浏览器本地生成 QQ 链接二维码 -->
               <div class="member-qr-popup" data-member-qr-popup aria-hidden="true">
                 <canvas data-member-qr
-                        th:attr="data-qr-text=${member.spec.qqFriendLink},aria-label='添加 ' + ${member.spec.displayName} + ' 的 QQ 二维码'"
+                        th:attr="data-qr-text=${member.spec.qqFriendLink}" th:aria-label="|添加 ${member.spec.displayName} 的 QQ 二维码|"
                         width="240" height="240" role="img"></canvas>
                 <span class="member-qr-status" data-member-qr-status>生成中</span>
               </div>

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title=${category?.spec?.displayName} + ' - ' + ${site.title}, content=~{::content}, description=${category?.spec?.description}, canonical=${category?.status?.permalink}, image=${category?.spec?.cover}, pageType='website', robots=null)}">
+      th:replace="~{layout :: html(title=|${category?.spec?.displayName} - ${site.title}|, content=~{::content}, description=${category?.spec?.description}, canonical=${category?.status?.permalink}, image=${category?.spec?.cover}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
   <div class="page-header" style="text-align: left; padding: var(--space-2xl) 0; border-bottom: 2px solid var(--primary); margin-bottom: var(--space-2xl); position: relative;">
     <h1 class="page-title" th:text="${category?.spec?.displayName}" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; letter-spacing: 0.05em; color: var(--primary);"></h1>

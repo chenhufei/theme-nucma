@@ -82,7 +82,7 @@
 
     <nav class="join pagination" th:if="${posts != null and (posts.hasPrevious() or posts.hasNext())}">
       <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn">上一页</a>
-      <span class="badge badge-outline join-item page-info" th:text="${posts.page} + ' / ' + ${posts.totalPages}"></span>
+      <span class="badge badge-outline join-item page-info" th:text="|${posts.page} / ${posts.totalPages}|"></span>
       <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn">下一页</a>
     </nav>
   </section>

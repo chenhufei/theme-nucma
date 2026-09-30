@@ -16,26 +16,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" th:content="${theme.config.appearance?.primary_color ?: '#D13E43'}" />
-  <title th:text="${title} ?: ${site.title}"></title>
+  <title th:text="${title ?: site.title}"></title>
   <meta name="description" th:content="${seoDescription}" />
   <meta name="keywords" th:if="${site.seo?.keywords != null and !#strings.isEmpty(site.seo.keywords)}" th:content="${site.seo.keywords}" />
   <meta name="robots" th:content="${seoRobots}" />
   <link rel="canonical" th:if="${seoCanonical != null and !#strings.isEmpty(seoCanonical)}" th:href="${seoCanonical}" />
   <meta property="og:site_name" th:content="${site.title}" />
-  <meta property="og:title" th:content="${title} ?: ${site.title}" />
+  <meta property="og:title" th:content="${title ?: site.title}" />
   <meta property="og:description" th:content="${seoDescription}" />
   <meta property="og:type" th:content="${seoPageType}" />
   <meta property="og:url" th:if="${seoCanonical != null and !#strings.isEmpty(seoCanonical)}" th:content="${seoCanonical}" />
   <meta property="og:image" th:if="${seoImage != null and !#strings.isEmpty(seoImage)}" th:content="${seoImage}" />
   <meta name="twitter:card" th:content="${seoImage != null and !#strings.isEmpty(seoImage) ? 'summary_large_image' : 'summary'}" />
-  <meta name="twitter:title" th:content="${title} ?: ${site.title}" />
+  <meta name="twitter:title" th:content="${title ?: site.title}" />
   <meta name="twitter:description" th:content="${seoDescription}" />
   <meta name="twitter:image" th:if="${seoImage != null and !#strings.isEmpty(seoImage)}" th:content="${seoImage}" />
   <script type="application/ld+json" th:inline="javascript">
     {
       "@context": "https://schema.org",
       "@type": /*[[${seoPageType == 'article' ? 'Article' : 'WebPage'}]]*/ "WebPage",
-      "name": /*[[${title} ?: ${site.title}]]*/ "Page",
+      "name": /*[[${title ?: site.title}]]*/ "Page",
       "description": /*[[${seoDescription}]]*/ "",
       "url": /*[[${seoCanonical}]]*/ "",
       "image": /*[[${seoImage}]]*/ "",
@@ -135,8 +135,8 @@
           <!-- 自定义链接跟在菜单右侧，超过1个时自动上下滚动轮播 -->
           <th:block th:if="${headerLinks != null and !#lists.isEmpty(headerLinks)}">
             <th:block th:with="carousel = ${#lists.size(headerLinks) > 1}">
-              <div class="header-links-wrap" th:classappend="${carousel ? 'is-carousel' : ''}"
-                   th:data-interval="${carousel} ? ${headerLinkInterval} : null">
+                 <div class="header-links-wrap" th:classappend="${carousel ? 'is-carousel' : ''}"
+                   th:data-interval="${carousel ? headerLinkInterval : null}">
                 <div class="header-links-track" th:if="${carousel}">
                   <th:block th:each="link : ${headerLinks}">
                     <div class="header-links-slide">
@@ -522,7 +522,7 @@
           </span>
           <span th:if="${theme.config.footer?.police_number != null and !#strings.isEmpty(theme.config.footer.police_number)}">
             <a th:if="${theme.config.footer?.police_record_code != null and !#strings.isEmpty(theme.config.footer.police_record_code)}"
-               th:href="'https://beian.mps.gov.cn/#/query/webSearch?code=' + ${theme.config.footer.police_record_code}"
+               th:href="|https://beian.mps.gov.cn/#/query/webSearch?code=${theme.config.footer.police_record_code}|"
                target="_blank" rel="noopener noreferrer"
                th:text="${theme.config.footer.police_number}"></a>
             <a th:unless="${theme.config.footer?.police_record_code != null and !#strings.isEmpty(theme.config.footer.police_record_code)}"

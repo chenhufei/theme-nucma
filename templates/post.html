@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{layout :: html(title=${post?.spec?.title} + ' - ' + ${site.title}, content=~{::content}, description=${post?.spec?.excerpt?.raw}, canonical=${post?.status?.permalink}, image=${post?.spec?.cover}, pageType='article', robots=null)}">
+      th:replace="~{layout :: html(title=|${post?.spec?.title} - ${site.title}|, content=~{::content}, description=${post?.spec?.excerpt?.raw}, canonical=${post?.status?.permalink}, image=${post?.spec?.cover}, pageType='article', robots=null)}">
 <th:block th:fragment="content">
   <div class="post-layout">
     <!-- 左侧：文章内容 -->
@@ -34,7 +34,7 @@
       <!-- 标签 -->
       <div class="post-tags" th:if="${theme.config.sidebar?.show_tags != false and post.tags != null and !post.tags.isEmpty()}">
         <a th:each="tag : ${post.tags}" th:href="@{${tag.status?.permalink}}"
-           class="badge badge-outline badge-sm tag" th:text="'#' + ${tag.spec?.displayName}"></a>
+           class="badge badge-outline badge-sm tag" th:text="|#${tag.spec?.displayName}|"></a>
       </div>
 
       <!-- 上一篇/下一篇 -->
