@@ -1,0 +1,175 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 流动渐变 -->
+    <radialGradient id="flowingGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff6b9d" stop-opacity="1">
+        <animate attributeName="stop-color" values="#ff6b9d;#ff9966;#c77dff;#6b9dff;#6bffcc;#ff6b9d" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#c77dff" stop-opacity="1">
+        <animate attributeName="stop-color" values="#c77dff;#ff6b9d;#ff9966;#c77dff;#6b9dff;#c77dff" dur="8s" repeatCount="indefinite"/>
+      </stop>
+    </radialGradient>
+
+    <!-- 光晕效果 -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- 阴影 -->
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.15"/>
+    </filter>
+
+    <!-- 动画 -->
+    <style>
+      @keyframes ripple {
+        0% { r: 240; opacity: 0.8; filter: blur(1px); }
+        50% { r: 245; opacity: 0.6; filter: blur(2px); }
+        100% { r: 240; opacity: 0.8; filter: blur(1px); }
+      }
+      @keyframes letterPulse {
+        0% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(255,255,255,0)); }
+        50% { transform: scale(1.1); filter: drop-shadow(0 0 8px rgba(255,255,255,0.6)); }
+        100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(255,255,255,0)); }
+      }
+      @keyframes ringPulse {
+        0% { stroke-width: 3; opacity: 0.3; }
+        50% { stroke-width: 2; opacity: 0.2; }
+        100% { stroke-width: 3; opacity: 0.3; }
+      }
+      @keyframes centerPulse {
+        0% { r: 80; opacity: 0.15; }
+        50% { r: 82; opacity: 0.2; }
+        100% { r: 80; opacity: 0.15; }
+      }
+      @keyframes lineFade {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 0.4; }
+      }
+      @keyframes twinkle {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-3px); }
+      }
+      @keyframes floatReverse {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(3px); }
+      }
+      #bgCircle {
+        animation: ripple 4s ease-in-out infinite;
+      }
+      #bgCircle2 {
+        animation: ripple 4s ease-in-out infinite 2s;
+      }
+      #letterN {
+        animation: letterPulse 4s ease-in-out infinite;
+        transform-origin: 256px 260px;
+      }
+      #outerRing {
+        animation: ringPulse 4s ease-in-out infinite;
+      }
+      #centerCircle {
+        animation: centerPulse 4s ease-in-out infinite;
+      }
+      .decoration-line {
+        animation: lineFade 4s ease-in-out infinite;
+      }
+      .dot-top {
+        animation: twinkle 2s ease-in-out infinite, float 3s ease-in-out infinite;
+      }
+      .dot-right {
+        animation: twinkle 2.2s ease-in-out infinite, floatReverse 3.2s ease-in-out infinite;
+      }
+      .dot-bottom {
+        animation: twinkle 2.4s ease-in-out infinite, float 3.4s ease-in-out infinite;
+      }
+      .dot-left {
+        animation: twinkle 2.6s ease-in-out infinite, floatReverse 3.6s ease-in-out infinite;
+      }
+      .dot-diagonal {
+        animation: twinkle 2.8s ease-in-out infinite;
+      }
+      .floating-dot {
+        animation: twinkle 1.5s ease-in-out infinite, float 2.5s ease-in-out infinite;
+      }
+      .floating-dot-2 {
+        animation: twinkle 1.8s ease-in-out infinite 0.3s, floatReverse 2.8s ease-in-out infinite 0.3s;
+      }
+      .floating-dot-3 {
+        animation: twinkle 2s ease-in-out infinite 0.6s, float 3s ease-in-out infinite 0.6s;
+      }
+      .floating-dot-4 {
+        animation: twinkle 1.6s ease-in-out infinite 0.9s, floatReverse 2.6s ease-in-out infinite 0.9s;
+      }
+    </style>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="512" height="512" fill="#ffffff"/>
+
+  <!-- 主圆形背景 -->
+  <circle id="bgCircle" cx="256" cy="256" r="240" fill="url(#flowingGradient)" filter="url(#shadow)"/>
+  
+  <!-- 水波纹效果圆 -->
+  <circle id="bgCircle2" cx="256" cy="256" r="240" fill="none" stroke="url(#flowingGradient)" stroke-width="8" opacity="0.5"/>
+
+  <!-- 外圆环 -->
+  <circle id="outerRing" cx="256" cy="256" r="235" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="3"/>
+
+  <!-- 装饰圆环 1 -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" stroke-dasharray="5,5"/>
+
+  <!-- 装饰圆环 2 -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+
+  <!-- 中心几何形状 -->
+  <g filter="url(#glow)">
+    <!-- 中心圆 -->
+    <circle id="centerCircle" cx="256" cy="256" r="80" fill="rgba(255,255,255,0.15)"/>
+
+    <!-- 四个装饰点 -->
+    <circle class="dot-top" cx="256" cy="160" r="6" fill="rgba(255,255,255,0.8)"/>
+    <circle class="dot-right" cx="352" cy="256" r="6" fill="rgba(255,255,255,0.8)"/>
+    <circle class="dot-bottom" cx="256" cy="352" r="6" fill="rgba(255,255,255,0.8)"/>
+    <circle class="dot-left" cx="160" cy="256" r="6" fill="rgba(255,255,255,0.8)"/>
+
+    <!-- 对角装饰点 -->
+    <circle class="dot-diagonal" cx="310" cy="202" r="4" fill="rgba(255,255,255,0.6)"/>
+    <circle class="dot-diagonal" cx="310" cy="310" r="4" fill="rgba(255,255,255,0.6)"/>
+    <circle class="dot-diagonal" cx="202" cy="310" r="4" fill="rgba(255,255,255,0.6)"/>
+    <circle class="dot-diagonal" cx="202" cy="202" r="4" fill="rgba(255,255,255,0.6)"/>
+
+    <!-- 额外的灵动小白点 -->
+    <circle class="floating-dot" cx="280" cy="140" r="3" fill="rgba(255,255,255,0.7)"/>
+    <circle class="floating-dot-2" cx="380" cy="200" r="2.5" fill="rgba(255,255,255,0.6)"/>
+    <circle class="floating-dot-3" cx="340" cy="380" r="3" fill="rgba(255,255,255,0.7)"/>
+    <circle class="floating-dot-4" cx="140" cy="300" r="2.5" fill="rgba(255,255,255,0.6)"/>
+    <circle class="floating-dot" cx="120" cy="150" r="2" fill="rgba(255,255,255,0.5)"/>
+    <circle class="floating-dot-2" cx="390" cy="320" r="2.5" fill="rgba(255,255,255,0.6)"/>
+  </g>
+
+  <!-- 中心字母 N - 艺术字风格 -->
+  <g id="letterN">
+    <!-- 左竖 -->
+    <line x1="210" y1="200" x2="210" y2="320" stroke="white" stroke-width="16" stroke-linecap="round"/>
+    
+    <!-- 右竖 -->
+    <line x1="302" y1="200" x2="302" y2="320" stroke="white" stroke-width="16" stroke-linecap="round"/>
+    
+    <!-- 对角线 - 从左上到右下 -->
+    <line x1="210" y1="200" x2="302" y2="320" stroke="white" stroke-width="16" stroke-linecap="round"/>
+  </g>
+
+  <!-- 底部装饰线 -->
+  <line class="decoration-line" x1="180" y1="380" x2="332" y2="380" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- 顶部装饰线 -->
+  <line class="decoration-line" x1="180" y1="132" x2="332" y2="132" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-linecap="round"/>
+</svg>

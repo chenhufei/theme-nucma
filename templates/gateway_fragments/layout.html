@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.toLanguageTag()}" xmlns:th="https://www.thymeleaf.org"
+      th:fragment="layout (title, head, body)"
+      th:with="ap=${theme.config.auth_page},
+               authOn=${ap?.auth_polish != false},
+               layoutMode=${ap?.auth_layout ?: 'split'},
+               showStory=${ap?.auth_story_show != false and layoutMode == 'split'},
+               motion=${ap?.auth_motion ?: 'full'},
+               darkFollow=${ap?.auth_dark_follow != false},
+               showBack=${ap?.auth_show_back != false},
+               brandName=${#strings.isEmpty(ap?.auth_site_name) ? site.title : ap.auth_site_name},
+               brandNote=${#strings.isEmpty(ap?.auth_brand_note) ? 'NUCMA' : ap.auth_brand_note},
+               brandLogo=${!#strings.isEmpty(ap?.auth_logo) ? ap.auth_logo : site.logo},
+               storyQuote=${#strings.isEmpty(ap?.auth_story_quote) ? #messages.msg('auth.story.quote') : ap.auth_story_quote},
+               storyNote=${ap?.auth_story_note ?: ''},
+               storyContact=${ap?.auth_story_contact ?: 'support@nucma.cn'},
+               footText=${#strings.isEmpty(ap?.auth_foot_text) ? #messages.msg('auth.story.foot') : ap.auth_foot_text},
+               primaryColor=${#strings.isEmpty(ap?.auth_primary_color) ? (theme.config.appearance?.primary_color ?: '#dd3333') : ap.auth_primary_color},
+               authRadius=${ap?.auth_radius ?: 18},
+               defaultMode=${theme.config.appearance?.default_theme_mode ?: 'system'},
+               isExit=${#strings.contains(title, '退出')},
+               isSignup=${!isExit and (#strings.contains(title, '注册') or #strings.contains(title, '创建'))},
+               isLogin=${!isExit and !isSignup and #strings.contains(title, '登录')},
+               viewName=${isExit ? 'logout' : (isSignup ? 'signup' : (isLogin ? 'login' : 'password-reset'))},
+               viewTitle=${isExit ? (ap?.auth_title_logout ?: #messages.msg('auth.view.logout')) : (isSignup ? (ap?.auth_title_signup ?: #messages.msg('auth.view.signup')) : (isLogin ? (ap?.auth_title_login ?: #messages.msg('auth.view.login')) : (ap?.auth_title_reset ?: #messages.msg('auth.view.reset'))))},
+               docTitle=${authOn ? viewTitle + ' - ' + site.title : title},
+               leadText=${isSignup ? (ap?.auth_lead_signup ?: #messages.msg('auth.lead.signup')) : (isLogin ? (ap?.auth_lead_login ?: #messages.msg('auth.lead.login')) : (ap?.auth_lead_reset ?: #messages.msg('auth.lead.reset')))},
+               showSwitch=${ap?.auth_show_switch != false and (isLogin or isSignup)},
+               switchUrl=${isSignup ? '/login' : '/signup'},
+               switchText=${isSignup ? #messages.msg('auth.switch.hasAccount') : #messages.msg('auth.switch.noAccount')},
+               switchAction=${isSignup ? #messages.msg('auth.switch.toLogin') : #messages.msg('auth.switch.toSignup')}">
+<!--
+  认证页面布局（登录 / 注册 / 退出 / 密码重置 / 两步验证）
+  ---------------------------------------------------------------------------
+  覆盖 Halo 内置 gateway_fragments/layout.html，签名必须是 layout (title, head, body)。
+
+  ⚠️ 这里刻意做成与线上 nucma.cn 的登录页（auth-ui 插件设计
+     auth-template-cfinccog「联盟暖白 · 分栏」）**同构**：同一套类名
+     #auth-ui / .auth-shell / .auth-story / .auth-card / .auth-slot-*，
+     同一份 data-* 属性，因此 src/auth/auth.css 可以整段复用线上设计样式，
+     视觉一比一。改结构前先对齐插件那边的 DOM，否则样式会错位。
+
+  只做两件事：
+  1. 外形：左深红品牌面板 + 右暖白表单卡片，样式在 src/auth/auth.css
+     （构建到 /assets/auth/auth.css），仅在开启美化时加载。
+  2. 文案：全部走「主题设置 → 登录注册页」。
+
+  ⚠️ 不接管任何表单：body 里仍是 Halo 自己的 .halo-form 表单片段，
+    提交地址、字段名、登录逻辑都由 Halo 决定，所以这里改样式改不坏登录。
+  ⚠️ basicStaticResources 必须保留：里面有 /js/main.js、RSA 加密登录、
+    验证码按钮、密码显示切换等交互脚本；删掉表单就只剩一副空壳。
+  ⚠️ 若站点装了 auth-ui 一类的认证页插件并启用了它的设计，插件的页面
+    优先级高于主题，本模板不会生效 —— 要在插件里停用设计才会走主题。
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="renderer" content="webkit" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title th:text="${docTitle}">登录账号</title>
+  <link th:unless="${#strings.isEmpty(site.favicon)}" rel="icon" th:href="${site.favicon}" />
+
+  <th:block th:replace="~{gateway_fragments/common::basicStaticResources}"></th:block>
+
+  <th:block th:if="${authOn}">
+    <link rel="preload"
+          th:href="@{/assets/css/KuaiKanShiJieTi.woff2(v=${theme.spec.version})}"
+          as="font"
+          type="font/woff2"
+          crossorigin />
+    <link rel="stylesheet" th:href="@{/assets/auth/auth.css(v=${theme.spec.version})}" />
+    <style th:text="|#auth-ui{--auth-primary:${primaryColor};--auth-radius:${authRadius}px;}|"></style>
+  </th:block>
+
+  <th:block th:if="${head != null}">
+    <th:block th:replace="${head}"></th:block>
+  </th:block>
+</head>
+<body class="gateway-page" th:classappend="${authOn} ? ' nucma-auth-page' : ''">
+
+  <!-- 关闭美化：原样交回 Halo 默认布局 -->
+  <th:block th:unless="${authOn}">
+    <th:block th:replace="${body}"></th:block>
+  </th:block>
+
+  <main th:if="${authOn}" id="auth-ui"
+        data-template="theme-nucma"
+        th:attr="data-view=${viewName},
+                 data-layout=${layoutMode},
+                 data-story=${showStory} ? 'on' : 'off',
+                 data-motion=${motion},
+                 data-entrance=${motion == 'off' ? 'none' : 'rise'}"
+        data-scheme="light" data-bg="gradient" data-decoration="none"
+        data-ambient="none" data-stagger="true" data-interactive="true" data-speed="normal">
+
+    <div class="auth-backdrop" aria-hidden="true">
+      <span class="auth-blob auth-blob-1"></span><span class="auth-blob auth-blob-2"></span><span class="auth-blob auth-blob-3"></span>
+      <span class="auth-particles"></span>
+    </div>
+
+    <div class="auth-shell">
+
+      <aside class="auth-story" th:if="${showStory}" th:aria-label="#{auth.aria.story}">
+        <div class="auth-story-art" aria-hidden="true">
+          <span class="auth-orbit"><span></span><span></span><span></span></span>
+          <span class="auth-grid"></span>
+          <span class="auth-waves"><span></span><span></span></span>
+        </div>
+        <div class="auth-story-content">
+          <div class="nucma-story-head" data-animate="fade">
+            <img th:if="${!#strings.isEmpty(brandLogo)}" th:src="${brandLogo}"
+                 th:alt="${brandName}" width="42" height="42" />
+            <div>
+              <strong th:text="${brandName}">全国高校自媒体联盟</strong>
+              <small th:if="${!#strings.isEmpty(brandNote)}" th:text="${brandNote}">NUCMA</small>
+            </div>
+          </div>
+          <div class="auth-spacer"></div>
+          <div class="nucma-story-mid" th:if="${!#strings.isEmpty(storyQuote) or !#strings.isEmpty(storyNote)}">
+            <p class="nucma-quote" data-animate="rise" data-delay="80" th:text="${storyQuote}">互动宣教
+多元交流</p>
+            <p class="nucma-note" th:if="${!#strings.isEmpty(storyNote)}" th:text="${storyNote}"></p>
+          </div>
+          <div class="nucma-story-foot" data-animate="fade" data-delay="240"
+               th:if="${!#strings.isEmpty(storyContact) or showBack}">
+            <a th:if="${!#strings.isEmpty(storyContact)}"
+               th:href="|mailto:${storyContact}|" th:text="${storyContact}">support@nucma.cn</a>
+            <span th:if="${!#strings.isEmpty(storyContact) and showBack}">·</span>
+            <a th:if="${showBack}" th:href="@{/}" th:text="#{error.home}">返回首页</a>
+          </div>
+        </div>
+      </aside>
+
+      <section class="auth-card" aria-labelledby="auth-title">
+
+        <div class="auth-slot auth-slot-header">
+          <div class="nucma-top" data-animate="fade">
+            <div class="nucma-brand" th:if="${!#strings.isEmpty(brandName)}">
+              <img th:if="${!#strings.isEmpty(brandLogo)}" th:src="${brandLogo}"
+                   th:alt="${brandName}" width="38" height="38" />
+              <div>
+                <strong th:text="${brandName}">全国高校自媒体联盟</strong>
+                <small th:if="${!#strings.isEmpty(brandNote)}" th:text="${brandNote}">NUCMA</small>
+              </div>
+            </div>
+            <a th:if="${showBack}" class="nucma-back" th:href="@{/}" th:aria-label="#{error.home}">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M9.6 3.4 5 8l4.6 4.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              <span th:text="#{error.home}">返回首页</span>
+            </a>
+          </div>
+        </div>
+
+        <header class="auth-heading">
+          <a class="auth-brand" th:href="@{/}" th:aria-label="#{error.home}">
+            <img th:if="${!#strings.isEmpty(brandLogo)}" th:src="${brandLogo}"
+                 th:alt="${brandName}" width="34" height="34" />
+            <span th:text="${brandName}">全国高校自媒体联盟</span>
+          </a>
+          <h1 id="auth-title" th:text="${viewTitle}">登录账号</h1>
+          <p class="auth-lead" th:if="${!#strings.isEmpty(leadText)}" th:text="${leadText}">欢迎回来，登录后继续。</p>
+        </header>
+
+        <!-- Halo 生成的表单本体：.halo-form / alert / pill-items 全部原样 -->
+        <div class="auth-forms">
+          <th:block th:replace="${body}"></th:block>
+        </div>
+
+        <p class="auth-switch" th:if="${showSwitch}">
+          <span th:text="${switchText}">还没有账号？</span>
+          <a th:href="@{${switchUrl}}" th:text="${switchAction}">创建账号</a>
+        </p>
+
+        <div class="auth-slot auth-slot-footer" th:if="${!#strings.isEmpty(footText)}">
+          <div class="nucma-foot" data-animate="fade" data-delay="200">
+            <p class="nucma-motto" th:text="${footText}">互动宣教，多元交流</p>
+          </div>
+        </div>
+
+        <!-- 线上 DOM 里也有这个 footer（设计层把它 display:none 了，这里保持结构一致） -->
+        <footer class="auth-footer">
+          <a class="auth-home" th:href="@{/}" th:text="#{error.home}">返回首页</a>
+        </footer>
+
+      </section>
+    </div>
+  </main>
+
+  <!-- 明暗：认证页不加载主题主脚本，这里单独判断一次；关掉「跟随站点明暗」就不切换。
+       ⚠️ 必须放在 body 末尾：#auth-ui 这时已经在 DOM 里，
+          放在 head 里同步执行 getElementById('auth-ui') 只会拿到 null，暗色永远不生效。
+          写入的变量与线上插件的 setVar 完全一致。 -->
+  <script th:if="${authOn and darkFollow}" th:inline="javascript">
+    (function () {
+      var mode = /*[[${defaultMode}]]*/ 'system';
+      try {
+        mode = localStorage.getItem('theme-mode') || localStorage.getItem('theme') || mode;
+      } catch (e) {}
+      var dark = mode === 'dark'
+        || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (!dark) { return; }
+      var root = document.getElementById('auth-ui');
+      if (!root) { return; }
+      root.setAttribute('data-scheme', 'dark');
+      root.style.setProperty('--auth-page', '#131313');
+      root.style.setProperty('--auth-card', '#1a1a1a');
+      root.style.setProperty('--auth-text', '#f0f0f0');
+      root.style.setProperty('--auth-muted', '#a3a3a3');
+      root.style.setProperty('--auth-border', '#2a2a2a');
+      root.style.setProperty('--auth-field', '#1f1f1f');
+      root.style.setProperty('--auth-primary', '#e8686d');
+    })();
+  </script>
+</body>
+</html>

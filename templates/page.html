@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{modules/layout :: html(title=|${singlePage?.spec?.title} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=${singlePage?.spec?.excerpt?.raw}, canonical=${singlePage?.status?.permalink}, image=${singlePage?.spec?.cover}, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+  <!-- 通用单页；关于页样式仅由后台显式选择 page_about 模板后加载。 -->
+  <article class="page">
+    <header class="page-header">
+      <h1 class="page-title" th:text="${singlePage?.spec?.title}"></h1>
+    </header>
+    <div class="page-content prose" th:utext="${singlePage?.content?.content}"></div>
+    
+    <!-- 评论区 -->
+    <section th:if="${haloCommentEnabled and (theme.config.pages?.page_comment_enabled != null ? theme.config.pages.page_comment_enabled : theme.config.content?.page_comment_enabled) != false}" class="page-comments">
+      <halo:comment group="content.halo.run" kind="SinglePage" th:attr="name=${singlePage.metadata.name}" />
+    </section>
+  </article>
+</th:block>
+</html>

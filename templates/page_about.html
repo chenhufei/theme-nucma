@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{modules/layout :: html(title=|${singlePage.spec.title ?: #messages.msg('about.heading')} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=${singlePage?.spec?.excerpt?.raw}, canonical=${singlePage?.status?.permalink}, image=${singlePage?.spec?.cover}, pageType='website', robots=null)}">
+<th:block th:fragment="content"
+          th:with="memberGroups = ${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null}">
+  <article class="page about-page">
+    <header class="page-header">
+      <h1 class="page-title" th:text="${singlePage.spec.title ?: #messages.msg('about.heading')}">关于</h1>
+      <p class="page-desc"
+         th:if="${singlePage.spec.excerpt != null and singlePage.spec.excerpt.raw != null and !#strings.isEmpty(singlePage.spec.excerpt.raw)}"
+         th:text="${singlePage.spec.excerpt.raw}"></p>
+    </header>
+
+    <th:block th:with="aboutBlocks = ${theme.config.about?.about_blocks}">
+      <!--
+        关于页区块的显示规则：
+        - 新配置或已保存的排序列表是唯一真相，列表外的区块不再自动追加；
+        - 旧版本没有保存排序列表时使用下方默认顺序；
+        - 每个区块都在没有实际内容时隐藏，避免出现空白容器。
+      -->
+      <th:block th:if="${aboutBlocks == null or #lists.isEmpty(aboutBlocks)}">
+        <section class="about-section" th:if="${singlePage.content?.content != null and !#strings.isEmpty(singlePage.content.content)}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{about.siteIntro}">站点介绍</h2></div>
+          <div class="page-content prose" th:utext="${singlePage.content.content}"></div>
+        </section>
+
+        <section class="about-section about-stats"
+                 th:with="stats = ${siteStatsFinder.getStats()}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{about.stats}">数据统计</h2></div>
+          <div class="stats intro-stats">
+            <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.post ?: 0}"></span><span class="stat-title intro-stat-label" th:text="#{about.postCount}">发布文章</span></div>
+            <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.visit ?: 0}"></span><span class="stat-title intro-stat-label" th:text="#{about.visits}">站点访问</span></div>
+            <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.category ?: 0}"></span><span class="stat-title intro-stat-label" th:text="#{categories.title}">内容分类</span></div>
+            <div class="stat intro-stat" th:if="${memberGroups != null and memberGroups.items != null}">
+              <span class="stat-value intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
+              <span class="stat-title intro-stat-label" th:text="#{about.memberCount}">成员数量</span>
+            </div>
+          </div>
+        </section>
+
+        <th:block th:with="recentPosts = ${postFinder.list({page: 1, size: 6})}">
+        <section class="about-section"
+                 th:if="${recentPosts != null and recentPosts.items != null and !#lists.isEmpty(recentPosts.items)}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{about.latestPosts}">最新文章</h2><a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a></div>
+          <div class="about-latest-list">
+            <a class="news-item" th:each="recent : ${recentPosts.items}" th:href="@{${recent.status?.permalink}}">
+              <time class="news-date" th:text="${#temporals.format(recent.spec?.publishTime, 'MM-dd')}"></time>
+              <span class="news-title" th:text="${recent.spec?.title}"></span>
+            </a>
+          </div>
+        </section>
+        </th:block>
+
+        <th:block th:with="allCategories = ${categoryFinder.listAll()}">
+        <section class="about-section"
+                 th:if="${allCategories != null and !#lists.isEmpty(allCategories)}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{categories.title}">内容分类</h2></div>
+          <div class="about-category-list">
+            <a th:each="item : ${allCategories}" th:href="@{${item.status?.permalink}}" class="about-category-item">
+              <span th:text="${item.spec?.displayName}"></span>
+              <strong th:text="${item.status?.postCount ?: 0}"></strong>
+            </a>
+          </div>
+        </section>
+        </th:block>
+
+        <section class="about-section about-timeline-section"
+                 th:if="${theme.config.about?.timeline_items != null and !#lists.isEmpty(theme.config.about.timeline_items)}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{about.timeline}">发展历程</h2></div>
+          <ol class="about-timeline">
+            <li class="about-timeline-item" th:each="item : ${theme.config.about.timeline_items}">
+              <time class="about-timeline-period" th:text="${item.period}"></time>
+              <div class="about-timeline-content">
+                <a th:if="${item.url != null and !#strings.isEmpty(item.url)}" class="about-timeline-title" th:href="@{${item.url}}" th:text="${item.title}"></a>
+                <strong th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="about-timeline-title" th:text="${item.title}"></strong>
+                <p th:if="${item.description != null and !#strings.isEmpty(item.description)}" th:text="${item.description}"></p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section class="about-section about-services-section"
+                 th:if="${theme.config.about?.service_items != null and !#lists.isEmpty(theme.config.about.service_items)}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{about.services}">服务入口</h2></div>
+          <div class="about-service-list">
+            <th:block th:each="item, stat : ${theme.config.about.service_items}">
+              <a th:if="${item.url != null and !#strings.isEmpty(item.url)}" class="about-service-item" th:href="@{${item.url}}">
+                <span class="about-service-index" th:text="${#numbers.formatInteger(stat.count, 2)}"></span>
+                <span class="about-service-content"><strong th:text="${item.title}"></strong><small th:if="${item.description != null and !#strings.isEmpty(item.description)}" th:text="${item.description}"></small></span>
+                <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="badge badge-sm badge-soft about-service-badge" th:text="${item.badge}"></span>
+                <span class="about-service-arrow" aria-hidden="true">→</span>
+              </a>
+              <div th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="about-service-item about-service-item--static">
+                <span class="about-service-index" th:text="${#numbers.formatInteger(stat.count, 2)}"></span>
+                <span class="about-service-content"><strong th:text="${item.title}"></strong><small th:if="${item.description != null and !#strings.isEmpty(item.description)}" th:text="${item.description}"></small></span>
+                <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="badge badge-sm badge-soft about-service-badge" th:text="${item.badge}"></span>
+              </div>
+            </th:block>
+          </div>
+        </section>
+
+        <section class="about-section about-projects-section"
+                 th:if="${theme.config.about?.project_items != null and !#lists.isEmpty(theme.config.about.project_items)}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{about.projects}">项目展示</h2></div>
+          <div class="about-project-list">
+            <th:block th:each="item : ${theme.config.about.project_items}">
+              <a th:if="${item.url != null and !#strings.isEmpty(item.url)}" class="about-project-item" th:href="@{${item.url}}">
+                <img th:if="${item.cover != null and !#strings.isEmpty(item.cover)}" class="about-project-cover" th:src="${item.cover}" th:alt="${item.title}" loading="lazy" decoding="async"
+                     sizes="(max-width: 900px) 92vw, 640px" width="640" height="280" />
+                <div class="about-project-body"><div class="about-project-meta"><span th:if="${item.tag != null and !#strings.isEmpty(item.tag)}" class="badge badge-sm badge-soft" th:text="${item.tag}"></span><span th:if="${item.status != null and !#strings.isEmpty(item.status)}" th:text="${item.status}"></span></div><h3 class="about-project-title" th:text="${item.title}"></h3><p class="about-project-description" th:text="${item.description}"></p></div>
+              </a>
+              <article th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="about-project-item">
+                <img th:if="${item.cover != null and !#strings.isEmpty(item.cover)}" class="about-project-cover" th:src="${item.cover}" th:alt="${item.title}" loading="lazy" decoding="async"
+                     sizes="(max-width: 900px) 92vw, 640px" width="640" height="280" />
+                <div class="about-project-body"><div class="about-project-meta"><span th:if="${item.tag != null and !#strings.isEmpty(item.tag)}" class="badge badge-sm badge-soft" th:text="${item.tag}"></span><span th:if="${item.status != null and !#strings.isEmpty(item.status)}" th:text="${item.status}"></span></div><h3 class="about-project-title" th:text="${item.title}"></h3><p class="about-project-description" th:text="${item.description}"></p></div>
+              </article>
+            </th:block>
+          </div>
+        </section>
+
+        <section class="about-section"
+                 th:if="${memberGroups != null and memberGroups.items != null and !#lists.isEmpty(memberGroups.items)}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{about.members}">成员展示</h2><a th:href="@{/members}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a></div>
+          <div class="about-member-groups" th:if="${memberGroups != null and memberGroups.items != null and !#lists.isEmpty(memberGroups.items)}">
+            <div class="about-member-group" th:each="group : ${memberGroups.items}"><span th:text="${group.spec?.displayName ?: #messages.msg('members.ungrouped')}"></span><strong th:text="${group.members != null ? #lists.size(group.members) : 0}"></strong></div>
+          </div>
+        </section>
+
+        <th:block th:with="randomLinks = ${pluginFinder.available('PluginLinks') ? linkFinder.random(8) : null}">
+        <section class="about-section"
+                 th:if="${randomLinks != null and !#lists.isEmpty(randomLinks)}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{home.links}">友情链接</h2><a th:href="@{/links}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a></div>
+          <div class="link-grid" th:if="${randomLinks != null and !#lists.isEmpty(randomLinks)}">
+            <a class="card card-border link-card" th:each="link : ${randomLinks}" th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer" th:aria-label="${link.spec?.displayName}">
+              <div class="link-logo"><img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:src="${link.spec.logo}" th:alt="${link.spec?.displayName}" width="48" height="48" loading="lazy" /><span class="link-logo-text" th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:text="${#strings.substring(link.spec?.displayName ?: '?', 0, 1)}"></span></div>
+              <div class="link-body"><div class="link-name" th:text="${link.spec?.displayName}"></div></div>
+            </a>
+          </div>
+        </section>
+        </th:block>
+
+        <section class="about-section"
+                 th:if="${theme.config.about?.faq_list != null and !#lists.isEmpty(theme.config.about.faq_list)}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{home.faq}">常见问题</h2></div>
+          <div class="faq-list">
+            <details class="collapse collapse-arrow faq-item" th:each="item : ${theme.config.about?.faq_list}">
+              <summary class="collapse-title faq-question">
+                <span th:text="${item.question}"></span>
+              </summary>
+              <div class="collapse-content faq-answer"><p th:text="${item.answer}"></p></div>
+            </details>
+          </div>
+        </section>
+      </th:block>
+
+      <th:block th:unless="${aboutBlocks == null or #lists.isEmpty(aboutBlocks)}" th:each="block : ${aboutBlocks}">
+        <section th:if="${block.type == 'content' and singlePage.content?.content != null and !#strings.isEmpty(singlePage.content.content)}" class="about-section">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: #messages.msg('about.siteIntro')}"></h2></div>
+          <div class="page-content prose"
+               th:utext="${singlePage.content?.content != null and !#strings.isEmpty(singlePage.content.content) ? singlePage.content.content : ''}"></div>
+        </section>
+
+        <section th:if="${block.type == 'stats'}" class="about-section about-stats"
+                 th:with="stats = ${siteStatsFinder.getStats()},
+                          linkCount = ${pluginFinder.available('PluginLinks') ? linkFinder.count() : null},
+                          hasCustomStats = ${theme.config.about?.stat_items != null and !#lists.isEmpty(theme.config.about.stat_items)}">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: #messages.msg('about.stats')}"></h2></div>
+          <div class="stats intro-stats">
+            <th:block th:if="${hasCustomStats}" th:each="item : ${theme.config.about.stat_items}">
+              <div class="stat intro-stat"
+                   th:if="${item.enabled != false and (item.type != 'member' or memberGroups != null) and (item.type != 'link' or linkCount != null)}">
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'post'}" th:text="${stats?.post ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'category'}" th:text="${stats?.category ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'comment'}" th:text="${stats?.comment ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'upvote'}" th:text="${stats?.upvote ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'visit'}" th:text="${stats?.visit ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'member' and memberGroups != null and memberGroups.items != null}"
+                      th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'link'}" th:text="${linkCount ?: 0}"></span>
+                <span class="stat-value intro-stat-number" th:if="${item.type == 'custom'}" th:text="${item.custom_number != null and !#strings.isEmpty(item.custom_number) ? item.custom_number : 0}"></span>
+                <span class="stat-title intro-stat-label"
+                      th:text="${!#strings.isEmpty(item.label) ? item.label : (item.type == 'post' ? #messages.msg('about.statPosts') : item.type == 'category' ? #messages.msg('about.statCategories') : item.type == 'comment' ? #messages.msg('about.statComments') : item.type == 'upvote' ? #messages.msg('about.upvotes') : item.type == 'visit' ? #messages.msg('about.statVisits') : item.type == 'member' ? #messages.msg('about.memberCount') : item.type == 'link' ? #messages.msg('about.statLinks') : #messages.msg('about.statCustom'))}"></span>
+              </div>
+            </th:block>
+            <th:block th:unless="${hasCustomStats}">
+              <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.post ?: 0}"></span><span class="stat-title intro-stat-label" th:text="#{about.postCount}">发布文章</span></div>
+              <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.visit ?: 0}"></span><span class="stat-title intro-stat-label" th:text="#{about.visits}">站点访问</span></div>
+              <div class="stat intro-stat"><span class="stat-value intro-stat-number" th:text="${stats?.category ?: 0}"></span><span class="stat-title intro-stat-label" th:text="#{categories.title}">内容分类</span></div>
+              <div class="stat intro-stat" th:if="${memberGroups != null and memberGroups.items != null}">
+                <span class="stat-value intro-stat-number" th:text="${#aggregates.sum(memberGroups.items.![members != null ? #lists.size(members) : 0])}"></span>
+                <span class="stat-title intro-stat-label" th:text="#{about.memberCount}">成员数量</span>
+              </div>
+            </th:block>
+          </div>
+        </section>
+
+        <th:block th:if="${block.type == 'latest'}"
+                  th:with="recentPosts = ${postFinder.list({page: 1, size: 6})}">
+        <section th:if="${recentPosts != null and recentPosts.items != null and !#lists.isEmpty(recentPosts.items)}" class="about-section">
+          <div class="section-header-bar">
+            <h2 class="section-title-bar" th:text="${block.title ?: #messages.msg('about.latestPosts')}"></h2>
+            <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
+          </div>
+          <div class="about-latest-list" th:if="${recentPosts != null and recentPosts.items != null}">
+            <a class="news-item" th:each="recent : ${recentPosts.items}" th:href="@{${recent.status?.permalink}}">
+              <time class="news-date" th:text="${#temporals.format(recent.spec?.publishTime, 'MM-dd')}"></time>
+              <span class="news-title" th:text="${recent.spec?.title}"></span>
+            </a>
+          </div>
+        </section>
+        </th:block>
+
+        <th:block th:if="${block.type == 'categories'}"
+                  th:with="allCategories = ${categoryFinder.listAll()}">
+        <section th:if="${allCategories != null and !#lists.isEmpty(allCategories)}" class="about-section">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: #messages.msg('categories.title')}"></h2></div>
+          <div class="about-category-list">
+            <a th:each="item : ${allCategories}" th:href="@{${item.status?.permalink}}" class="about-category-item">
+              <span th:text="${item.spec?.displayName}"></span>
+              <strong th:text="${item.status?.postCount ?: 0}"></strong>
+            </a>
+          </div>
+        </section>
+        </th:block>
+
+        <section th:if="${block.type == 'timeline' and theme.config.about?.timeline_items != null and !#lists.isEmpty(theme.config.about.timeline_items)}"
+                 class="about-section about-timeline-section">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: #messages.msg('about.timeline')}"></h2></div>
+          <ol class="about-timeline">
+            <li class="about-timeline-item" th:each="item : ${theme.config.about.timeline_items}">
+              <time class="about-timeline-period" th:text="${item.period}"></time>
+              <div class="about-timeline-content">
+                <a th:if="${item.url != null and !#strings.isEmpty(item.url)}"
+                   class="about-timeline-title"
+                   th:href="@{${item.url}}"
+                   th:text="${item.title}"></a>
+                <strong th:unless="${item.url != null and !#strings.isEmpty(item.url)}"
+                        class="about-timeline-title"
+                        th:text="${item.title}"></strong>
+                <p th:if="${item.description != null and !#strings.isEmpty(item.description)}"
+                   th:text="${item.description}"></p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section th:if="${block.type == 'services' and theme.config.about?.service_items != null and !#lists.isEmpty(theme.config.about.service_items)}"
+                 class="about-section about-services-section">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: #messages.msg('about.services')}"></h2></div>
+          <div class="about-service-list">
+            <th:block th:each="item, stat : ${theme.config.about.service_items}">
+              <a th:if="${item.url != null and !#strings.isEmpty(item.url)}"
+                 class="about-service-item"
+                 th:href="@{${item.url}}">
+                <span class="about-service-index" th:text="${#numbers.formatInteger(stat.count, 2)}"></span>
+                <span class="about-service-content">
+                  <strong th:text="${item.title}"></strong>
+                  <small th:if="${item.description != null and !#strings.isEmpty(item.description)}" th:text="${item.description}"></small>
+                </span>
+                <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="badge badge-sm badge-soft about-service-badge" th:text="${item.badge}"></span>
+                <span class="about-service-arrow" aria-hidden="true">→</span>
+              </a>
+              <div th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="about-service-item about-service-item--static">
+                <span class="about-service-index" th:text="${#numbers.formatInteger(stat.count, 2)}"></span>
+                <span class="about-service-content">
+                  <strong th:text="${item.title}"></strong>
+                  <small th:if="${item.description != null and !#strings.isEmpty(item.description)}" th:text="${item.description}"></small>
+                </span>
+                <span th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" class="badge badge-sm badge-soft about-service-badge" th:text="${item.badge}"></span>
+              </div>
+            </th:block>
+          </div>
+        </section>
+
+        <section th:if="${block.type == 'projects' and theme.config.about?.project_items != null and !#lists.isEmpty(theme.config.about.project_items)}"
+                 class="about-section about-projects-section">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: #messages.msg('about.projects')}"></h2></div>
+          <div class="about-project-list">
+            <th:block th:each="item : ${theme.config.about.project_items}">
+              <a th:if="${item.url != null and !#strings.isEmpty(item.url)}" class="about-project-item" th:href="@{${item.url}}">
+                <img th:if="${item.cover != null and !#strings.isEmpty(item.cover)}" class="about-project-cover" th:src="${item.cover}" th:alt="${item.title}" loading="lazy" decoding="async"
+                     sizes="(max-width: 900px) 92vw, 640px" width="640" height="280" />
+                <div class="about-project-body">
+                  <div class="about-project-meta"><span th:if="${item.tag != null and !#strings.isEmpty(item.tag)}" class="badge badge-sm badge-soft" th:text="${item.tag}"></span><span th:if="${item.status != null and !#strings.isEmpty(item.status)}" th:text="${item.status}"></span></div>
+                  <h3 class="about-project-title" th:text="${item.title}"></h3>
+                  <p class="about-project-description" th:text="${item.description}"></p>
+                </div>
+              </a>
+              <article th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="about-project-item">
+                <img th:if="${item.cover != null and !#strings.isEmpty(item.cover)}" class="about-project-cover" th:src="${item.cover}" th:alt="${item.title}" loading="lazy" decoding="async"
+                     sizes="(max-width: 900px) 92vw, 640px" width="640" height="280" />
+                <div class="about-project-body">
+                  <div class="about-project-meta"><span th:if="${item.tag != null and !#strings.isEmpty(item.tag)}" class="badge badge-sm badge-soft" th:text="${item.tag}"></span><span th:if="${item.status != null and !#strings.isEmpty(item.status)}" th:text="${item.status}"></span></div>
+                  <h3 class="about-project-title" th:text="${item.title}"></h3>
+                  <p class="about-project-description" th:text="${item.description}"></p>
+                </div>
+              </article>
+            </th:block>
+          </div>
+        </section>
+
+        <th:block th:if="${block.type == 'members'}">
+        <section th:if="${memberGroups != null and memberGroups.items != null and !#lists.isEmpty(memberGroups.items)}" class="about-section">
+          <div class="section-header-bar">
+            <h2 class="section-title-bar" th:text="${block.title ?: #messages.msg('about.members')}"></h2>
+            <a th:href="@{/members}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
+          </div>
+          <div class="about-member-groups" th:if="${memberGroups != null and memberGroups.items != null}">
+            <div class="about-member-group" th:each="group : ${memberGroups.items}">
+              <span th:text="${group.spec?.displayName ?: #messages.msg('members.ungrouped')}"></span>
+              <strong th:text="${group.members != null ? #lists.size(group.members) : 0}"></strong>
+            </div>
+          </div>
+        </section>
+        </th:block>
+
+        <th:block th:if="${block.type == 'links'}"
+                  th:with="randomLinks = ${pluginFinder.available('PluginLinks') ? linkFinder.random(8) : null}">
+        <section th:if="${randomLinks != null and !#lists.isEmpty(randomLinks)}" class="about-section">
+          <div class="section-header-bar">
+            <h2 class="section-title-bar" th:text="${block.title ?: #messages.msg('home.links')}"></h2>
+            <a th:href="@{/links}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
+          </div>
+          <div class="link-grid" th:if="${randomLinks != null}">
+            <a class="card card-border link-card" th:each="link : ${randomLinks}" th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer">
+              <div class="link-logo">
+                <img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:src="${link.spec.logo}" th:alt="${link.spec?.displayName}" width="48" height="48" loading="lazy" />
+                <span class="link-logo-text" th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:text="${#strings.substring(link.spec?.displayName ?: '?', 0, 1)}"></span>
+              </div>
+              <div class="link-body"><div class="link-name" th:text="${link.spec?.displayName}"></div></div>
+            </a>
+          </div>
+        </section>
+        </th:block>
+
+        <section th:if="${block.type == 'faq' and theme.config.about?.faq_list != null and !#lists.isEmpty(theme.config.about.faq_list)}" class="about-section">
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="${block.title ?: #messages.msg('home.faq')}"></h2></div>
+          <div class="faq-list">
+            <details class="collapse collapse-arrow faq-item" th:each="item : ${theme.config.about?.faq_list}">
+              <summary class="collapse-title faq-question">
+                <span th:text="${item.question}"></span>
+              </summary>
+              <div class="collapse-content faq-answer"><p th:text="${item.answer}"></p></div>
+            </details>
+          </div>
+        </section>
+      </th:block>
+
+    </th:block>
+
+    <section th:if="${haloCommentEnabled and (theme.config.pages?.page_comment_enabled != null ? theme.config.pages.page_comment_enabled : theme.config.content?.page_comment_enabled) != false}" class="page-comments">
+      <halo:comment group="content.halo.run" kind="SinglePage" th:attr="name=${singlePage?.metadata.name}" />
+    </section>
+  </article>
+</th:block>
+</html>

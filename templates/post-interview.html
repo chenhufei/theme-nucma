@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{modules/layout :: html(title=|${post?.spec?.title} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=${post?.spec?.excerpt?.raw}, canonical=${post?.status?.permalink}, image=${post?.spec?.cover}, pageType='article', robots=null)}">
+<th:block th:fragment="content">
+  <th:block th:replace="~{fragments/post-special :: special('interview', #messages.msg('template.post.interview'))}" />
+</th:block>
+</html>

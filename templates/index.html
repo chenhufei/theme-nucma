@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{modules/layout :: html(title=${site.title}, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=${site.seo?.description ?: site.subtitle}, canonical=${site.url}, image=${site.logo}, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+  <!-- Banner - 校园风格 -->
+  <section class="banner"
+           th:with="heroConfig = ${theme.config.home?.show_hero != null ? theme.config.home : theme.config.hero},
+                     legacyBg = ${heroConfig?.bg_image != null and !#strings.isEmpty(heroConfig.bg_image) ? heroConfig.bg_image : ''},
+                     backgrounds = ${heroConfig?.bg_carousel},
+                     hasBackgrounds = ${backgrounds != null and !#lists.isEmpty(backgrounds)},
+                     singleBackground = ${hasBackgrounds ? backgrounds[0] : null},
+                     carousel = ${hasBackgrounds and #lists.size(backgrounds) > 1},
+                     singleBgUrl = ${singleBackground != null and singleBackground.url != null and !#strings.isEmpty(singleBackground.url) ? singleBackground.url : legacyBg},
+                     hasBg = ${!#strings.isEmpty(singleBgUrl)},
+                     bgInterval = ${heroConfig?.carousel_interval ?: 5000},
+                     fullW = ${heroConfig?.full_width == true},
+                     overlay = ${heroConfig?.bg_overlay != null and !#strings.isEmpty(heroConfig.bg_overlay) ? heroConfig.bg_overlay : 'medium'},
+                     heroH = ${heroConfig?.min_height},
+                     heroClass = ${(hasBg or carousel ? 'has-custom-bg' : '') + ' ' + (fullW ? 'full-width' : '') + ' overlay-' + overlay + (carousel ? ' has-bg-carousel' : '')},
+                     heroStyle = ${heroH != null ? 'min-height:' + heroH + 'px' : ''},
+                     heroInterval = ${carousel ? bgInterval : null}"
+           th:if="${heroConfig == null or heroConfig.show_hero != false}"
+           th:classappend="${heroClass}"
+           th:style="${heroStyle}"
+           th:data-bg-interval="${heroInterval}">
+    <!-- 单背景 -->
+    <th:block th:if="${!carousel}">
+      <div class="banner-bg"
+           th:style="${hasBg ? 'background-image: url(' + singleBgUrl + ')' : ''}"></div>
+    </th:block>
+    <!-- 多背景轮播 -->
+    <th:block th:if="${carousel}">
+      <div class="banner-bg-stage" aria-hidden="true">
+        <div th:each="bg, bgStat : ${backgrounds}"
+             class="banner-bg-slide"
+             th:classappend="${bgStat.index == 0} ? 'is-active' : ''"
+             th:data-bg-url="${bg.url != null and !#strings.isEmpty(bg.url) ? bg.url : null}"
+             th:style="${bgStat.index == 0 and bg.url != null and !#strings.isEmpty(bg.url) ? 'background-image: url(' + bg.url + ')' : ''}"></div>
+      </div>
+      <!-- 条形指示线 -->
+      <div class="banner-bg-indicators" role="tablist" aria-label="背景图轮播指示" th:aria-label="#{home.bannerDots}">
+        <button th:each="bg, bgStat : ${backgrounds}"
+                type="button"
+                class="banner-bg-indicator"
+                th:classappend="${bgStat.index == 0} ? 'is-active' : ''"
+                th:attr="data-index=${bgStat.index}, aria-label=${bg.caption != null and !#strings.isEmpty(bg.caption) ? bg.caption : (#messages.msg('home.bannerImage') + (bgStat.index + 1))}, role='tab'"
+                th:aria-selected="${bgStat.index == 0}"
+                th:tabindex="${bgStat.index == 0 ? 0 : -1}"></button>
+      </div>
+    </th:block>
+    <div class="banner-content">
+      <div class="banner-logos">
+        <div class="banner-logo-item">
+          <div class="banner-logo-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18L19.18 8 12 11.82 4.82 8 12 4.18zM4 9.64l7 3.5V19.5l-7-3.5V9.64zm9 3.5l7 3.5V9.64l-7 3.5v3.5z"/>
+            </svg>
+          </div>
+          <div class="banner-logo-text">
+            <strong>NUCMA</strong>
+            <span th:text="#{home.heroTitle}">全国高校自媒体联盟</span>
+          </div>
+        </div>
+      </div>
+      <h1 class="banner-title" th:text="${site.title}"></h1>
+      <p class="banner-subtitle" th:text="${site.subtitle}"></p>
+    </div>
+  </section>
+
+  <div class="home-sections"
+       th:with="homeBlocks=${theme.config.home?.section_blocks},
+                homeOrder=${homeBlocks != null ? homeBlocks.![type] : theme.config.home?.section_order},
+                newsBlocks=${homeBlocks != null ? homeBlocks.?[type == 'news'] : null},
+                memberBlocks=${homeBlocks != null ? homeBlocks.?[type == 'members'] : null},
+                linkBlocks=${homeBlocks != null ? homeBlocks.?[type == 'links'] : null},
+                newsBlock=${newsBlocks != null and !#lists.isEmpty(newsBlocks) ? newsBlocks[0] : null},
+                memberBlock=${memberBlocks != null and !#lists.isEmpty(memberBlocks) ? memberBlocks[0] : null},
+                linkBlock=${linkBlocks != null and !#lists.isEmpty(linkBlocks) ? linkBlocks[0] : null},
+                newsCategories=${newsBlock != null and newsBlock.category_blocks != null ? newsBlock.category_blocks : theme.config.home?.category_blocks},
+                newsLimit=${newsBlock != null and newsBlock.news_limit != null ? newsBlock.news_limit : (theme.config.home?.news_limit ?: 8)},
+                memberLimit=${memberBlock != null and memberBlock.member_limit != null ? memberBlock.member_limit : (theme.config.home?.member_limit ?: 6)},
+                memberPinned=${memberBlock != null and memberBlock.member_pinned != null ? memberBlock.member_pinned : theme.config.home?.member_pinned},
+                linkLimit=${linkBlock != null and linkBlock.link_limit != null ? linkBlock.link_limit : (theme.config.home?.link_limit ?: 8)},
+                linkPinned=${linkBlock != null and linkBlock.link_pinned != null ? linkBlock.link_pinned : theme.config.home?.link_pinned}"
+       th:data-section-order="${homeOrder != null ? #strings.listJoin(homeOrder, ',') : 'news,members,links'}">
+
+  <!-- 信息公告 -->
+  <section class="section" data-home-section="news"
+           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and (newsCategories == null or #lists.isEmpty(newsCategories))}">
+    <div class="section-container" th:if="${posts != null and posts.items != null and !posts.items.isEmpty()}">
+      <div class="section-header-bar">
+        <h2 class="section-title-bar" th:text="#{home.announcements}">信息公告</h2>
+        <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
+      </div>
+      <div class="news-list">
+        <a th:each="post, iter : ${posts.items}" th:if="${iter.index < newsLimit}"
+           th:href="@{${post.status?.permalink}}" target="_blank" rel="noopener noreferrer" class="news-item">
+          <span class="news-date" th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}"></span>
+          <span class="news-title" th:text="${post.spec?.title}"></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 首页自选分类栏 -->
+  <section class="section" data-home-section="news"
+           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and newsCategories != null and !#lists.isEmpty(newsCategories)}">
+    <div class="section-container">
+      <div class="category-cols-wrapper"
+           th:classappend="${'category-cols--count-' + #lists.size(newsCategories)}">
+        <th:block th:each="col : ${newsCategories}"
+                  th:with="catPostList = ${postFinder.list({page: 1, size: col.limit ?: 6, categoryName: col.category_name})},
+                           catInfo = ${categoryFinder.getByName(col.category_name)}">
+          <div class="category-col">
+            <div class="section-header-bar category-col-header">
+              <h2 class="section-title-bar" th:text="${col.block_title ?: (catInfo != null ? catInfo.spec?.displayName : #messages.msg('home.categoryPosts'))}"></h2>
+              <a th:if="${catInfo != null}" th:href="@{${catInfo.status?.permalink}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
+            </div>
+            <div class="news-list" th:if="${catPostList != null and catPostList.items != null and !catPostList.items.isEmpty()}">
+              <a th:each="post : ${catPostList.items}"
+                 th:href="@{${post.status?.permalink}}" target="_blank" rel="noopener noreferrer" class="news-item">
+                <span class="news-date" th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}"></span>
+                <span class="news-title" th:text="${post.spec?.title}"></span>
+              </a>
+            </div>
+            <div class="alert alert-soft alert-vertical empty-state category-col-empty" th:if="${catPostList == null or catPostList.items == null or catPostList.items.isEmpty()}">
+              <span th:text="#{common.noPosts}">暂无文章</span>
+            </div>
+          </div>
+        </th:block>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" data-home-section="members"
+           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'members')) and pluginFinder.available('PluginMembers')}">
+    <div class="section-container">
+      <div class="section-header-bar">
+        <h2 class="section-title-bar" th:text="#{home.members}">成员公示</h2>
+        <a th:href="@{/members}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
+      </div>
+      <th:block th:with="groupsResult = ${memberFinder.listApprovedMembers()}">
+        <div class="member-grid" th:if="${groupsResult != null and groupsResult.items != null and !#lists.isEmpty(groupsResult.items)}"
+             th:attr="data-limit=${memberLimit},
+                      data-pinned-ids=${memberPinned == null or #lists.isEmpty(memberPinned) ? '' : #strings.listJoin(memberPinned, ',')}">
+          <th:block th:each="group : ${groupsResult.items}">
+            <th:block th:each="member : ${group.members}">
+              <div class="card card-border member-card" th:attr="data-id=${member.metadata?.name ?: ''}">
+                <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
+                      class="member-card-background" aria-hidden="true"
+                      th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
+                <div class="member-avatar">
+                  <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                       th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
+                  <svg th:unless="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
+                       fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                  </svg>
+                </div>
+                <div class="member-info">
+                  <div class="member-name" th:text="${member.spec.displayName}">名称</div>
+                  <div class="member-school" th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
+                       th:text="${member.spec.school}">学校</div>
+                  <div class="member-school member-school-empty" th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}" th:text="#{members.noBio}">暂无简介</div>
+                </div>
+              </div>
+            </th:block>
+          </th:block>
+        </div>
+      </th:block>
+    </div>
+  </section>
+
+  <!-- 友情链接 -->
+  <section class="section" data-home-section="links"
+           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'links')) and pluginFinder.available('PluginLinks')}">
+    <div class="section-container">
+      <div class="section-header-bar">
+        <h2 class="section-title-bar" th:text="#{home.links}">友情链接</h2>
+        <a th:href="@{/links}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
+      </div>
+      <th:block th:with="linkGroups = ${linkFinder?.groupBy()}">
+        <div class="link-grid" th:if="${linkGroups != null and !#lists.isEmpty(linkGroups)}"
+             th:attr="data-limit=${linkLimit},
+                      data-pinned-ids=${linkPinned == null or #lists.isEmpty(linkPinned) ? '' : #strings.listJoin(linkPinned, ',')}">
+          <th:block th:each="group : ${linkGroups}">
+            <th:block th:each="link : ${group?.links}">
+              <a th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer"
+                 class="card card-border link-card" th:title="${link.spec?.description}"
+                 th:attr="data-id=${link.metadata?.name ?: ''}">
+                <div class="link-logo">
+                  <img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec?.logo)}"
+                       th:src="${link.spec?.logo}" th:alt="${link.spec?.displayName}" loading="lazy" width="48" height="48" />
+                  <span th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec?.logo)}"
+                        class="link-logo-text"
+                        th:text="${link.spec?.displayName != null ? #strings.substring(link.spec?.displayName, 0, 1) : '?'}"></span>
+                </div>
+                <div class="link-body">
+                  <div class="link-name" th:text="${link.spec?.displayName}"></div>
+                </div>
+              </a>
+            </th:block>
+          </th:block>
+        </div>
+        <div th:if="${linkGroups == null or #lists.isEmpty(linkGroups)}" class="alert alert-soft alert-vertical empty-state">
+          <div class="empty-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+          </div>
+          <p class="empty-text" th:text="#{home.noLinks}">暂无友链</p>
+          <p class="empty-sub" th:text="#{home.noLinksHint}">请在后台链接管理中添加友链</p>
+        </div>
+      </th:block>
+    </div>
+  </section>
+
+
+
+  </div>
+
+  <!-- 分页 -->
+  <nav class="join pagination"
+       th:with="homeBlocks=${theme.config.home?.section_blocks},
+                newsBlocks=${homeBlocks != null ? homeBlocks.?[type == 'news'] : null},
+                newsBlock=${newsBlocks != null and !#lists.isEmpty(newsBlocks) ? newsBlocks[0] : null},
+                newsCategories=${newsBlock != null and newsBlock.category_blocks != null ? newsBlock.category_blocks : theme.config.home?.category_blocks}"
+       th:if="${posts != null and (posts.hasPrevious() or posts.hasNext()) and (newsCategories == null or #lists.isEmpty(newsCategories))}">
+    <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn" th:text="#{common.previousPage}">上一页</a>
+    <span class="badge badge-outline join-item page-info" th:text="|${posts.page} / ${posts.totalPages}|"></span>
+    <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn" th:text="#{common.nextPage}">下一页</a>
+  </nav>
+</th:block>
+</html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{modules/layout :: html(title=|${linksTitle ?: #messages.msg('home.links')} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=|${#messages.msg('links.description')}|, canonical='/links', image=${site.logo}, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+
+  <!--
+    官方 PluginLinks 不注入 linkApplicationEnabled；申请接口
+    POST /apis/api.link.halo.run/v1alpha1/link-applications 自 2.5.0 起才有，
+    因此这里带版本范围判断，低版本插件只展示友链列表、不显示申请入口。
+  -->
+  <th:block th:with="linkApplicationEnabled=${pluginFinder.available('PluginLinks', '>=2.5.0')}">
+
+  <div class="page-header">
+    <div class="page-header-row page-header-row--with-tools">
+      <div>
+        <h1 class="page-title page-title--with-count">
+          <span th:text="${linksTitle ?: #messages.msg('home.links')}">友情链接</span>
+          <span id="linkTotalCount" class="page-title-count" title="友链总数" th:title="#{links.totalTitle}" hidden>0</span>
+        </h1>
+        <p class="page-desc" th:text="#{home.linksSubtitle}">协同传播的校园伙伴</p>
+      </div>
+      <div class="page-header-tools">
+        <div class="input input-bordered page-search link-search" data-link-search>
+          <label class="visually-hidden" for="linkSearchInput" th:text="#{links.searchLabel}">搜索友链</label>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input id="linkSearchInput"
+                 name="linkSearch"
+                 type="search"
+                 placeholder="搜索名称、拼音首字母、简介或网址…" th:placeholder="#{links.searchPlaceholder}"
+                 autocomplete="off"
+                 spellcheck="false"
+                 aria-controls="linkSearchResults" />
+          <button type="button" class="btn btn-ghost btn-circle btn-xs link-search__clear" data-link-search-clear aria-label="清空搜索" th:aria-label="#{links.clearSearch}" hidden>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <button th:if="${linkApplicationEnabled}"
+                type="button"
+                class="btn btn-primary apply-btn"
+                data-official-link-apply-open>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"></path>
+          </svg>
+          <span th:text="#{links.apply}">申请友链</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    申请表单按官方 PluginLinks 同源契约渲染；link-submit-next 只在网址字段旁注入「获取信息」按钮。
+    主题不复制审核流程与友链存储。表单提交后插件会 303 重定向回 /links，
+    结果通过 applied / message 查询参数回传，这里负责展示。
+  -->
+  <th:block th:if="${param.applied != null and !#arrays.isEmpty(param.applied)}">
+    <p th:if="${param.applied[0] == 'success'}" class="alert alert-soft link-application-result" role="status" th:text="#{links.submitted}">
+      友链申请已提交，等待站长审核。
+    </p>
+    <p th:unless="${param.applied[0] == 'success'}" class="alert alert-soft link-application-result" role="alert"
+       th:text="${param.message != null and !#arrays.isEmpty(param.message) ? param.message[0] : #messages.msg('links.submitError')}">
+      提交失败，请稍后再试
+    </p>
+  </th:block>
+
+  <dialog th:if="${linkApplicationEnabled}"
+          id="officialLinkApplyDialog" class="modal" aria-labelledby="officialLinkApplyTitle">
+    <div class="modal-box link-application-modal">
+      <form method="dialog">
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3" aria-label="关闭申请窗口" th:aria-label="#{links.applyClose}">✕</button>
+      </form>
+      <h2 id="officialLinkApplyTitle" class="modal-title" th:text="#{links.applyHeading}">申请友情链接</h2>
+      <p class="modal-description" th:text="#{links.applyDesc}">请填写站点资料，申请通过后会展示在友情链接页。</p>
+      <p id="officialLinkApplyResult" class="alert link-application-result" role="status" aria-live="polite" hidden></p>
+      <form id="officialLinkApplyForm" method="post" action="/apis/api.link.halo.run/v1alpha1/link-applications" class="modal-form link-application-form">
+        <label class="form-control">
+          <span class="label-text" th:text="#{links.siteUrl}">网站地址</span>
+          <input class="input input-bordered" name="url" type="url" required maxlength="2048" autocomplete="url">
+        </label>
+        <label class="form-control">
+          <span class="label-text" th:text="#{links.siteName}">网站名称</span>
+          <input class="input input-bordered" name="displayName" required maxlength="100" autocomplete="organization">
+        </label>
+        <label class="form-control">
+          <span class="label-text" th:text="#{links.logoUrl}">Logo 地址</span>
+          <input class="input input-bordered" name="logo" type="url" maxlength="2048" placeholder="https://">
+        </label>
+        <label class="form-control">
+          <span class="label-text" th:text="#{links.siteDescription}">网站描述</span>
+          <textarea class="textarea textarea-bordered" name="description" maxlength="500" rows="3"></textarea>
+        </label>
+        <label class="form-control">
+          <span class="label-text" th:text="#{links.contactEmail}">联系邮箱</span>
+          <input class="input input-bordered" name="email" type="email" maxlength="254" autocomplete="email">
+        </label>
+        <label class="form-control">
+          <span class="label-text" th:text="#{links.applyUrlHint}">本站友情链接页面</span>
+          <input class="input input-bordered" name="backlink" type="url" maxlength="2048" placeholder="https://">
+        </label>
+        <label class="form-control">
+          <span class="label-text" th:text="#{links.rssHint}">RSS/Atom 订阅地址</span>
+          <textarea class="textarea textarea-bordered" name="feedUrls" rows="2" placeholder="每行一个，可留空" th:placeholder="#{links.linesHint}"></textarea>
+        </label>
+        <div class="link-application-captcha-row">
+          <img id="officialLinkApplyCaptcha" alt="友链申请验证码" th:alt="#{links.captchaTitle}" width="160" height="48">
+          <button type="button" class="btn btn-ghost btn-sm" data-captcha-refresh th:text="#{links.captchaRefresh}">刷新验证码</button>
+          <label class="form-control link-application-captcha-input">
+            <span class="label-text" th:text="#{links.captchaLabel}">验证码</span>
+            <input class="input input-bordered" name="captchaCode" required minlength="5" maxlength="5" autocomplete="off">
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-official-link-apply-close th:text="#{common.cancel}">取消</button>
+          <button type="submit" class="btn btn-primary" th:text="#{links.submitButton}">提交申请</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button aria-label="关闭申请窗口" th:aria-label="#{links.applyClose}" th:text="#{common.close}">关闭</button></form>
+  </dialog>
+
+  <div class="directory-content directory-content--links">
+
+  <th:block th:if="${pluginFinder.available('PluginLinks')}">
+
+    <!-- 搜索结果的读屏播报：计数本身已移到标题右侧的徽标，这里只保留完整语句 -->
+    <span id="linkSearchCount" class="visually-hidden" aria-live="polite"></span>
+
+    <!-- 分组筛选 -->
+    <nav class="link-filters"
+         th:with="allLinkGroups = ${simpleGroups}">
+      <a th:href="@{/links}"
+         class="directory-filter-item link-filter-item"
+         th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active' : ''"
+         th:aria-current="${group == null or #strings.isEmpty(group) ? 'page' : null}"
+         th:text="#{common.all}">
+        全部
+      </a>
+      <a th:each="g : ${allLinkGroups}"
+         th:if="${allLinkGroups != null}"
+         th:href="@{/links(group=${g.metadata.name})}"
+         class="directory-filter-item link-filter-item"
+         th:classappend="${group != null and group == g.metadata.name} ? 'is-active' : ''"
+         th:aria-current="${group != null and group == g.metadata.name ? 'page' : null}">
+        <span th:text="${g.spec?.displayName}">分组</span>
+      </a>
+    </nav>
+
+    <!-- 按分组展示（无 group 参数时） -->
+    <div th:if="${group == null or #strings.isEmpty(group)}"
+         id="linkSearchResults"
+         class="link-groups">
+
+      <th:block th:each="g : ${groups}"
+                th:if="${g.links != null and !#lists.isEmpty(g.links)}">
+        <div class="link-group">
+          <h2 class="link-group-title">
+            <span th:text="${g.spec?.displayName ?: #messages.msg('members.ungrouped')}">分组名</span>
+            <span class="badge badge-primary badge-soft badge-sm link-group-count" th:text="${#lists.size(g.links)}">0</span>
+          </h2>
+
+          <div class="link-grid">
+            <a th:each="link : ${g.links}"
+               th:href="${link.spec.url}"
+               target="_blank" rel="noopener noreferrer"
+               class="card card-border link-card"
+               th:title="${link.spec.description}">
+              <div class="link-logo">
+                <img th:if="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
+                     th:src="${link.spec.logo}" th:alt="${link.spec.displayName}"
+                     loading="lazy" width="48" height="48" />
+                <span th:unless="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
+                      class="link-logo-text"
+                      th:text="${#strings.isEmpty(link.spec.displayName) ? '?' : #strings.substring(link.spec.displayName, 0, 1)}">
+                </span>
+              </div>
+              <div class="link-body">
+                <div class="link-name" th:text="${link.spec.displayName}"></div>
+                <div class="link-desc"
+                     th:if="${link.spec.description != null and !#strings.isEmpty(link.spec.description)}"
+                     th:text="${link.spec.description}"></div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </th:block>
+
+    </div>
+
+    <!-- 单分组展示（带 group 参数时） -->
+    <div th:unless="${group == null or #strings.isEmpty(group)}"
+         id="linkSearchResults"
+         class="link-grid"
+         th:if="${links != null and !#lists.isEmpty(links)}">
+      <a th:each="link : ${links}"
+         th:href="${link.spec.url}"
+         target="_blank" rel="noopener noreferrer"
+         class="card card-border link-card"
+         th:title="${link.spec.description}">
+        <div class="link-logo">
+          <img th:if="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
+               th:src="${link.spec.logo}" th:alt="${link.spec.displayName}"
+               loading="lazy" width="48" height="48" />
+          <span th:unless="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
+                class="link-logo-text"
+                th:text="${#strings.isEmpty(link.spec.displayName) ? '?' : #strings.substring(link.spec.displayName, 0, 1)}">
+          </span>
+        </div>
+        <div class="link-body">
+          <div class="link-name" th:text="${link.spec.displayName}"></div>
+          <div class="link-desc"
+               th:if="${link.spec.description != null and !#strings.isEmpty(link.spec.description)}"
+               th:text="${link.spec.description}"></div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 计数区已经是 aria-live，这里不再重复播报，只做视觉空状态 -->
+    <div id="linkSearchEmpty" class="alert alert-soft alert-vertical empty-state link-search-empty" hidden>
+      <div class="empty-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke-width="1.5"></circle>
+          <path stroke-width="1.5" stroke-linecap="round" d="m20 20-4-4"></path>
+        </svg>
+      </div>
+      <p class="empty-text" th:text="#{links.searchEmpty}">未找到匹配友链</p>
+      <p class="empty-sub" th:text="#{links.searchEmptyHint}">请尝试名称、拼音首字母、简介或网址</p>
+    </div>
+
+    <!-- 空状态 -->
+    <div th:if="${(group == null or #strings.isEmpty(group)) and (groups == null or #lists.isEmpty(groups))}"
+         class="alert alert-soft alert-vertical empty-state">
+      <div class="empty-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+        </svg>
+      </div>
+      <p class="empty-text" th:text="#{home.noLinks}">暂无友链</p>
+      <p class="empty-sub" th:text="#{home.noLinksHint}">请在后台链接管理中添加友链</p>
+    </div>
+
+    <div th:if="${group != null and !#strings.isEmpty(group) and (links == null or #lists.isEmpty(links))}"
+         class="alert alert-soft alert-vertical empty-state">
+      <div class="empty-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+        </svg>
+      </div>
+      <p class="empty-text" th:text="#{links.groupEmpty}">该分组暂无链接</p>
+      <a th:href="@{/links}" class="btn btn-ghost btn-sm more-link" th:text="#{common.viewAll}">查看全部</a>
+    </div>
+
+    <!-- 评论区 -->
+    <section th:if="${haloCommentEnabled and (theme.config.pages?.links_comment_enabled != null ? theme.config.pages.links_comment_enabled : theme.config.content?.links_comment_enabled) != false}" class="post-comments">
+      <halo:comment group="plugin.halo.run" kind="Plugin" th:attr="name=${pluginName}" />
+    </section>
+
+  </th:block>
+
+  <div th:unless="${pluginFinder.available('PluginLinks')}" class="alert alert-soft alert-vertical empty-state"
+       role="status" data-plugin-status="missing" data-plugin="PluginLinks">
+    <div class="empty-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+      </svg>
+    </div>
+    <p class="empty-text" th:text="#{links.pluginMissing}">链接管理插件未启用</p>
+    <p class="empty-sub" th:text="#{links.pluginMissingHint}">请在后台安装并启用「链接管理」插件</p>
+  </div>
+
+  </div>
+
+  <!-- 悬浮自助申请按钮：与成员页的悬浮申请按钮同款，打开的是同一个官方申请弹窗 -->
+  <button th:if="${linkApplicationEnabled}"
+          type="button"
+          class="link-apply-fab"
+          data-official-link-apply-open
+          title="申请友链" th:title="#{links.apply}"
+          aria-label="申请友链" th:aria-label="#{links.apply}">
+    <svg width="1.4em" height="1.4em" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+    </svg>
+  </button>
+
+  <script type="module" th:src="@{/assets/js/links.js(v=${theme.spec.version})}"></script>
+
+  </th:block>
+
+</th:block>
+</html>
