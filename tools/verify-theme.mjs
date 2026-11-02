@@ -76,7 +76,7 @@ const groupNames = groups.map((form) => form.group);
 if (new Set(groupNames).size !== groupNames.length) {
   fail('settings.yaml 存在重复设置分组');
 }
-const expectedGroups = ['appearance', 'navigation', 'home', 'sidebar', 'about', 'pages', 'seo', 'error_page', 'auth_page', 'globe', 'footer'];
+const expectedGroups = ['appearance', 'navigation', 'home', 'home_hero', 'sidebar', 'about', 'pages', 'seo', 'error_page', 'auth_page', 'globe', 'footer'];
 if (JSON.stringify(groupNames) !== JSON.stringify(expectedGroups)) {
   fail(`设置分组顺序异常：${groupNames.join(', ')}`);
 }

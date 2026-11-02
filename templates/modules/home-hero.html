@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<body>
+<!--
+  首页首屏：5 套版式（1/2/3/8/10）共用一套后台设置。
+  页头、文案、按钮、数字、三块内容、成员名单全部来自 theme.config.home_hero，
+  版式只决定排布，不写死任何展示内容。
+-->
+<section th:fragment="hero"
+         class="nh"
+         th:classappend="${heroLayout == 'p42' ? ' nh--p42r' : ' nh--' + heroLayout}"
+         th:with="hero=${theme.config.home_hero},
+                  heroLayout=${hero?.layout ?: 'p42r'},
+                  logoMode=${hero?.logo_mode ?: 'mark'},
+                  logoImage=${hero?.logo_image},
+                  brandName=${#strings.isEmpty(hero?.brand_name) ? site.title : hero.brand_name},
+                  brandEn=${hero?.brand_en},
+                  ctaText=${hero?.header_cta_text},
+                  ctaUrl=${hero?.header_cta_url ?: '/'},
+                  navMenuName=${hero?.nav_menu},
+                  navMenu=${navMenuName != null and !#strings.isEmpty(navMenuName) ? menuFinder.getByName(navMenuName) : null},
+                  useMenu=${navMenu != null and navMenu.menuItems != null and !#lists.isEmpty(navMenu.menuItems)},
+                  navItems=${hero?.nav_items},
+                  hasNavItems=${navItems != null and !#lists.isEmpty(navItems)},
+                  title1=${hero?.title_line1},
+                  titleAccent=${hero?.title_accent},
+                  subtitle=${hero?.subtitle},
+                  lead=${hero?.lead},
+                  eyebrow=${hero?.eyebrow},
+                  primaryText=${hero?.primary_text},
+                  primaryUrl=${hero?.primary_url ?: '/archives'},
+                  secondaryText=${hero?.secondary_text},
+                  secondaryUrl=${hero?.secondary_url ?: '/members'},
+                  stats=${hero?.stats},
+                  hasStats=${stats != null and !#lists.isEmpty(stats)},
+                  blocks=${hero?.blocks},
+                  hasBlocks=${blocks != null and !#lists.isEmpty(blocks)},
+                  coverImage=${hero?.cover_image},
+                  hasCoverImage=${coverImage != null and !#strings.isEmpty(coverImage)},
+                  panImage=${hasCoverImage ? coverImage : (hasBlocks and blocks[0].image != null and !#strings.isEmpty(blocks[0].image) ? blocks[0].image : null)},
+                  footnote=${hero?.footnote},
+                  hasLogoImage=${logoMode == 'image' and logoImage != null and !#strings.isEmpty(logoImage)},
+                  showMark=${logoMode == 'mark'},
+                  logoChar=${!#strings.isEmpty(brandEn) ? #strings.substring(brandEn, 0, 1) : (!#strings.isEmpty(brandName) ? #strings.substring(brandName, 0, 1) : 'N')},
+                  memberNames=${#strings.isEmpty(hero?.member_names) ? null : #strings.arraySplit(hero.member_names, ',')},
+                  memberLimit=${hero?.member_limit == null ? 3 : hero.member_limit},
+                  pinnedIds=${hero?.member_pinned},
+                  hasPinned=${pinnedIds != null and !#lists.isEmpty(pinnedIds)},
+                  memberGroups=${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null},
+                  useMembers=${memberGroups != null and memberGroups.items != null and !#lists.isEmpty(memberGroups.items)}">
+
+  <header class="nh-hd">
+    <a class="nh-brand" th:href="@{/}">
+      <img th:if="${hasLogoImage}" class="nh-logo-img" th:src="${logoImage}" th:alt="${brandName}" width="28" height="28" decoding="async" />
+      <s th:if="${showMark}" class="nh-mark" th:text="${logoChar}">N</s>
+      <b th:text="${brandName}">全国高校自媒体联盟</b>
+      <u th:if="${!#strings.isEmpty(brandEn)}" th:text="${brandEn}">NUCMA</u>
+    </a>
+    <nav class="nh-nav" th:aria-label="#{home.heroNavAria}">
+      <th:block th:if="${useMenu}">
+        <a th:each="item : ${navMenu.menuItems}"
+           th:if="${!#strings.isEmpty(item.status?.href ?: item.spec?.href)}"
+           th:href="@{${item.status?.href ?: item.spec?.href}}"
+           th:text="${item.status?.displayName ?: item.spec?.displayName}"
+           th:target="${item.spec?.target?.value}"></a>
+      </th:block>
+      <th:block th:unless="${useMenu}">
+        <th:block th:if="${hasNavItems}">
+          <a th:each="item : ${navItems}"
+             th:if="${item.label != null and !#strings.isEmpty(item.label) and item.url != null and !#strings.isEmpty(item.url)}"
+             th:href="@{${item.url}}"
+             th:classappend="${item.active == true} ? ' on' : ''"
+             th:text="${item.label}"></a>
+        </th:block>
+      </th:block>
+    </nav>
+    <a class="nh-cta" th:if="${ctaText != null and !#strings.isEmpty(ctaText)}"
+       th:href="@{${ctaUrl}}" th:text="${ctaText}">加入联盟</a>
+    <button class="nh-hm" id="mobileMenuToggle" type="button"
+            aria-controls="mobileMenu" aria-expanded="false" th:aria-label="#{home.heroMenuAria}">
+      <i></i><i></i><i></i>
+    </button>
+  </header>
+
+  <!-- 1 / 7 · 图文并置 -->
+  <div class="nh42" th:if="${heroLayout == 'p42r' or heroLayout == 'p42'}">
+    <div class="nh42-l">
+      <div class="nh-eb nh42-eb" th:if="${heroLayout == 'p42' and !#strings.isEmpty(eyebrow)}">
+        <s></s><span th:text="${eyebrow}"></span>
+      </div>
+      <h1 class="nh-title nh42-title">
+        <span th:text="${title1}">让每一面校园的墙</span>
+        <th:block th:if="${!#strings.isEmpty(titleAccent)}"><br /><em th:text="${titleAccent}">被更多人看见</em></th:block>
+      </h1>
+      <p class="nh42-p" th:if="${!#strings.isEmpty(lead)}" th:text="${lead}"></p>
+      <div class="nh-btns">
+        <a class="nh-btn solid" th:if="${!#strings.isEmpty(primaryText)}" th:href="@{${primaryUrl}}" th:text="${primaryText}"></a>
+        <a class="nh-btn line" th:if="${!#strings.isEmpty(secondaryText)}" th:href="@{${secondaryUrl}}" th:text="${secondaryText}"></a>
+      </div>
+      <div class="nh-stats nh42-stats" th:if="${hasStats}">
+        <div class="nh-stat" th:each="s, st : ${stats}" th:if="${st.index < 3}">
+          <b><span th:text="${s.value}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
+          <span th:text="${s.label}"></span>
+        </div>
+      </div>
+    </div>
+    <div class="nh42-ph" th:if="${hasBlocks}">
+      <a class="nh42-t" th:each="b, st : ${blocks}" th:if="${st.index < 3}"
+         th:classappend="${' nh42-t' + st.count}"
+         th:attr="href=${b.url != null and !#strings.isEmpty(b.url) ? b.url : null}"
+         th:style="${'--b:' + (b.color != null and !#strings.isEmpty(b.color) ? b.color : '#f4c09c') + (b.image != null and !#strings.isEmpty(b.image) ? ';background-image:url(' + b.image + ')' : '')}">
+        <span class="nh42-idx" th:if="${!#strings.isEmpty(b.meta)}" th:text="${b.meta}"></span>
+        <span class="nh42-tag"><s></s><span th:text="${b.title}"></span></span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 2 · 品牌墙 -->
+  <div class="nhwall" th:if="${heroLayout == 'wall'}">
+    <div class="nhwall-fog" aria-hidden="true"></div>
+    <div class="nhwall-grid" aria-hidden="true"></div>
+    <div class="nhwall-main">
+      <h1 class="nh-title nhwall-title">
+        <span th:text="${title1}">让每一面校园的墙</span>
+        <th:block th:if="${!#strings.isEmpty(titleAccent)}"><br /><em th:text="${titleAccent}">被更多人看见</em></th:block>
+      </h1>
+      <p class="nhwall-sub" th:if="${!#strings.isEmpty(subtitle)}" th:text="${subtitle}"></p>
+      <p class="nhwall-lead" th:if="${!#strings.isEmpty(lead)}" th:text="${lead}"></p>
+      <div class="nh-btns nhwall-cta">
+        <a class="nh-btn solid" th:if="${!#strings.isEmpty(primaryText)}" th:href="@{${primaryUrl}}" th:text="${primaryText}"></a>
+        <a class="nh-link" th:if="${!#strings.isEmpty(secondaryText)}" th:href="@{${secondaryUrl}}" th:text="${secondaryText}"></a>
+      </div>
+      <div class="nh-stats nhwall-stats" th:if="${hasStats}">
+        <div class="nh-stat" th:each="s, st : ${stats}" th:if="${st.index < 3}">
+          <b><span th:text="${s.value}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
+          <span th:text="${s.label}"></span>
+        </div>
+      </div>
+    </div>
+    <div class="nhwall-foot" th:if="${useMembers or memberNames != null}">
+      <div class="nhwall-track">
+        <div class="nhwall-set" th:each="pass : ${ {0,1} }">
+          <th:block th:if="${useMembers}">
+            <th:block th:each="g, gs : ${memberGroups.items}" th:if="${hasPinned or gs.index < 8}">
+              <a class="nhchip" th:each="m, ms : ${g.members}"
+                 th:if="${hasPinned ? #lists.contains(pinnedIds, m.metadata.name) : ms.index < memberLimit}"
+                 th:href="@{/members}" th:title="${m.spec.displayName}">
+                <span class="nhchip-av">
+                  <img th:if="${m.spec.avatar != null and !#strings.isEmpty(m.spec.avatar)}" th:src="${m.spec.avatar}" alt="" width="32" height="32" loading="lazy" />
+                  <th:block th:unless="${m.spec.avatar != null and !#strings.isEmpty(m.spec.avatar)}"
+                            th:text="${!#strings.isEmpty(m.spec.school) ? #strings.substring(m.spec.school, 0, 1) : (!#strings.isEmpty(m.spec.displayName) ? #strings.substring(m.spec.displayName, 0, 1) : 'N')}">N</th:block>
+                </span>
+                <u th:text="${!#strings.isEmpty(m.spec.school) ? m.spec.school : m.spec.displayName}"></u>
+              </a>
+            </th:block>
+          </th:block>
+          <th:block th:unless="${useMembers}">
+            <a class="nhchip" th:each="n : ${memberNames}"
+               th:if="${n != null and !#strings.isEmpty(#strings.trim(n))}" th:href="@{/members}">
+              <span class="nhchip-av" th:text="${#strings.substring(#strings.trim(n), 0, 1)}">N</span>
+              <u th:text="${#strings.trim(n)}"></u>
+            </a>
+          </th:block>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 · 校墙封面 -->
+  <div class="nhcover" th:if="${heroLayout == 'cover'}">
+    <div class="nhcover-img" th:style="${hasCoverImage ? 'background-image:url(' + coverImage + ')' : ''}" aria-hidden="true"></div>
+    <div class="nhcover-veil" aria-hidden="true"></div>
+    <div class="nhcover-inner">
+      <h1 class="nh-title nhcover-title">
+        <span th:text="${title1}">让每一面校园的墙</span>
+        <th:block th:if="${!#strings.isEmpty(titleAccent)}"><br /><em th:text="${titleAccent}">被更多人看见</em></th:block>
+      </h1>
+      <p class="nhcover-sub" th:if="${!#strings.isEmpty(subtitle)}" th:text="${subtitle}"></p>
+      <div class="nh-btns nhcover-cta">
+        <a class="nh-btn solid" th:if="${!#strings.isEmpty(primaryText)}" th:href="@{${primaryUrl}}" th:text="${primaryText}"></a>
+        <a class="nh-btn ghost" th:if="${!#strings.isEmpty(secondaryText)}" th:href="@{${secondaryUrl}}" th:text="${secondaryText}"></a>
+      </div>
+    </div>
+    <div class="nhcover-glass" th:if="${hasStats}">
+      <div class="nhcover-cell" th:each="s, st : ${stats}" th:if="${st.index < 4}">
+        <b><span th:text="${s.value}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
+        <span th:text="${s.label}"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8 · 层叠卡片 -->
+  <div class="nhcards" th:if="${heroLayout == 'cards'}">
+    <div class="nhcards-h">
+      <h1 class="nh-title nhcards-title">
+        <span th:text="${title1}">让每一面校园的墙</span>
+        <th:block th:if="${!#strings.isEmpty(titleAccent)}"><br /><em th:text="${titleAccent}">被更多人看见</em></th:block>
+      </h1>
+      <p class="nhcards-p" th:if="${!#strings.isEmpty(lead)}" th:text="${lead}"></p>
+      <div class="nh-btns nhcards-btns">
+        <a class="nh-btn solid" th:if="${!#strings.isEmpty(primaryText)}" th:href="@{${primaryUrl}}" th:text="${primaryText}"></a>
+        <a class="nh-btn line" th:if="${!#strings.isEmpty(secondaryText)}" th:href="@{${secondaryUrl}}" th:text="${secondaryText}"></a>
+      </div>
+    </div>
+    <div class="nhcards-stk" th:if="${hasBlocks}">
+      <div class="nhcard" th:each="b, st : ${blocks}" th:if="${st.index < 3}"
+           th:classappend="${' nhcard-' + st.count}"
+           th:style="${'--b:' + (b.color != null and !#strings.isEmpty(b.color) ? b.color : '#f4c09c')}">
+        <div class="nhcard-tb"><i></i><i></i><i></i><span th:text="${b.meta}"></span></div>
+        <div class="nhcard-bd">
+          <div class="nhcard-r"><b th:text="${b.title}"></b><s class="nhcard-dot" aria-hidden="true"></s></div>
+          <div class="nhcard-ln" th:if="${b.line2 != null and !#strings.isEmpty(b.line2)}">
+            <span th:text="${b.line2}"></span><u></u>
+          </div>
+          <div class="nhcard-prog" aria-hidden="true"><s th:each="k : ${ {1,2,3,4,5} }" th:classappend="${k == st.count ? ' hi' : ''}"></s></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 · 极简大字 -->
+  <div class="nhmin" th:if="${heroLayout == 'minimal'}">
+    <div class="nhmin-body">
+      <div class="nhmin-mk" th:if="${!#strings.isEmpty(eyebrow)}"><s></s><span th:text="${eyebrow}"></span></div>
+      <h1 class="nh-title nhmin-title">
+        <span th:text="${title1}">让每一面校园的墙</span>
+        <th:block th:if="${!#strings.isEmpty(titleAccent)}"><br /><em th:text="${titleAccent}">被更多人看见</em></th:block>
+      </h1>
+      <div class="nhmin-sub">
+        <p th:if="${!#strings.isEmpty(lead)}" th:text="${lead}"></p>
+        <div class="nh-btns">
+          <a class="nh-btn solid" th:if="${!#strings.isEmpty(primaryText)}" th:href="@{${primaryUrl}}" th:text="${primaryText}"></a>
+          <a class="nh-btn line" th:if="${!#strings.isEmpty(secondaryText)}" th:href="@{${secondaryUrl}}" th:text="${secondaryText}"></a>
+        </div>
+      </div>
+    </div>
+    <aside class="nhmin-side" th:if="${useMenu or hasNavItems}" th:aria-label="#{home.heroTabsAria}">
+      <th:block th:if="${useMenu}">
+        <a th:each="item : ${navMenu.menuItems}"
+           th:if="${!#strings.isEmpty(item.status?.href ?: item.spec?.href)}"
+           th:href="@{${item.status?.href ?: item.spec?.href}}">
+          <span th:text="${item.status?.displayName ?: item.spec?.displayName}"></span>
+        </a>
+      </th:block>
+      <th:block th:unless="${useMenu}">
+        <a th:each="item : ${navItems}"
+           th:if="${item.label != null and !#strings.isEmpty(item.label) and item.url != null and !#strings.isEmpty(item.url)}"
+           th:href="@{${item.url}}">
+          <span th:text="${item.label}"></span>
+          <u th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" th:text="${item.badge}"></u>
+        </a>
+      </th:block>
+    </aside>
+    <div class="nhmin-foot" th:if="${!#strings.isEmpty(footnote)}">
+      <span th:text="${footnote}"></span>
+    </div>
+  </div>
+
+  <!-- 4 · 光斑 -->
+  <div class="nhaur" th:if="${heroLayout == 'aurora'}">
+    <div class="nhaur-layer" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="nhaur-veil" aria-hidden="true"></div>
+    <div class="nhaur-inner">
+      <h1 class="nh-title nhaur-title">
+        <span th:text="${title1}">让每一面校园的墙</span>
+        <th:block th:if="${!#strings.isEmpty(titleAccent)}"><br /><em th:text="${titleAccent}">被更多人看见</em></th:block>
+      </h1>
+      <p class="nhaur-lead" th:if="${!#strings.isEmpty(lead)}" th:text="${lead}"></p>
+      <div class="nh-btns nhaur-cta">
+        <a class="nh-btn solid" th:if="${!#strings.isEmpty(primaryText)}" th:href="@{${primaryUrl}}" th:text="${primaryText}"></a>
+        <a class="nh-btn line" th:if="${!#strings.isEmpty(secondaryText)}" th:href="@{${secondaryUrl}}" th:text="${secondaryText}"></a>
+      </div>
+      <div class="nhaur-chips" th:if="${useMenu or hasNavItems}">
+        <th:block th:if="${useMenu}">
+          <a class="nhaur-chip" th:each="item, ns : ${navMenu.menuItems}"
+             th:if="${ns.index < 4 and !#strings.isEmpty(item.status?.href ?: item.spec?.href)}"
+             th:href="@{${item.status?.href ?: item.spec?.href}}">
+            <b th:text="${item.status?.displayName ?: item.spec?.displayName}"></b>
+          </a>
+        </th:block>
+        <th:block th:unless="${useMenu}">
+          <a class="nhaur-chip" th:each="item, ns : ${navItems}"
+             th:if="${ns.index < 4 and item.label != null and !#strings.isEmpty(item.label)}"
+             th:attr="href=${item.url != null and !#strings.isEmpty(item.url) ? item.url : '/'}">
+            <b th:text="${item.label}"></b>
+          </a>
+        </th:block>
+      </div>
+      <div class="nhaur-foot" th:if="${hasStats}">
+        <span class="nhaur-st" th:each="s, st : ${stats}" th:if="${st.index < 4}">
+          <i th:text="${s.label}"></i><b th:text="${s.value}"></b>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 · 柔光渐层 -->
+  <div class="nhmesh" th:if="${heroLayout == 'p41'}">
+    <div class="nhmesh-field" aria-hidden="true"></div>
+    <div class="nhmesh-veil" aria-hidden="true"></div>
+    <div class="nhmesh-h">
+      <div class="nh-eb" th:if="${!#strings.isEmpty(eyebrow)}"><s></s><span th:text="${eyebrow}"></span></div>
+      <h1 class="nh-title nhmesh-title">
+        <span th:text="${title1}">让每一面校园的墙</span>
+        <th:block th:if="${!#strings.isEmpty(titleAccent)}"><br /><em th:text="${titleAccent}">被更多人看见</em></th:block>
+      </h1>
+      <p class="nhmesh-p" th:if="${!#strings.isEmpty(lead)}" th:text="${lead}"></p>
+      <div class="nh-btns nhmesh-btns">
+        <a class="nh-btn solid" th:if="${!#strings.isEmpty(primaryText)}" th:href="@{${primaryUrl}}" th:text="${primaryText}"></a>
+        <a class="nh-btn line" th:if="${!#strings.isEmpty(secondaryText)}" th:href="@{${secondaryUrl}}" th:text="${secondaryText}"></a>
+      </div>
+    </div>
+    <div class="nhmesh-line" th:if="${memberNames != null}">
+      <s></s><b th:text="${#strings.arrayJoin(memberNames, '　')}"></b>
+    </div>
+    <div class="nhmesh-orb" th:if="${hasStats}">
+      <i th:text="${stats[0].value}"></i>
+      <span th:text="${stats[0].label}"></span>
+    </div>
+  </div>
+
+  <!-- 6 · 双色分栏 -->
+  <div class="nhsplit" th:if="${heroLayout == 'p46'}">
+    <div class="nhsplit-pan" aria-hidden="true"
+         th:style="${panImage != null and !#strings.isEmpty(panImage) ? '--pan-img:url(' + panImage + ')' : ''}">
+      <div class="nhsplit-ph"></div>
+      <div class="nhsplit-vt" th:if="${!#strings.isEmpty(subtitle)}" th:text="${subtitle}"></div>
+      <div class="nhsplit-nm" th:if="${hasStats}">
+        <b th:text="${stats[0].value}"></b>
+        <span th:text="${stats[0].label}"></span>
+      </div>
+    </div>
+    <div class="nhsplit-h">
+      <div class="nh-eb" th:if="${!#strings.isEmpty(eyebrow)}"><s></s><span th:text="${eyebrow}"></span></div>
+      <h1 class="nh-title nhsplit-title">
+        <span th:text="${title1}">让每一面校园的墙</span>
+        <th:block th:if="${!#strings.isEmpty(titleAccent)}"><br /><em th:text="${titleAccent}">被更多人看见</em></th:block>
+      </h1>
+      <p class="nhsplit-p" th:if="${!#strings.isEmpty(lead)}" th:text="${lead}"></p>
+      <div class="nh-btns nhsplit-btns">
+        <a class="nh-btn solid" th:if="${!#strings.isEmpty(primaryText)}" th:href="@{${primaryUrl}}" th:text="${primaryText}"></a>
+        <a class="nh-btn line" th:if="${!#strings.isEmpty(secondaryText)}" th:href="@{${secondaryUrl}}" th:text="${secondaryText}"></a>
+      </div>
+      <div class="nhsplit-st" th:if="${hasStats}">
+        <div th:each="s, st : ${stats}" th:if="${st.index < 3}">
+          <b><span th:text="${s.value}"></span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
+          <span th:text="${s.label}"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9 · 环形轨道 -->
+  <div class="nhorb" th:if="${heroLayout == 'p82'}">
+    <div class="nhorb-stage">
+      <svg class="nhorb-svg" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <ellipse cx="600" cy="260" rx="540" ry="228" transform="rotate(-8 600 260)" fill="none" stroke="currentColor" stroke-width="1"></ellipse>
+        <ellipse cx="600" cy="260" rx="400" ry="164" transform="rotate(-8 600 260)" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 7"></ellipse>
+      </svg>
+      <div class="nhorb-labels" aria-hidden="true" th:if="${memberNames != null}">
+        <span th:classappend="${' n' + ns.count}" th:each="n, ns : ${memberNames}" th:if="${ns.index < 6}">
+          <s></s><b th:text="${#strings.trim(n)}"></b>
+        </span>
+      </div>
+      <div class="nhorb-h">
+        <h1 class="nh-title nhorb-title">
+          <span th:text="${title1}">让每一面校园的墙</span>
+          <th:block th:if="${!#strings.isEmpty(titleAccent)}"><br /><em th:text="${titleAccent}">被更多人看见</em></th:block>
+        </h1>
+        <p class="nhorb-p" th:if="${!#strings.isEmpty(lead)}" th:text="${lead}"></p>
+        <div class="nh-btns nhorb-btns">
+          <a class="nh-btn solid" th:if="${!#strings.isEmpty(primaryText)}" th:href="@{${primaryUrl}}" th:text="${primaryText}"></a>
+          <a class="nh-btn line" th:if="${!#strings.isEmpty(secondaryText)}" th:href="@{${secondaryUrl}}" th:text="${secondaryText}"></a>
+        </div>
+      </div>
+    </div>
+    <div class="nhorb-foot" th:if="${hasStats}">
+      <div class="nh-stat" th:each="s, st : ${stats}" th:if="${st.index < 4}">
+        <b><span th:text="${s.value}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
+        <span th:text="${s.label}"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11 · 红线穿过 -->
+  <div class="nhline" th:if="${heroLayout == 'p83'}">
+    <svg class="nhline-svg" viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M -80 806 C 300 762 452 512 716 436 S 1152 262 1520 118" stroke="currentColor" stroke-width="1.6" fill="none" vector-effect="non-scaling-stroke"></path>
+      <circle cx="300" cy="700" r="4" fill="currentColor"></circle>
+      <circle cx="770" cy="412" r="4" fill="currentColor"></circle>
+      <circle cx="1190" cy="232" r="4" fill="currentColor"></circle>
+    </svg>
+    <th:block th:if="${hasBlocks}">
+      <span class="nhline-tag n1" th:if="${blocks[0] != null}"><b th:text="${blocks[0].title}"></b><i th:text="#{home.heroOrbitStart}">起点</i></span>
+      <span class="nhline-tag n2" th:if="${#lists.size(blocks) > 1 and blocks[1] != null}"><b th:text="${blocks[1].title}"></b><i th:text="#{home.heroOrbitMid}">中途</i></span>
+      <span class="nhline-tag n3" th:if="${#lists.size(blocks) > 2 and blocks[2] != null}"><b th:text="${blocks[2].title}"></b><i th:text="#{home.heroOrbitNow}">现在</i></span>
+    </th:block>
+    <div class="nhline-h">
+      <h1 class="nh-title nhline-title">
+        <span th:text="${title1}">让每一面校园的墙</span>
+        <th:block th:if="${!#strings.isEmpty(titleAccent)}"><br /><em th:text="${titleAccent}">被更多人看见</em></th:block>
+      </h1>
+      <p class="nhline-p" th:if="${!#strings.isEmpty(lead)}" th:text="${lead}"></p>
+    </div>
+    <div class="nh-btns nhline-btns">
+      <a class="nh-btn solid" th:if="${!#strings.isEmpty(primaryText)}" th:href="@{${primaryUrl}}" th:text="${primaryText}"></a>
+      <a class="nh-btn line" th:if="${!#strings.isEmpty(secondaryText)}" th:href="@{${secondaryUrl}}" th:text="${secondaryText}"></a>
+    </div>
+  </div>
+
+  <script th:inline="none">
+    (function () {
+      var sec = document.querySelector('.nh');
+      if (!sec || sec.dataset.navOn) return;
+      sec.dataset.navOn = '1';
+      var here = (location.pathname.replace(/\/+$/, '') || '/');
+      sec.querySelectorAll('.nh-nav a, .nhmin-side a').forEach(function (a) {
+        var href = a.getAttribute('href') || '';
+        if (!href || href.charAt(0) === '#') return;
+        var path = href.replace(/^https?:\/\/[^/]+/i, '').replace(/\/+$/, '') || '/';
+        if (path === here) a.classList.add('on');
+      });
+    })();
+  </script>
+</section>
+</body>
+</html>

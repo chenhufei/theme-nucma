@@ -50,6 +50,25 @@ spec:
               value: MM/DD/YYYY
             - label: 01-01
               value: MM-DD
+        - $formkit: select
+          name: site_bg
+          label: 全站承接背景
+          value: auto
+          help: 铺在所有页面最底层。「跟随首屏」时，1/2/6/7/8/9/10/11 号首屏为纯白底；3 校墙封面、4 光斑、5 柔光渐层沿用原纹理并过渡到底色。
+          options:
+            - label: 跟随首屏版式
+              value: auto
+            - label: 纸感暖白
+              value: paper
+            - label: 栏目网格
+              value: grid
+            - label: 关闭（纯白底）
+              value: "off"
+        - $formkit: color
+          name: site_bg_color
+          label: 全站背景底色
+          value: "#F8F6F1"
+          help: 用于 3/4/5 号首屏和固定纹理模式：首屏底部过渡到这个颜色，滚动时没有接缝；深色模式会压暗。纯白首屏不受此项影响。
         - $formkit: checkbox
           name: developer_mode
           label: 开发者诊断模式
@@ -216,6 +235,29 @@ spec:
           max: 800
           step: 10
           help: 通过拖动条调节 Hero 区域最小高度（当前值会实时显示在右侧输入框中，默认 320px）
+        - $formkit: select
+          name: hero_style
+          label: 首屏样式
+          value: floaters
+          help: 浮标卡/杂志栏沿用页脚的白卡与浅色面板语言；填了自定义背景图时自动回到经典居中，保证文字可读。
+          options:
+            - label: 浮标卡（白卡骑在面板上沿）
+              value: floaters
+            - label: 杂志栏（左文右目录）
+              value: magazine
+            - label: 经典居中
+              value: classic
+        - $formkit: text
+          name: hero_eyebrow
+          label: 首屏眉标
+          value: 全国高校自媒体联盟 · CAMPUS MEDIA
+          help: 标题上方那行小字，留空使用默认文案。
+        - $formkit: text
+          name: hero_lead
+          label: 首屏副标题
+          value: ""
+          placeholder: 留空使用站点副标题
+          help: 站点副标题为空时使用主题默认文案；只在浮标卡/杂志栏样式下显示。
 
         - $formkit: array
           name: section_blocks
@@ -381,6 +423,323 @@ spec:
                 iconField: spec.logo
                 descriptionField: spec.url
                 fieldSelectorKey: metadata.name
+
+    - group: home_hero
+      label: 首屏 Hero
+      formSchema:
+        - $formkit: checkbox
+          name: enabled
+          label: 启用新版首屏
+          value: true
+          help: 关闭后回到原来的首页横幅；开启后首页改用下方面板控制的整屏首屏。
+        - $formkit: select
+          name: layout
+          label: 首屏版式
+          value: p42r
+          help: 11 套版式共用同一组文案、数字、导航与按钮设置，切换版式不会丢内容。
+          options:
+            - label: 1 · 图文并置（左文右三块）
+              value: p42r
+            - label: 2 · 品牌墙（成员跑马灯）
+              value: wall
+            - label: 3 · 校墙封面（全屏底图）
+              value: cover
+            - label: 4 · 光斑（居中大字）
+              value: aurora
+            - label: 5 · 柔光渐层（左下沉降）
+              value: p41
+            - label: 6 · 双色分栏（右侧杏色竖面）
+              value: p46
+            - label: 7 · 图文并置（带小字原稿）
+              value: p42
+            - label: 8 · 层叠卡片（归档台）
+              value: cards
+            - label: 9 · 环形轨道（成员环绕）
+              value: p82
+            - label: 10 · 极简大字（NUCMA / 2026）
+              value: minimal
+            - label: 11 · 红线穿过（一条线串起校墙）
+              value: p83
+
+        - $formkit: select
+          name: logo_mode
+          label: 页头 Logo
+          value: mark
+          help: 默认使用主题红色标记；可换成媒体库图片，也可以完全去掉标记只留站名。
+          options:
+            - label: 默认标记
+              value: mark
+            - label: 自定义图片
+              value: image
+            - label: 不显示 Logo
+              value: none
+        - $formkit: attachment
+          name: logo_image
+          label: 自定义 Logo 图片
+          value: ""
+          accepts: ["image/*"]
+          help: 仅在「页头 Logo」选择「自定义图片」时生效，建议使用透明底 PNG/SVG。
+        - $formkit: text
+          name: brand_name
+          label: 站名
+          value: 全国高校自媒体联盟
+        - $formkit: text
+          name: brand_en
+          label: 站名英文缩写
+          value: NUCMA
+          help: 显示在站名右侧，同时用作默认标记的字母。
+        - $formkit: menuSelect
+          name: nav_menu
+          label: 页头导航菜单
+          clearable: true
+          help: 选择 Halo 后台菜单后，首屏导航完全跟随菜单增删改；留空则使用下方自定义导航。
+        - $formkit: array
+          name: nav_items
+          label: 自定义页头导航
+          addLabel: 添加导航项
+          emptyText: 暂无导航项
+          help: 仅在未选择「页头导航菜单」时生效；数字角标用于极简大字版式的右侧列表。
+          itemLabels:
+            - type: text
+              label: $value.label
+            - type: text
+              label: $value.url
+          value:
+            - label: 首页
+              url: /
+              badge: ""
+              active: true
+            - label: 联盟动态
+              url: /archives
+              badge: "38"
+              active: false
+            - label: 三下乡
+              url: /categories
+              badge: "96"
+              active: false
+            - label: 信息公告
+              url: /archives
+              badge: "24"
+              active: false
+            - label: 成员公示
+              url: /members
+              badge: "104"
+              active: false
+          children:
+            - $formkit: text
+              name: label
+              label: 显示文字
+              value: ""
+              validation: required
+            - $formkit: text
+              name: url
+              label: 链接地址
+              value: ""
+              placeholder: /archives
+              validation: required
+            - $formkit: text
+              name: badge
+              label: 数字角标（可选）
+              value: ""
+              placeholder: 如 38
+            - $formkit: checkbox
+              name: active
+              label: 默认高亮
+              value: false
+              help: 浏览器会按当前地址自动高亮匹配项，这里只作为兜底。
+        - $formkit: text
+          name: header_cta_text
+          label: 页头按钮文字
+          value: 加入联盟
+        - $formkit: text
+          name: header_cta_url
+          label: 页头按钮链接
+          value: /members
+
+        - $formkit: text
+          name: title_line1
+          label: 主标题第一行
+          value: 让每一面校园的墙
+        - $formkit: text
+          name: title_accent
+          label: 主标题强调行
+          value: 被更多人看见
+          help: 显示为第二行并跟随主题主色；留空则只显示第一行。
+        - $formkit: text
+          name: subtitle
+          label: 副标题（短句）
+          value: 互动宣教 · 多元交流
+        - $formkit: textarea
+          name: lead
+          label: 首屏简介
+          value: 互动宣教，多元交流。104 所高校的栏目、作品与公告，收进同一个入口，一次发布，全站可见。
+          rows: 3
+        - $formkit: text
+          name: eyebrow
+          label: 首屏小字
+          value: NUCMA / 2026
+          help: 仅极简大字版式显示在标题左上方。
+        - $formkit: text
+          name: primary_text
+          label: 主按钮文字
+          value: 浏览全部内容
+        - $formkit: text
+          name: primary_url
+          label: 主按钮链接
+          value: /archives
+        - $formkit: text
+          name: secondary_text
+          label: 次按钮文字
+          value: 成员单位入口
+        - $formkit: text
+          name: secondary_url
+          label: 次按钮链接
+          value: /members
+
+        - $formkit: array
+          name: stats
+          label: 首屏数字
+          addLabel: 添加数字
+          emptyText: 暂无数字
+          help: 数字、单位、指代含义都可以改；封面版式最多显示 4 个，其余版式显示 3 个。
+          itemLabels:
+            - type: text
+              label: $value.value
+            - type: text
+              label: $value.label
+          value:
+            - value: "104"
+              unit: 所
+              label: 成员单位
+            - value: "356"
+              unit: 篇
+              label: 累计作品
+            - value: "42"
+              unit: 个
+              label: 覆盖区县
+          children:
+            - $formkit: text
+              name: value
+              label: 数字
+              value: "0"
+              validation: required
+            - $formkit: text
+              name: unit
+              label: 单位
+              value: ""
+              placeholder: 所 / 篇 / 个
+            - $formkit: text
+              name: label
+              label: 指代含义
+              value: ""
+              placeholder: 成员单位
+              validation: required
+
+        - $formkit: array
+          name: blocks
+          label: 图文并置三块
+          addLabel: 添加内容块
+          emptyText: 暂无内容块
+          help: 1 号版式右侧的三块内容：默认是色块，填了图片就换成图片；标题、说明与链接都可改。8 号版式用同样的三块生成层叠卡片。
+          itemLabels:
+            - type: text
+              label: $value.title
+            - type: image
+              label: $value.image
+          value:
+            - title: 西南大学 · 酉阳支教队
+              meta: 支教手记 · NO.018
+              line2: 支教手记：山里的第一课
+              color: "#f4c09c"
+              image: ""
+              url: ""
+            - title: 调研 · 非遗手艺
+              meta: 田野记录 · 09.12
+              line2: 手艺人的年轻人
+              color: "#bfd0a8"
+              image: ""
+              url: ""
+            - title: 影像 · 清晨 06:20
+              meta: 校园影像 · 06:20
+              line2: 清晨的操场
+              color: "#b9c4d2"
+              image: ""
+              url: ""
+          children:
+            - $formkit: text
+              name: title
+              label: 标题
+              value: ""
+              validation: required
+            - $formkit: text
+              name: meta
+              label: 说明 / 角标
+              value: ""
+              placeholder: 支教手记 · NO.018
+            - $formkit: text
+              name: line2
+              label: 第二行（卡片版式用）
+              value: ""
+            - $formkit: color
+              name: color
+              label: 默认色块颜色
+              value: "#f4c09c"
+            - $formkit: attachment
+              name: image
+              label: 替换图片（可选）
+              value: ""
+              accepts: ["image/*"]
+              help: 选了图片后这张图会盖住色块，作为该块的背景。
+            - $formkit: text
+              name: url
+              label: 点击链接（可选）
+              value: ""
+              placeholder: /archives
+
+        - $formkit: attachment
+          name: cover_image
+          label: 封面底图（3 号版式）
+          value: ""
+          accepts: ["image/*"]
+          help: 留空使用主题默认渐变；建议 1920×1080 以上、横向构图。
+        - $formkit: number
+          name: member_limit
+          label: 每组展示数量（2 号版式）
+          value: 3
+          min: 1
+          max: 12
+          help: 未指定成员时，每个成员分组最多展示几位（最多读取 8 个分组）；指定成员时以选择为准。
+        - $formkit: select
+          name: member_pinned
+          label: 指定展示的成员
+          value: []
+          multiple: true
+          sortable: true
+          clearable: true
+          searchable: true
+          help: 留空展示全部审核通过的成员；选中后只展示这些成员。需启用成员插件。
+          action: /apis/member.plugin.halo.run/v1alpha1/members
+          requestOption:
+            method: GET
+            pageField: page
+            sizeField: size
+            totalField: total
+            itemsField: items
+            labelField: spec.displayName
+            valueField: metadata.name
+            iconField: spec.avatar
+            descriptionField: spec.school
+            fieldSelectorKey: metadata.name
+        - $formkit: text
+          name: member_names
+          label: 成员跑马灯兜底名单（2 号版式）
+          value: 重庆大学,西南大学,西南政法大学,重庆师范大学,重庆邮电大学,四川外国语大学,重庆交通大学,重庆工商大学
+          help: 逗号分隔。仅在成员插件不可用或没有审核通过的成员时使用。
+        - $formkit: text
+          name: footnote
+          label: 首屏底部注脚
+          value: 重庆 · 秘书处　|　nucma.cn
+          help: 仅极简大字版式显示。
 
     - group: sidebar
       label: 文章页面

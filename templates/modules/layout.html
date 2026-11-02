@@ -107,9 +107,15 @@
   <th:block th:if="${headExtra != null}" th:replace="${headExtra}"></th:block>
 </head>
 <body class="page-body"
-      th:classappend="${seoPageType == 'article'} ? ' page-article' : ''"
+      th:with="siteBgStyle=${theme.config.appearance?.site_bg ?: 'auto'},
+               heroLayout=${theme.config.home_hero?.layout ?: 'p42r'},
+               heroKeepsTint=${heroLayout == 'cover' or heroLayout == 'aurora' or heroLayout == 'p41'}"
+      th:classappend="${(seoPageType == 'article' ? ' page-article' : '') + (siteBgStyle == 'off' ? ' site-bg-off' : '') + (siteBgStyle == 'auto' and !heroKeepsTint ? ' site-bg-white' : '')}"
       th:data-template="${_templateId}"
-      th:data-theme-version="${theme.spec.version}">
+      th:data-theme-version="${theme.spec.version}"
+      th:style="${'--site-paper:' + (theme.config.appearance?.site_bg_color ?: '#F8F6F1')}">
+  <div class="site-bg" aria-hidden="true"
+       th:classappend="${' site-bg--' + siteBgStyle + (siteBgStyle == 'auto' ? ' site-bg--h-' + heroLayout : '')}"></div>
   <a class="skip-link" href="#mainContent" th:text="#{a11y.skipToContent}">跳到主要内容</a>
   <div th:if="${seoPageType == 'article'}"
        id="readingProgress"
@@ -122,8 +128,9 @@
     <span class="reading-progress__bar"></span>
   </div>
 
-  <!-- 顶部导航 -->
-  <header class="site-header" th:fragment="siteHeader">
+  <!-- 顶部导航：首页启用新版首屏时由首屏自带的页头接管，这里不再重复渲染 -->
+  <header class="site-header" th:fragment="siteHeader"
+          th:if="${!(_templateId == 'index' and theme.config.home_hero?.enabled != false)}">
     <div class="container">
       <div class="header-inner"
            th:with="navAlign = ${theme.config.navigation?.nav_align ?: 'center'}"
@@ -276,7 +283,30 @@
         </button>
       </div>
       <nav class="mobile-nav" aria-label="移动端导航" th:aria-label="#{nav.mobileAria}">
-        <th:block th:if="${theme.config.navigation?.header_menu != null and !#strings.isEmpty(theme.config.navigation?.header_menu)}"
+        <th:block th:if="${_templateId == 'index' and theme.config.home_hero?.enabled != false}">
+          <th:block th:with="heroMenuName=${theme.config.home_hero?.nav_menu},
+                             heroMenu=${heroMenuName != null and !#strings.isEmpty(heroMenuName) ? menuFinder.getByName(heroMenuName) : null}">
+            <div class="mobile-nav-section mobile-nav-section--menu" role="group" th:aria-label="#{home.heroNavAria}">
+              <div class="mobile-menu-links" th:if="${heroMenu != null and !#lists.isEmpty(heroMenu.menuItems)}">
+                <a th:each="item : ${heroMenu.menuItems}"
+                   th:if="${!#strings.isEmpty(item.status?.href ?: item.spec?.href)}"
+                   class="mobile-nav-link mobile-nav-link--menu"
+                   th:href="@{${item.status?.href ?: item.spec?.href}}"
+                   th:text="${item.status?.displayName ?: item.spec?.displayName}"
+                   th:target="${item.spec?.target?.value}"></a>
+              </div>
+              <div class="mobile-menu-links" th:if="${heroMenu == null or #lists.isEmpty(heroMenu.menuItems)}">
+                <a th:each="item : ${theme.config.home_hero?.nav_items}"
+                   th:if="${item.label != null and !#strings.isEmpty(item.label) and item.url != null and !#strings.isEmpty(item.url)}"
+                   class="mobile-nav-link mobile-nav-link--menu"
+                   th:classappend="${item.active == true} ? ' is-active' : ''"
+                   th:href="@{${item.url}}"
+                   th:text="${item.label}"></a>
+              </div>
+            </div>
+          </th:block>
+        </th:block>
+        <th:block th:if="${!(_templateId == 'index' and theme.config.home_hero?.enabled != false) and theme.config.navigation?.header_menu != null and !#strings.isEmpty(theme.config.navigation?.header_menu)}"
                   th:with="menu = ${menuFinder.getByName(theme.config.navigation?.header_menu)}">
           <th:block th:if="${menu != null and !#lists.isEmpty(menu.menuItems)}">
             <div class="mobile-nav-section mobile-nav-section--menu" role="group" aria-label="菜单导航" th:aria-label="#{nav.menuAria}">

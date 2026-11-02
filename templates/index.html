@@ -2,7 +2,12 @@
 <html xmlns:th="https://www.thymeleaf.org"
       th:replace="~{modules/layout :: html(title=${site.title}, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=${site.seo?.description ?: site.subtitle}, canonical=${site.url}, image=${site.logo}, pageType='website', robots=null)}">
 <th:block th:fragment="content">
-  <!-- Banner - 校园风格 -->
+  <!-- 新版首屏：11 套版式，内容全部来自后台「首屏 Hero」设置组 -->
+  <th:block th:if="${theme.config.home_hero?.enabled != false}">
+    <th:block th:replace="~{modules/home-hero :: hero}"></th:block>
+  </th:block>
+
+  <!-- Banner - 校园风格（关闭新版首屏时回退到原横幅） -->
   <section class="banner"
            th:with="heroConfig = ${theme.config.home?.show_hero != null ? theme.config.home : theme.config.hero},
                      legacyBg = ${heroConfig?.bg_image != null and !#strings.isEmpty(heroConfig.bg_image) ? heroConfig.bg_image : ''},
@@ -16,12 +21,21 @@
                      fullW = ${heroConfig?.full_width == true},
                      overlay = ${heroConfig?.bg_overlay != null and !#strings.isEmpty(heroConfig.bg_overlay) ? heroConfig.bg_overlay : 'medium'},
                      heroH = ${heroConfig?.min_height},
-                     heroClass = ${(hasBg or carousel ? 'has-custom-bg' : '') + ' ' + (fullW ? 'full-width' : '') + ' overlay-' + overlay + (carousel ? ' has-bg-carousel' : '')},
-                     heroStyle = ${heroH != null ? 'min-height:' + heroH + 'px' : ''},
+                     heroStyle = ${(hasBg or carousel) ? 'classic' : (heroConfig?.hero_style ?: 'floaters')},
+                     heroEyebrow = ${#strings.isEmpty(heroConfig?.hero_eyebrow) ? #messages.msg('home.heroEyebrowDefault') : heroConfig.hero_eyebrow},
+                     heroLead = ${#strings.isEmpty(heroConfig?.hero_lead) ? (!#strings.isEmpty(site.subtitle) ? site.subtitle : #messages.msg('home.heroLeadDefault')) : heroConfig.hero_lead},
+                     latestPost = ${posts != null and posts.items != null and !#lists.isEmpty(posts.items) ? posts.items[0] : null},
+                     memberList = ${heroStyle != 'classic' and pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null},
+                     memberTotal = ${memberList != null and memberList.items != null and !#lists.isEmpty(memberList.items) ? #aggregates.sum(memberList.items.![members.size()]) : 0},
+                     linkGroups = ${heroStyle != 'classic' and pluginFinder.available('PluginLinks') ? linkFinder?.groupBy() : null},
+                     linkTotal = ${linkGroups != null and !#lists.isEmpty(linkGroups) ? #aggregates.sum(linkGroups.![links.size()]) : 0},
+                     heroClass = ${(hasBg or carousel ? 'has-custom-bg' : '') + ' ' + (fullW ? 'full-width' : '') + ' overlay-' + overlay + (carousel ? ' has-bg-carousel' : '') + (heroStyle == 'classic' ? '' : ' hero-' + heroStyle)},
+                     heroStyleAttr = ${heroH != null ? 'min-height:' + heroH + 'px' : ''},
                      heroInterval = ${carousel ? bgInterval : null}"
            th:if="${heroConfig == null or heroConfig.show_hero != false}"
+           th:unless="${theme.config.home_hero?.enabled != false}"
            th:classappend="${heroClass}"
-           th:style="${heroStyle}"
+           th:style="${heroStyle == 'classic' ? heroStyleAttr : ''}"
            th:data-bg-interval="${heroInterval}">
     <!-- 单背景 -->
     <th:block th:if="${!carousel}">
@@ -48,7 +62,7 @@
                 th:tabindex="${bgStat.index == 0 ? 0 : -1}"></button>
       </div>
     </th:block>
-    <div class="banner-content">
+    <div class="banner-content" th:if="${heroStyle == 'classic'}">
       <div class="banner-logos">
         <div class="banner-logo-item">
           <div class="banner-logo-icon">
@@ -64,6 +78,66 @@
       </div>
       <h1 class="banner-title" th:text="${site.title}"></h1>
       <p class="banner-subtitle" th:text="${site.subtitle}"></p>
+    </div>
+
+    <!-- 首屏：浮标卡 / 杂志栏（沿用页脚 33 案的白卡 + 浅色面板语言） -->
+    <div class="hero-shell" th:unless="${heroStyle == 'classic'}">
+      <div class="hero-panel">
+        <div class="hero-copy">
+          <p class="hero-eyebrow">
+            <span class="hero-eyebrow-bar" aria-hidden="true"></span>
+            <span th:text="${heroEyebrow}">全国高校自媒体联盟 · CAMPUS MEDIA</span>
+          </p>
+          <h1 class="hero-title" th:text="${site.title}">NUCMA</h1>
+          <p class="hero-lead" th:text="${heroLead}">把校园里的创作、记录与连接，放在同一个地方。</p>
+          <div class="hero-actions">
+            <a class="hero-btn" th:href="@{${site.routes?.archivesUri ?: '/archives'}}">
+              <span th:text="#{home.heroRead}">阅读文章</span><span class="hero-btn-go" aria-hidden="true">→</span>
+            </a>
+            <a class="hero-btn-ghost" th:href="@{/members}" th:text="#{home.heroMembers}">成员名录</a>
+          </div>
+          <dl class="hero-stats">
+            <div class="hero-stat">
+              <dt th:text="#{home.heroPostLabel}">文章</dt>
+              <dd><b th:text="${posts != null ? posts.total : 0}">0</b><span th:text="#{home.heroPostUnit}">篇</span></dd>
+            </div>
+            <div class="hero-stat" th:if="${memberTotal > 0}">
+              <dt th:text="#{home.heroMemberLabel}">已认证成员</dt>
+              <dd><b th:text="${memberTotal}">0</b><span th:text="#{home.heroMemberUnit}">位</span></dd>
+            </div>
+            <div class="hero-stat" th:if="${linkTotal > 0}">
+              <dt th:text="#{home.heroLinkLabel}">友情链接</dt>
+              <dd><b th:text="${linkTotal}">0</b><span th:text="#{home.heroLinkUnit}">个</span></dd>
+            </div>
+          </dl>
+        </div>
+        <div class="hero-cards">
+          <a class="hero-card hero-card-news" th:if="${latestPost != null}"
+             th:href="@{${latestPost.status?.permalink}}">
+            <span class="hero-card-k" th:text="#{home.heroLatest}">最新发布</span>
+            <strong class="hero-card-t" th:text="${latestPost.spec?.title}">最新一篇文章</strong>
+            <span class="hero-card-m" th:text="${#temporals.format(latestPost.spec?.publishTime, 'yyyy-MM-dd')}">2026-01-01</span>
+            <span class="hero-card-go"><span th:text="#{home.heroReadMore}">阅读全文</span> <i aria-hidden="true">→</i></span>
+          </a>
+          <a class="hero-card hero-card-members" th:if="${memberList != null and memberList.items != null and !#lists.isEmpty(memberList.items)}"
+             th:href="@{/members}">
+            <span class="hero-card-k" th:text="#{home.heroMembers}">成员名录</span>
+            <span class="hero-avatars">
+              <th:block th:each="g, gs : ${memberList.items}" th:if="${gs.index < 2}">
+                <th:block th:each="mm, ms : ${g.members}" th:if="${ms.index < 2}">
+                  <span class="hero-avatar">
+                    <img th:if="${!#strings.isEmpty(mm.spec.avatar)}" th:src="${mm.spec.avatar}" alt="" width="34" height="34" loading="lazy" />
+                    <th:block th:unless="${!#strings.isEmpty(mm.spec.avatar)}"
+                              th:text="${#strings.isEmpty(mm.spec.displayName) ? 'N' : #strings.substring(mm.spec.displayName, 0, 1)}">N</th:block>
+                  </span>
+                </th:block>
+              </th:block>
+            </span>
+            <span class="hero-card-m" th:text="${#messages.msg('home.heroMemberCount', memberTotal)}">0 位成员</span>
+            <span class="hero-card-go"><span th:text="#{home.heroDirectory}">进入名录</span> <i aria-hidden="true">→</i></span>
+          </a>
+        </div>
+      </div>
     </div>
   </section>
 

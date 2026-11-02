@@ -1296,6 +1296,30 @@ import { initDiagnostics } from './modules/diagnostics.js';
     }, 4000);
   }
 
+
+  // 成员跑马灯：成员较少时复制组，保证半轨宽度始终覆盖视口，避免出现空白缺口。
+  function initHeroMembersMarquee() {
+    var track = document.querySelector('.nhwall-track');
+    if (!track) return;
+    var set = track.querySelector('.nhwall-set');
+    if (!set || prefersReduced) return;
+    var fit = function() {
+      var vw = document.documentElement.clientWidth || window.innerWidth;
+      var guard = 0;
+      while (track.scrollWidth / 2 < vw && guard < 12) {
+        track.appendChild(set.cloneNode(true));
+        track.appendChild(set.cloneNode(true));
+        guard += 2;
+      }
+      var seconds = Math.max(18, Math.round(track.scrollWidth / 2 / 60));
+      track.style.animationDuration = seconds + 's';
+    };
+    fit();
+    window.addEventListener('resize', function() {
+      window.requestAnimationFrame(fit);
+    }, { passive: true });
+  }
+
   // ===== 初始化 =====
   function initTheme() {
     if (document.documentElement.dataset.nucmaInitialized === 'true') return;
@@ -1318,6 +1342,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
     initHistoryBackLinks();
     initWidgetOpeners();
     initBannerAnimation();
+    initHeroMembersMarquee();
     initHeaderLinksCarousel();
     initHeroBgCarousel();
     initScrollReveal();
