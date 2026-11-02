@@ -6,6 +6,7 @@ import { t } from './modules/i18n.js';
 import { defaultQqAvatar } from './modules/avatar.js';
 import { createMemberNetwork } from './modules/network.js';
 import { normalizeQqLink, decodeQrFromFile } from './modules/qq-link.js';
+import { renderBadgeShare } from './modules/badge-share.js';
 
 (function() {
   'use strict';
@@ -420,156 +421,365 @@ import { normalizeQqLink, decodeQrFromFile } from './modules/qq-link.js';
     overview.hidden = false;
   }
 
-  function initMemberPreview() {
+  /* 成员页工牌弹层：挂绳、卡扣、拖拽与入场全部由 err404.js 驱动，
+     这里只负责打开/关闭、把点击的成员交给工牌、以及键盘可及性。 */
+  function initMemberBadge() {
     var triggers = Array.from(document.querySelectorAll('[data-member-preview]'));
-    if (!triggers.length) return;
+    var overlay = document.getElementById('memberBadge');
+    if (!triggers.length || !overlay) return;
+    if (!document.getElementById('badge') || typeof window.__badgeSetMember !== 'function') return;
 
-    var modal = document.createElement('div');
-    modal.className = 'member-preview';
-    modal.hidden = true;
-    modal.innerHTML =
-      '<div class="member-preview-backdrop" data-member-preview-close></div>' +
-      '<div class="member-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="memberPreviewName">' +
-        '<button type="button" class="member-preview-close" data-member-preview-close aria-label="' + t('members.closePreview') + '">' +
-          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
-            '<path d="M6 6l12 12M18 6L6 18"></path>' +
-          '</svg>' +
-        '</button>' +
-        '<div class="member-preview-header">' +
-          '<div class="member-preview-avatar" data-member-preview-avatar></div>' +
-          '<div class="member-preview-title">' +
-            '<h2 class="member-preview-name" id="memberPreviewName" data-member-preview-name></h2>' +
-            '<p class="member-preview-school" data-member-preview-school></p>' +
-          '</div>' +
-        '</div>' +
-        '<dl class="member-preview-meta">' +
-          '<div><dt>' + t('members.previewGroup') + '</dt><dd data-member-preview-group></dd></div>' +
-          '<div><dt>' + t('members.previewJoined') + '</dt><dd data-member-preview-joined></dd></div>' +
-          '<div><dt>' + t('members.previewQq') + '</dt><dd data-member-preview-qq></dd></div>' +
-        '</dl>' +
-        '<div class="member-preview-qr" data-member-preview-qr hidden>' +
-          '<canvas data-member-preview-canvas width="180" height="180" role="img" aria-label="' + t('members.previewQrLabel') + '"></canvas>' +
-          '<span class="member-preview-qr-status" data-member-preview-qr-status>' + t('members.previewQrPending') + '</span>' +
-        '</div>' +
-        '<div class="member-preview-actions">' +
-          '<a class="btn btn-primary btn-sm" data-member-preview-link target="_blank" rel="noopener noreferrer" hidden>' + t('members.previewAdd') + '</a>' +
-          '<button type="button" class="btn btn-ghost btn-sm" data-member-preview-close>' + t('members.previewClose') + '</button>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(modal);
-
-    var dialog = modal.querySelector('.member-preview-dialog');
-    var closeButton = modal.querySelector('.member-preview-close');
+    var closeButton = overlay.querySelector('.member-badge-back');
+    var saveButton = overlay.querySelector('[data-member-badge-save]');
+    var saveLabel = overlay.querySelector('[data-member-badge-save-label]');
+    var saveStatus = overlay.querySelector('[data-member-badge-save-status]');
+    var conf = window.__ERR404__ || {};
+    var currentCard = null;
+    var saving = false;
+    var saveTimer = 0;
     var lastFocus = null;
 
-    function close() {
-      modal.hidden = true;
-      document.documentElement.classList.remove('member-preview-open');
-      var canvas = modal.querySelector('[data-member-preview-canvas]');
-      if (canvas) {
-        var ctx = canvas.getContext('2d');
-        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-        delete canvas.dataset.qrFor;
+    /* 分享图预览层：点「保存工作证」先出图，不直接下载 */
+    var preview = document.getElementById('badgePreview');
+    var previewImg = preview ? preview.querySelector('[data-badge-preview-img]') : null;
+    var previewState = preview ? preview.querySelector('[data-badge-preview-state]') : null;
+    var previewDownload = preview ? preview.querySelector('[data-badge-preview-download]') : null;
+    var previewTip = preview ? preview.querySelector('[data-badge-preview-tip]') : null;
+    var previewStage = preview ? preview.querySelector('.badge-preview-stage') : null;
+    var previewCloseBtn = preview ? preview.querySelector('.badge-preview-close') : null;
+    var previewOpen = false;
+    var previewSeq = 0;
+    var previewReturnFocus = null;
+    var previewCloseTimer = 0;
+    /* 淡出时长与 .badge-preview.is-closing 的 0.22s 对齐；多留一点收尾余量 */
+    var PREVIEW_FADE_MS = 240;
+    var poolIndex = {};
+    Array.prototype.forEach.call(document.querySelectorAll('#err404MemberData .err404-member'), function(node, index) {
+      var mid = node.getAttribute('data-mid');
+      if (mid) poolIndex[mid] = index;
+    });
+
+    function badgeShareData(card) {
+      var text = function(selector) {
+        var el = card.querySelector(selector);
+        return el ? el.textContent.trim() : '';
+      };
+      var avatarImg = card.querySelector('.member-avatar img');
+      var link = card.tagName === 'A' ? card.getAttribute('href') || '' : '';
+      var introEl = document.getElementById('backIntro');
+      var statusEl = document.getElementById('badgeStatus');
+      return {
+        name: text('.member-name'),
+        school: card.getAttribute('data-school') || '',
+        group: card.getAttribute('data-group') || '',
+        joined: card.getAttribute('data-created') || '',
+        qq: card.getAttribute('data-qq') || '',
+        link: /^https?:\/\//i.test(link) ? link : '',
+        avatar: avatarImg ? avatarImg.currentSrc || avatarImg.src : '',
+        intro: introEl ? introEl.textContent.trim() : '',
+        status: statusEl ? statusEl.textContent.trim() : '',
+        verified: card.classList.contains('member-card-verified'),
+        qr: document.getElementById('badgeQr'),
+        logo: conf.siteLogo || '',
+        siteTitle: conf.siteTitle || document.title,
+        strapColor: conf.strapColor || '#cf3538'
+      };
+    }
+
+    function resetSave() {
+      clearTimeout(saveTimer);
+      if (!saveButton) return;
+      saving = false;
+      saveButton.disabled = false;
+      if (saveLabel) saveLabel.textContent = t('members.badgeSave');
+      if (saveStatus) saveStatus.textContent = '';
+    }
+
+    function open(memberCard, trigger) {
+      lastFocus = trigger || document.activeElement;
+      currentCard = memberCard;
+      resetSave();
+      var mid = trigger.getAttribute('data-member-id') || '';
+      var idx = Object.prototype.hasOwnProperty.call(poolIndex, mid) ? poolIndex[mid] : 0;
+      window.__badgeSetMember(idx);
+
+      /* 插件成员池不带简介、认证状态，用成员卡片上的原文补上 */
+      var descriptionEl = memberCard.querySelector('[data-member-description]');
+      var description = descriptionEl ? descriptionEl.textContent.trim() : '';
+      var introEl = document.getElementById('backIntro');
+      if (introEl) {
+        introEl.textContent = description;
+        introEl.classList.toggle('is-empty', !description);
       }
+      var statusBadge = memberCard.querySelector('.member-status-badge');
+      var statusEl = document.getElementById('badgeStatus');
+      if (statusBadge && statusEl) {
+        statusEl.textContent = statusBadge.textContent.trim();
+        statusEl.classList.toggle('is-vip', memberCard.classList.contains('member-card-verified'));
+      }
+
+      if (typeof window.__badgeRest === 'function') window.__badgeRest();
+      overlay.removeAttribute('inert');
+      overlay.classList.add('is-open');
+      document.documentElement.classList.add('member-badge-open');
+      closeButton.focus();
+      /* 打开后滚动条消失、视口变宽，先重量尺寸再播入场 */
+      requestAnimationFrame(function() {
+        /* 首帧兜底：样式刚切到可见时 focus() 可能落空，焦点必须在弹层里 */
+        if (!overlay.contains(document.activeElement)) closeButton.focus();
+        if (typeof window.__badgeMeasure === 'function') window.__badgeMeasure();
+        requestAnimationFrame(function() {
+          if (typeof window.__badgeDrop === 'function') window.__badgeDrop();
+        });
+      });
+    }
+
+    function close() {
+      if (!overlay.classList.contains('is-open')) return;
+      if (previewOpen) closePreview();
+      overlay.classList.remove('is-open');
+      overlay.classList.remove('is-previewing');   /* 关弹层时别把操作条留在透明态 */
+      overlay.setAttribute('inert', '');
+      document.documentElement.classList.remove('member-badge-open');
       if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
       lastFocus = null;
     }
 
-    function renderQr(link) {
-      var wrap = modal.querySelector('[data-member-preview-qr]');
-      var canvas = modal.querySelector('[data-member-preview-canvas]');
-      var status = modal.querySelector('[data-member-preview-qr-status]');
-      if (!wrap || !canvas || !link) return;
-      wrap.hidden = false;
-      if (canvas.dataset.qrFor === link) return;
-      canvas.dataset.qrFor = link;
-      status.textContent = t('members.generating');
-      loadQrCode().then(function(QRCode) {
-        return QRCode.toCanvas(canvas, link, {
-          width: 360,
-          margin: 1,
-          errorCorrectionLevel: 'M',
-          color: { dark: '#111827FF', light: '#FFFFFFFF' }
-        });
-      }).then(function() {
-        canvas.style.removeProperty('width');
-        canvas.style.removeProperty('height');
-        status.textContent = t('members.qrScan');
-      }).catch(function() {
-        delete canvas.dataset.qrFor;
-        wrap.hidden = true;
+    overlay.querySelectorAll('[data-member-badge-close]').forEach(function(el) {
+      el.addEventListener('click', close);
+    });
+
+    /* ---------------- 分享图预览 ---------------- */
+
+    function setPreviewState(text, isError) {
+      if (!previewState) return;
+      previewState.hidden = !text;
+      previewState.textContent = text || '';
+      previewState.classList.toggle('is-error', !!isError);
+      /* 生成中给一个等比例骨架，别让面板先塌再撑 */
+      if (previewStage) previewStage.classList.toggle('is-loading', !!text && !isError);
+    }
+
+    function clearPreviewArt() {
+      if (previewImg) {
+        previewImg.hidden = true;
+        previewImg.removeAttribute('src');
+      }
+      if (previewDownload) {
+        previewDownload.hidden = true;
+        previewDownload.removeAttribute('href');
+      }
+      if (previewTip) previewTip.hidden = true;
+    }
+
+    function openPreview(returnTo) {
+      if (!preview) return 0;
+      previewSeq += 1;
+      previewOpen = true;
+      previewReturnFocus = returnTo || document.activeElement;
+      /* 从淡出过程中抢回来：撤掉 is-closing 会让淡入动画重播 */
+      clearTimeout(previewCloseTimer);
+      previewCloseTimer = 0;
+      preview.classList.remove('is-closing');
+      /* 预览期间把工牌那条操作条淡掉：预览层没有黑底，不淡会露出两排按钮 */
+      overlay.classList.add('is-previewing');
+      clearPreviewArt();
+      setPreviewState(t('members.badgeSaving'));
+      preview.hidden = false;
+      if (previewCloseBtn) previewCloseBtn.focus();
+      return previewSeq;
+    }
+
+    function closePreview() {
+      if (!preview || !previewOpen) return;
+      previewOpen = false;
+      previewSeq += 1;        /* 作废进行中的生成，别让它把图写回已关掉的层 */
+      if (saveStatus) saveStatus.textContent = '';
+
+      var target = previewReturnFocus;
+      previewReturnFocus = null;
+
+      function finish() {
+        previewCloseTimer = 0;
+        preview.classList.remove('is-closing');
+        preview.hidden = true;
+        overlay.classList.remove('is-previewing');
+        clearPreviewArt();
+        setPreviewState('');
+        /* 「保存工作证」在生成期间是 disabled，聚焦不了，退回「返回成员列表」 */
+        if (target && document.contains(target) && !target.disabled) {
+          target.focus();
+        } else if (closeButton && document.contains(closeButton)) {
+          closeButton.focus();
+        }
+      }
+
+      /* 淡出跑完再藏；关了动效偏好就立刻收 */
+      var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduced) { finish(); return; }
+      preview.classList.add('is-closing');
+      clearTimeout(previewCloseTimer);
+      previewCloseTimer = setTimeout(finish, PREVIEW_FADE_MS);
+    }
+
+    if (preview) {
+      preview.querySelectorAll('[data-badge-preview-close]').forEach(function(el) {
+        el.addEventListener('click', closePreview);
       });
     }
 
-    function open(card, trigger) {
-      lastFocus = trigger || document.activeElement;
-      var nameEl = card.querySelector('.member-name');
-      var avatarEl = card.querySelector('.member-avatar img');
-      var school = (card.getAttribute('data-school') || '').trim();
-      var group = (card.getAttribute('data-group') || '').trim();
-      var qq = (card.getAttribute('data-qq') || '').trim();
-      var link = '';
-      if (card.tagName === 'A') link = card.getAttribute('href') || '';
-      else {
-        var canvasEl = card.querySelector('[data-qr-text]');
-        if (canvasEl) link = canvasEl.getAttribute('data-qr-text') || '';
-      }
-      var created = cardDate(card);
-      var name = nameEl ? nameEl.textContent.trim() : t('members.labelMembers');
-
-      modal.querySelector('[data-member-preview-name]').textContent = name;
-      modal.querySelector('[data-member-preview-school]').textContent = school || t('members.noSchool');
-      modal.querySelector('[data-member-preview-group]').textContent = group || t('members.ungrouped');
-      modal.querySelector('[data-member-preview-joined]').textContent =
-        created ? formatDate(created) + '（' + relativeDays(created) + '）' : t('members.unknown');
-      modal.querySelector('[data-member-preview-qq]').textContent = qq || t('members.isPrivate');
-
-      var avatarBox = modal.querySelector('[data-member-preview-avatar]');
-      avatarBox.textContent = '';
-      if (avatarEl && avatarEl.getAttribute('src')) {
-        var img = document.createElement('img');
-        img.src = avatarEl.getAttribute('src');
-        img.alt = name;
-        img.loading = 'lazy';
-        avatarBox.appendChild(img);
-      } else {
-        avatarBox.textContent = name.slice(0, 1);
-        avatarBox.classList.add('is-fallback');
-      }
-
-      var linkEl = modal.querySelector('[data-member-preview-link]');
-      if (link) {
-        linkEl.href = link;
-        linkEl.hidden = false;
-        renderQr(link);
-      } else {
-        linkEl.removeAttribute('href');
-        linkEl.hidden = true;
-        modal.querySelector('[data-member-preview-qr]').hidden = true;
-      }
-
-      modal.hidden = false;
-      document.documentElement.classList.add('member-preview-open');
-      closeButton.focus();
+    function shareFileName(data) {
+      var safe = String(data.name || data.siteTitle || 'member').replace(/[\\/:*?"<>|\s]+/g, '-');
+      return 'NUCMA-' + safe + '-' + t('members.badgeFileName') + '.png';
     }
 
-    modal.querySelectorAll('[data-member-preview-close]').forEach(function(el) {
-      el.addEventListener('click', close);
-    });
+    /* 转成 data URL 再交给 <img>：iOS Safari 长按 blob: 图片不一定给「存储图像」，
+       data: 则一定出现在长按菜单里，手机存相册才不会落空。 */
+    function blobToDataUrl(blob) {
+      return new Promise(function(resolve) {
+        var reader = new FileReader();
+        reader.onload = function() { resolve(String(reader.result || '')); };
+        reader.onerror = function() { resolve(''); };
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    /* 兜底：预览层缺失时仍按老路直接下载，不让「保存」变成死按钮 */
+    function downloadBlob(blob, name) {
+      var href = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = href;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function() { URL.revokeObjectURL(href); }, 6000);
+    }
+
+    if (saveButton) {
+      saveButton.addEventListener('click', function() {
+        if (saving || !currentCard) return;
+        saving = true;
+        clearTimeout(saveTimer);
+        saveButton.disabled = true;
+        if (saveLabel) saveLabel.textContent = t('members.badgeSaving');
+        if (saveStatus) saveStatus.textContent = '';
+        var data = badgeShareData(currentCard);
+        var seq = openPreview(saveButton);
+        renderBadgeShare(data).then(function(blob) {
+          if (!seq) {
+            downloadBlob(blob, shareFileName(data));
+            if (saveLabel) saveLabel.textContent = t('members.badgeSaved');
+            if (saveStatus) saveStatus.textContent = t('members.badgeSavedHint');
+            saveTimer = setTimeout(function() {
+              if (saveLabel) saveLabel.textContent = t('members.badgeSave');
+              if (saveStatus) saveStatus.textContent = '';
+            }, 2600);
+            return;
+          }
+          return blobToDataUrl(blob).then(function(url) {
+            if (!url) throw new Error('badge data url failed');
+            if (seq !== previewSeq) return;      /* 预览已被关掉，丢弃这次结果 */
+            if (previewImg) {
+              previewImg.src = url;
+              previewImg.hidden = false;
+            }
+            if (previewDownload) {
+              previewDownload.href = url;
+              previewDownload.download = shareFileName(data);
+              previewDownload.hidden = false;
+            }
+            if (previewTip) previewTip.hidden = false;
+            setPreviewState('');
+          });
+        }).catch(function() {
+          if (seq && seq !== previewSeq) return;
+          if (seq) {
+            setPreviewState(t('members.badgeSaveFailed'), true);
+          } else if (saveStatus) {
+            saveStatus.textContent = t('members.badgeSaveFailed');
+          }
+        }).then(function() {
+          saving = false;
+          if (saveButton) saveButton.disabled = false;
+          /* 进了预览层的分支要复位文案；兜底下载分支保留「已保存」 */
+          if (seq && saveLabel) saveLabel.textContent = t('members.badgeSave');
+        });
+      });
+    }
+
+    /* 本地验证钩子：直接拿到当前成员的分享图 Blob，不触发下载 */
+    window.__badgeShare = function() {
+      if (!currentCard) return Promise.reject(new Error('no member'));
+      return renderBadgeShare(badgeShareData(currentCard));
+    };
+
+    /* 精准命中：按下点在卡片 / 吊带 / 卡扣上才交给物理引擎，
+       其余位置的「点击」关闭弹层；拖拽（位移超过 8px）不算点击。 */
+    var press = null;
+    overlay.addEventListener('pointerdown', function(event) {
+      if (!overlay.classList.contains('is-open') || event.button) { press = null; return; }
+      press = {
+        x: event.clientX,
+        y: event.clientY,
+        hit: typeof window.__badgeHit === 'function' &&
+          window.__badgeHit(event.target, event.clientX, event.clientY),
+        chrome: !!(event.target.closest &&
+          event.target.closest('[data-member-badge-close], [data-member-badge-save], .member-badge-actions'))
+      };
+    }, true);
+    overlay.addEventListener('pointerup', function(event) {
+      if (!press || event.button) { press = null; return; }
+      var start = press;
+      press = null;
+      if (start.chrome || start.hit) return;
+      if (Math.abs(event.clientX - start.x) + Math.abs(event.clientY - start.y) > 8) return;
+      close();
+    }, true);
+    overlay.addEventListener('pointercancel', function() { press = null; }, true);
+
     document.addEventListener('keydown', function(event) {
-      if (modal.hidden) return;
+      /* 预览层在上面：Esc 只关预览，Tab 也只在这一层里循环 */
+      if (previewOpen) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closePreview();
+          return;
+        }
+        if (event.key !== 'Tab' || !preview) return;
+        var pvList = Array.from(preview.querySelectorAll('a[href], button'))
+          .filter(function(el) { return !el.hidden && el.offsetParent !== null; });
+        if (!pvList.length) return;
+        var pvFirst = pvList[0];
+        var pvLast = pvList[pvList.length - 1];
+        if (!preview.contains(document.activeElement)) {
+          event.preventDefault();
+          (event.shiftKey ? pvLast : pvFirst).focus();
+        } else if (event.shiftKey && document.activeElement === pvFirst) {
+          event.preventDefault();
+          pvLast.focus();
+        } else if (!event.shiftKey && document.activeElement === pvLast) {
+          event.preventDefault();
+          pvFirst.focus();
+        }
+        return;
+      }
+      if (!overlay.classList.contains('is-open')) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         close();
         return;
       }
       if (event.key !== 'Tab') return;
-      var focusable = Array.from(dialog.querySelectorAll('a[href], button, [tabindex]:not([tabindex="-1"])'))
+      var focusable = Array.from(overlay.querySelectorAll('a[href], button, [tabindex]:not([tabindex="-1"])'))
         .filter(function(el) { return !el.hidden && el.offsetParent !== null; });
       if (!focusable.length) return;
       var first = focusable[0];
       var last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
+      if (!overlay.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
@@ -579,12 +789,12 @@ import { normalizeQqLink, decodeQrFromFile } from './modules/qq-link.js';
     });
 
     triggers.forEach(function(trigger) {
-      var card = trigger.closest('.member-card-slot')?.querySelector('.member-card');
-      if (!card) return;
+      var memberCard = trigger.closest('.member-card-slot')?.querySelector('.member-card');
+      if (!memberCard) return;
       trigger.addEventListener('click', function(event) {
         event.preventDefault();
         event.stopPropagation();
-        open(card, trigger);
+        open(memberCard, trigger);
       });
     });
   }
@@ -1254,7 +1464,7 @@ import { normalizeQqLink, decodeQrFromFile } from './modules/qq-link.js';
     var network = initMemberNetwork();
     initMemberFilters(cards, function(matched) { network.setCards(matched); });
     initMemberOverview(cards);
-    initMemberPreview();
+    initMemberBadge();
     initMemberQrPopups();
     initClaimModal();
   }
