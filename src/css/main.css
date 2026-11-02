@@ -2452,121 +2452,412 @@ a.about-service-item:focus-visible .about-service-arrow { transform: translateX(
 .member-feed-sentinel[hidden] { display: none; }
 .member-feed-status { font-size: 0.78rem; color: var(--text-tertiary); }
 
-/* ===== 成员详情预览 ===== */
-html.member-preview-open,
-html.member-preview-open body { overflow: hidden; }
-.member-preview {
+/* ===== 成员详情 · 复用 404 挂绳工牌场景 ===== */
+html.member-badge-open,
+html.member-badge-open body { overflow: hidden; }
+
+.member-badge {
   position: fixed;
   inset: 0;
   z-index: 1200;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  /* 关闭时等淡出跑完再藏；打开时不延迟，否则首帧不可见、focus() 会落空 */
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
 }
-.member-preview[hidden] { display: none; }
-.member-preview-backdrop {
+.member-badge.is-open {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.3s ease, visibility 0s;
+}
+
+.member-badge-shade {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  z-index: 0;
+  /* 纯中性压暗：之前叠了一层红色径向光，像为了烘托气氛硬打的灯，撤掉 */
+  background: rgba(14, 12, 12, 0.78);
+  backdrop-filter: blur(7px) saturate(0.85);
+  -webkit-backdrop-filter: blur(7px) saturate(0.85);
 }
-.member-preview-dialog {
+
+/* 404 物理宿主铺满整屏：织带画布跟随视口，卡片甩到哪都不断绳 */
+.member-badge .err404-main {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  min-height: 0;
+  overflow-x: clip;
+}
+.member-badge .err404-wrap {
+  display: block;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  /* 静息时卡片落在屏幕中央：吊带从屏幕顶边垂下来，锚点按卡片高度上移 */
+  padding: max(0px, calc(50vh - 394px)) 0 0;
+}
+.member-badge-scene { width: 100%; }
+
+/* ===== 底部操作条：状态行 → 按钮 → 提示小字 =====
+   「返回成员列表」「保存工作证」原分挂左右上角，会压住吊带入口；
+   按用户口径统一挪到卡片下方，并保持「按钮在提示小字上方」。 */
+.member-badge-bar {
+  position: absolute;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(560px, calc(100vw - 32px));
+  /* 只有按钮吃点击：空白处仍交给遮罩关闭 / 卡片拖拽 */
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+/* 分享图预览层不再自带黑底，工牌的操作条会露在下面、和预览层自己的按钮撞车。
+   预览期间先把整条淡出，视觉上就只剩「翻到另一页」。 */
+.member-badge.is-previewing .member-badge-bar {
+  opacity: 0;
+  pointer-events: none;
+}
+/* 工牌本体同样淡掉：不然背后「真工牌 + 分享图」两张重影，
+   手机端提示文字还会压在浅色卡片上直接看不见。 */
+.member-badge-physics { transition: opacity 0.2s ease; }
+.member-badge.is-previewing .member-badge-physics {
+  opacity: 0;
+  pointer-events: none;
+}
+.member-badge-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.member-badge-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 18px 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(22, 18, 18, 0.62);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.member-badge-back:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.member-badge-back:active { transform: translateY(1px); }
+.member-badge-back:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.member-badge-back svg { width: 16px; height: 16px; }
+
+/* 保存工作证：卡片落定后再淡入，避免和入场抢视线 */
+.member-badge-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #cf4045, #a8262b);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  opacity: 0;
+  /* 从下方浮起来（原先是压在上方，位置变了方向也跟着翻） */
+  transform: translateY(6px);
+  pointer-events: none;
+  box-shadow: 0 12px 26px -14px rgba(140, 18, 18, 0.9);
+  transition: opacity 0.3s ease, transform 0.3s ease, filter 0.2s ease;
+}
+.member-badge.is-open .member-badge-save {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition-delay: 0.55s;
+}
+.member-badge-save:hover { filter: brightness(1.08); }
+.member-badge-save:active { transform: translateY(1px); }
+.member-badge-save:disabled { cursor: progress; filter: saturate(0.7); }
+.member-badge-save:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.member-badge-save svg { width: 16px; height: 16px; }
+
+.member-badge-save-status {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-align: center;
+  pointer-events: none;
+}
+/* 空字符串时不要留一行空白，否则按钮组会跟着上下跳 */
+.member-badge-save-status:empty { display: none; }
+
+.member-badge-hint {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ===== 分享图预览层 =====
+   点「保存工作证」先生成图并停在这一层：手机长按图片即可存相册，
+   电脑可点「保存到本地」或右键另存 —— 不再直接触发下载。 */
+.badge-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  /* 整层淡入：图片出图、面板都跟着一起渐显。曲线起步快，点下去立刻有回应 */
+  animation: bpFadeIn 0.3s cubic-bezier(0.22, 0.68, 0.3, 1) both;
+}
+.badge-preview[hidden] { display: none; }
+/* 关闭时先跑淡出，跑完 JS 再 hidden —— 点外面直接消失会太硬 */
+.badge-preview.is-closing {
+  animation: bpFadeOut 0.22s cubic-bezier(0.33, 0, 0.2, 1) both;
+  pointer-events: none;
+}
+@keyframes bpFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bpFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+.badge-preview-scrim {
+  position: absolute;
+  inset: 0;
+  /* 不再自带遮罩：背后工牌层已经有 .member-badge-shade（0.78 黑 + 模糊），
+     这里再压一层黑只会把画面压闷、也看不出「翻到另一页」的层次。
+     这一层只留一个透明的点击区，用来「点外面关闭」。 */
+  background: transparent;
+}
+
+.badge-preview-panel {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  width: min(400px, 100%);
-  max-height: calc(100vh - 2rem);
-  overflow: auto;
-  padding: 1.25rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  background: var(--bg-primary);
-  box-shadow: var(--shadow-lg);
+  align-items: center;
+  gap: 14px;
+  width: min(880px, 100%);
+  max-height: 100%;
+  min-height: 0;
+  animation: bpRise 0.32s cubic-bezier(0.22, 0.68, 0.3, 1) both;
 }
-.member-preview-close {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.6rem;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
+/* 只上浮，不再叠一层透明度：整层的淡入已经负责渐显了 */
+@keyframes bpRise {
+  from { transform: translateY(14px); }
+  to { transform: none; }
+}
+
+/* 只留右上角关闭：不再写「工作证分享图」标题，图片本身就是主角 */
+.badge-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+  flex: 0 0 auto;
+}
+.badge-preview-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
   padding: 0;
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
-  background: transparent;
-  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
   cursor: pointer;
-  transition: color var(--transition-fast), background-color var(--transition-fast);
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
-.member-preview-close:hover { color: var(--text-primary); background: var(--bg-secondary); }
-.member-preview-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.member-preview-header {
+.badge-preview-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.36);
+}
+.badge-preview-close:active { transform: scale(0.94); }
+.badge-preview-close:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.badge-preview-close svg { width: 16px; height: 16px; }
+
+.badge-preview-stage {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding-right: 2rem;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
 }
-.member-preview-avatar {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  overflow: hidden;
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  color: var(--primary);
-  font-size: 1.3rem;
-  font-weight: 700;
+/* 生成中的骨架：与最终分享图同比例（1480×1067），面板不会先塌成一团再撑开 */
+.badge-preview-stage.is-loading::before {
+  content: '';
+  width: min(100%, 824px);
+  aspect-ratio: 1480 / 1067;
+  max-height: min(66vh, 640px);
+  border-radius: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.025);
 }
-.member-preview-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.member-preview-title { min-width: 0; }
-.member-preview-name {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  overflow-wrap: anywhere;
-}
-.member-preview-school {
-  margin: 0.2rem 0 0;
-  font-size: 0.82rem;
-  color: var(--text-tertiary);
-  overflow-wrap: anywhere;
-}
-.member-preview-meta {
+/* 文字压在骨架正中，不参与 flex 排布 */
+.badge-preview-stage.is-loading .badge-preview-state {
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  margin: 0;
-  padding: 0.75rem 0 0;
-  border-top: 1px solid var(--border-color);
-  font-size: 0.82rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
-.member-preview-meta > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
-.member-preview-meta dt { color: var(--text-tertiary); flex-shrink: 0; }
-.member-preview-meta dd { margin: 0; color: var(--text-primary); text-align: right; overflow-wrap: anywhere; }
-.member-preview-qr {
+.badge-preview-state {
+  margin: 0;
+  padding: 34px 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  animation: bpPulse 1.4s ease-in-out infinite;
+}
+@keyframes bpPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+.badge-preview-state[hidden] { display: none; }
+.badge-preview-state.is-error {
+  color: #ffb4b4;
+  animation: none;
+  opacity: 1;
+}
+
+.badge-preview-img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(66vh, 640px);
+  border-radius: 14px;
+  background: #fdf9f6;
+  box-shadow: 0 34px 70px -32px rgba(0, 0, 0, 0.9);
+  animation: bpImgIn 0.34s cubic-bezier(0.22, 0.68, 0.3, 1) both;
+  /* 长按保存要靠图片自身的默认手势，这里绝不能设 touch-callout / user-select 为 none */
+}
+@keyframes bpImgIn {
+  from { opacity: 0; transform: scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.badge-preview-img[hidden] { display: none; }
+
+.badge-preview-foot {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  /* 占住按钮 + 提示的高度：生成中不显示它们时面板高度不变，出图不会整体跳一下 */
+  min-height: 68px;
 }
-.member-preview-qr[hidden] { display: none; }
-.member-preview-qr canvas {
-  width: 180px;
-  height: 180px;
-  border-radius: var(--radius-sm);
-  background: #fff;
+.badge-preview-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  padding: 0 26px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #d13e43, #a8262b);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  box-shadow: 0 14px 28px -16px rgba(160, 20, 24, 0.95);
+  transition: filter 0.2s ease, transform 0.2s ease;
 }
-.member-preview-qr-status { font-size: 0.72rem; color: var(--text-tertiary); }
-.member-preview-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+.badge-preview-download:hover { filter: brightness(1.08); text-decoration: none; color: #fff; }
+.badge-preview-download:active { transform: translateY(1px); }
+.badge-preview-download:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.badge-preview-download[hidden] { display: none; }
+
+.badge-preview-tip {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+.badge-preview-tip[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-preview,
+  .badge-preview.is-closing,
+  .badge-preview-panel,
+  .badge-preview-img,
+  .badge-preview-state { animation: none; }
+}
+
+@media (max-width: 560px) {
+  .member-badge .err404-wrap { padding-top: max(0px, calc(50vh - 339px)); }
+  .member-badge-bar {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+  .member-badge-back {
+    height: 38px;
+    padding: 0 14px 0 11px;
+    font-size: 0.76rem;
+  }
+  .member-badge-save {
+    height: 38px;
+    padding: 0 16px 0 13px;
+    font-size: 0.76rem;
+  }
+  .member-badge-save-status { font-size: 0.64rem; }
+  .member-badge-hint { font-size: 0.64rem; letter-spacing: 0.12em; }
+
+  .badge-preview { padding: 16px 12px; }
+  .badge-preview-panel { gap: 12px; }
+  .badge-preview-img { max-height: min(60vh, 460px); }
+  .badge-preview-download { height: 40px; padding: 0 22px; font-size: 0.78rem; }
+  .badge-preview-tip { font-size: 0.66rem; letter-spacing: 0.06em; }
+}
+
+/* 矮视口（横屏手机 / 窄高窗口）：底部操作条会压到卡片，把整条收紧一档 */
+@media (max-height: 620px) {
+  .member-badge-bar {
+    bottom: max(8px, env(safe-area-inset-bottom));
+    gap: 6px;
+  }
+  .member-badge-back,
+  .member-badge-save { height: 36px; font-size: 0.76rem; }
+  .member-badge-hint { font-size: 0.62rem; }
+  .badge-preview-img { max-height: min(66vh, 380px); }
+}
 
 @media (max-width: 767px) {
   .member-overview { padding: var(--space-md); }
   .member-overview-body { grid-template-columns: 1fr; gap: var(--space-md); }
-  .member-preview-dialog { width: 100%; }
 }
 
 /* 目录 */

@@ -723,6 +723,19 @@
       badge.classList.add('is-flipping');
     }
     window.__badgeFlip = flipCard;
+    /* 成员页弹层复用：每次打开前把卡片恢复到静息姿态（不播入场） */
+    window.__badgeRest = function () {
+      showFace(0);
+      badge.classList.remove('is-flipped', 'is-flipping', 'is-drag');
+      flipEl.style.transform = '';
+      flipping = false; flipK = 1;
+      r = L0; vr = 0; th = 0; om = 0; leanS = 0; leanV = 0;
+      swiv = 0; bulDir = 0; bulS = 0;
+      entAt = null; entT = 0; entFall = false; entDone = true; entFrozen = false;
+      postDrag = false; caught = false; vrPrev = 0;
+      lastCx = -1e9; lastCy = -1e9; lastDeg = -1e9;
+      strapDirty = true;
+    };
 
     /* ---- 整页可拖 ---- */
     function inUI(t) {
@@ -736,8 +749,35 @@
        抓卡身就拖卡身，抓卡扣才拖卡扣。以前一律按「孔位 + 指针位移」算，
        抓卡身时卡扣会飞到指尖、卡身反向甩开，就是「拉扯永远在扣环上」。 */
     var gx = 0, gy = 0;
+    /* 弹层模式（成员页）：只认卡片 / 卡扣 / 织带三个可拖区域。
+       卡扣与织带都是 pointer-events:none，只能靠几何命中：
+       卡扣按卡孔圆域，织带按采样折线到指针的最短距离（带宽一半 + 8px 容差）。 */
+    var OVERLAY = !!CONF.overlay;
+    function hitBadge(target, cx, cy) {
+      if (target && target.closest && target.closest('#badge')) return true;
+      var rect = scene.getBoundingClientRect();
+      var lx = cx - rect.left, ly = cy - rect.top;
+      var hx = ax + Math.sin(th) * r, hy = ay + Math.cos(th) * r;
+      var ringR = Math.max(24, 34 * vSX);
+      var dx = lx - hx, dy = ly - hy;
+      if (dx * dx + dy * dy <= ringR * ringR) return true;
+      if (N < 2) return false;
+      var tol = bandW * 0.5 * flipK + 8, tol2 = tol * tol;
+      for (var i = 0; i < N; i++) {
+        var x1 = PX[i], y1 = PY[i], x2 = PX[i + 1], y2 = PY[i + 1];
+        var vx = x2 - x1, vy = y2 - y1;
+        var L2 = vx * vx + vy * vy || 1;
+        var t = ((lx - x1) * vx + (ly - y1) * vy) / L2;
+        t = t < 0 ? 0 : (t > 1 ? 1 : t);
+        var qx = x1 + vx * t - lx, qy = y1 + vy * t - ly;
+        if (qx * qx + qy * qy <= tol2) return true;
+      }
+      return false;
+    }
+    window.__badgeHit = hitBadge;
     function startDrag(e) {
       if (e.button || inUI(e.target)) return;
+      if (OVERLAY && !hitBadge(e.target, e.clientX, e.clientY)) return;
       dragging = true; moved = 0; downT = performance.now();
       var rect = scene.getBoundingClientRect();
       sceneL = rect.left; sceneT = rect.top;
@@ -1319,6 +1359,8 @@
     var ANIM_LITE = ANIM_MODE === 'lite';
     function startDrop() {
       if (reduced || hold || demo || freezeFp !== null || ANIM_MODE === 'off') return;
+      /* 成员页会多次重播入场：上一轮拖拽的状态必须清掉，否则回弹会走飞行段 */
+      postDrag = false; caught = false; vrPrev = 0;
       /* 140ms 延迟只会等字体/布局量完尺寸；期间卡片停在画面外上方，页面是空的 */
       entAt = performance.now() + 140;
       entT = 0; entFall = true; rFree = true; entFrozen = false;
@@ -1339,6 +1381,10 @@
         }
       }
     }
+
+    /* 成员页弹层复用：重播入场 / 重新量尺寸（打开时滚动条消失会改变视口宽度） */
+    window.__badgeDrop = startDrop;
+    window.__badgeMeasure = measure;
 
     window.__badgeDebug = function () {
       return JSON.stringify({ dragging: dragging, th: +th.toFixed(3), r: +r.toFixed(1), L0: L0,
