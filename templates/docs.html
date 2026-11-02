@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{modules/layout :: html(title=|${title ?: #messages.msg('docs.title')} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=|${#messages.msg('docs.description')}|, canonical='/docs', image=${site.logo}, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+  <div class="page-header" style="text-align: center; padding: var(--space-xl) 0; margin-bottom: var(--space-xl);">
+    <h1 class="page-title" th:text="${title ?: #messages.msg('docs.title')}">文档中心</h1>
+    <p class="page-desc" th:text="#{docs.subtitle}">规章制度与操作指南</p>
+  </div>
+
+  <div class="docs-list" th:if="${docs != null and docs.items != null and !#lists.isEmpty(docs.items)}">
+    <a class="card card-border doc-card" th:each="doc : ${docs.items}" th:href="@{${doc.status?.permalink}}">
+      <h3 th:text="${doc.spec?.title}"></h3>
+      <p th:if="${doc.spec?.description != null}" th:text="${doc.spec?.description}"></p>
+      <div class="doc-card__action" th:text="#{common.viewDetailArrow}">查看详情 →</div>
+    </a>
+  </div>
+
+  <div class="alert alert-soft alert-vertical empty-state" th:unless="${docs != null and docs.items != null and !#lists.isEmpty(docs.items)}">
+    <p th:text="#{docs.empty}">暂无文档</p>
+  </div>
+
+  <nav class="join pagination" th:if="${docs != null and (docs.hasPrevious() or docs.hasNext())}">
+    <a th:if="${docs.hasPrevious()}" th:href="@{${docs.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn" th:text="#{common.previousPage}">上一页</a>
+    <a th:if="${docs.hasNext()}" th:href="@{${docs.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn" th:text="#{common.nextPage}">下一页</a>
+  </nav>
+</th:block>
+</html>

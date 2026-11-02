@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{modules/layout :: html(title=|${#messages.msg('common.categories')} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=|${#messages.msg('categories.description')}|, canonical=${site.routes.categoriesUri}, image=${site.logo}, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+  <div class="page-header">
+    <h1 class="page-title" th:text="#{categories.heading}">专题</h1>
+  </div>
+  
+  <div class="category-grid" th:if="${categories != null and !categories.isEmpty()}">
+    <a th:each="cat : ${categories}" th:href="@{${cat.status?.permalink}}" class="card card-border category-card">
+      <h3 th:text="${cat.spec?.displayName}"></h3>
+      <p th:text="${#messages.msg('categories.postCountLabel', cat.status?.postCount ?: 0)}"></p>
+    </a>
+  </div>
+  
+  <div class="alert alert-soft alert-vertical empty-state" th:unless="${categories != null and !categories.isEmpty()}">
+    <p th:text="#{categories.emptyList}">暂无分类</p>
+  </div>
+</th:block>
+</html>

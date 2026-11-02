@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{modules/layout :: html(title=|${title ?: #messages.msg('photos.heading')} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=|${#messages.msg('photos.description')}|, canonical='/photos', image=${site.logo}, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+
+  <div class="page-header">
+    <h1 class="page-title" th:text="${title ?: #messages.msg('photos.heading')}">图库</h1>
+    <p class="page-desc" th:text="#{photos.subtitle}">校园影像记录</p>
+  </div>
+
+  <!-- 分组筛选 -->
+  <div class="photo-filters" th:if="${groups != null and !#lists.isEmpty(groups)}">
+    <a th:href="@{${photoUrl.list()}}"
+       class="btn btn-sm btn-soft photo-filter-item"
+       th:classappend="${group == null or #strings.isEmpty(group)} ? 'is-active btn-active' : ''"
+       th:text="#{common.all}">
+      全部
+    </a>
+    <a th:each="g : ${groups}"
+       th:href="@{${photoUrl.list(g.metadata.name)}}"
+       class="btn btn-sm btn-soft photo-filter-item"
+       th:classappend="${group != null and group == g.metadata.name} ? 'is-active btn-active' : ''">
+      <span th:text="${g.spec?.displayName}">分组</span>
+      <span class="badge badge-sm badge-soft photo-filter-count" th:if="${g.status?.photoCount != null}"
+            th:text="${g.status?.photoCount}">0</span>
+    </a>
+  </div>
+
+  <!-- 图片网格 -->
+  <div class="photo-grid"
+       th:if="${photos != null and photos.items != null and !#lists.isEmpty(photos.items)}">
+    <a th:each="photo : ${photos.items}"
+       th:href="@{${photoUrl.detail(photo)}}"
+       class="photo-item"
+       th:title="${photo.spec?.displayName}"
+       th:aria-label="${photo.spec?.displayName ?: #messages.msg('photos.viewPhoto')}">
+      <img th:src="${photo.spec?.cover ?: photo.spec?.url}"
+           th:alt="${photo.spec?.displayName}"
+           loading="lazy" decoding="async"
+           sizes="(max-width: 640px) 46vw, (max-width: 1024px) 30vw, 250px"
+           width="250" height="200" />
+      <div class="photo-overlay">
+        <span class="photo-name" th:text="${photo.spec?.displayName}"></span>
+        <span class="photo-desc" th:if="${photo.spec?.description != null and !#strings.isEmpty(photo.spec?.description)}"
+              th:text="${photo.spec?.description}"></span>
+      </div>
+    </a>
+  </div>
+
+  <!-- 空状态 -->
+  <div class="alert alert-soft alert-vertical empty-state" th:if="${photos == null or photos.items == null or #lists.isEmpty(photos.items)}">
+    <div class="empty-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+    </div>
+    <p class="empty-text" th:text="#{photos.emptyList}">暂无照片</p>
+    <p class="empty-sub" th:text="#{photos.emptyHint}">请在后台图库中添加照片</p>
+  </div>
+
+  <!-- 分页 -->
+  <nav class="join pagination"
+       th:if="${photos != null and (photos.hasPrevious() or photos.hasNext())}">
+    <a th:if="${photos.hasPrevious()}" th:href="@{${photos.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn" th:text="#{common.previousPage}">上一页</a>
+    <span class="badge badge-outline join-item page-info" th:text="|${photos.page} / ${photos.totalPages}|"></span>
+    <a th:if="${photos.hasNext()}" th:href="@{${photos.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn" th:text="#{common.nextPage}">下一页</a>
+  </nav>
+
+</th:block>
+</html>

@@ -1,0 +1,520 @@
+/* ===================== 404 · 工牌重构 ===================== */
+/* 只在 404 页加载（templates/error/404.html 里按需 <link>），不参与主样式包。
+   替换变量只有 --err404-h：主题 header 的占位高度，默认 70px，portal 风格 64px；
+   不直接用 --header-height 是因为主题没有这个变量，写死 72px 会矮 2~8px。 */
+.err404-main{
+  --err404-h:70px;
+  min-height:calc(var(--err404-vh,100vh) - var(--err404-h));display:flex;
+  /* 织带画布比场景宽 680px，横向裁掉，避免小屏出现横向滚动条 */
+  overflow-x:clip;
+}
+.err404-wrap{
+  width:100%;max-width:1200px;margin:0 auto;padding:1.2rem 2.5rem 2.6rem;
+  display:grid;grid-template-columns:minmax(440px,1.04fr) minmax(360px,1fr);
+  align-items:start;gap:2rem;
+}
+/* ---------- 左：工牌场景（不裁剪，允许整页拉扯） ---------- */
+.err404-scene{
+  /* z-index 2（19:2x 按用户口径**退回**）：站点导航栏 HEADER.site-header 是 sticky; z-index:100，
+     工牌飞到那条线以上时**就该藏进 header 里**——用户 19:2x：「绳子应该在 header 那条线以下，
+     不应该在他之上。但是反弹可以隐藏在 header 之外」。
+     19:0x 曾抬到 101 让卡片盖住导航栏，那正是「带子爬到 header 上面」的元凶之一，已撤。
+     静息/摆动时卡片离那条线还有 200px 以上，只有飞出去的那零点几秒会被导航栏盖住。 */
+  position:relative;height:720px;z-index:2;
+  overflow:visible;
+  user-select:none;-webkit-user-select:none;
+}
+.err404-scene::before{ /* 背景红晕 */
+  content:"";position:absolute;inset:-4% -6% 0;pointer-events:none;
+  background:radial-gradient(52% 42% at 50% 40%, rgba(221,51,51,.10), transparent 72%);
+}
+/* 织带画布：比场景大一圈，允许甩出边界。
+   z-index 2：**压在卡片(3)之下** —— 吊带永远从工牌背后穿过，卡片甩到哪都盖住带子，
+   只由卡扣(5)在连接处压住，符合真实挂绳工牌的遮挡关系。 */
+.strap-canvas{
+  position:absolute;left:-340px;top:-230px;width:calc(100% + 680px);height:calc(100% + 530px);
+  pointer-events:none;z-index:2;overflow:visible;
+  /* 不要在这里再叠 clip-path：织带一直画到画布上边界（场景顶 -230px，已在视口之外）。
+     页面里唯一的切口来自 .err404-main 的 overflow-x:clip，裁剪线正好压在 header 底边 →
+     带子像是从导航栏后面垂下来。以前自己裁在场景顶（比 header 底边低 19px），
+     刀口直接露在空白里，卡片一斜就是一道三角缺口。 */
+}
+/* 金属夹扣：与卡片同级兄弟元素（不再嵌在卡片里），由 JS 每帧套用卡片同款变换，
+   尺寸在 measure() 里同步成卡片宽高。z-index 5：压在吊带(4)之上，金属卡扣始终盖住
+   吊带与卡面的连接处 → 任何姿态吊带都"接进"卡扣、不再像断成两截。 */
+.clasp{
+  /* 与 mask 同一坐标系(0 0 316 492)，锚点=卡孔中心 → 任何尺寸都与孔严丝合缝 */
+  position:absolute;left:0;top:0;width:316px;height:492px;z-index:5;
+  pointer-events:none;overflow:visible;
+}
+.badge-flip{z-index:2}
+.idcard{
+  position:absolute;left:0;top:0;width:316px;height:492px;z-index:3;
+  transform-origin:158px 20px;cursor:grab;touch-action:none;
+  border-radius:22px;
+  /* 常驻合成层：40px/70px 的投影和 mask 只在首次栅格化一次，之后每帧只改矩阵 */
+  will-change:transform;
+}
+.idcard.is-drag{cursor:grabbing}
+.idcard:focus-visible{outline:2px solid #dd3333;outline-offset:6px}
+/* 翻转：2D 挤压式，只换面不做 3D → 不可能透出白底 */
+.badge-flip{position:absolute;inset:0;transform-origin:50% 50%}
+.badge-face{
+  position:absolute;inset:0;border-radius:22px;visibility:hidden;
+  box-shadow:0 40px 70px -30px rgba(140,18,18,.42);
+}
+.badge-face.is-on{visibility:visible}
+
+/* ================= 亚克力卡面（正面） ================= */
+/* 翻转期间：大羽化阴影换成小阴影（70px 模糊每帧重栅格化是掉帧主因） */
+.idcard.is-flipping .badge-face{
+  box-shadow:0 16px 28px -22px rgba(140,18,18,.3);
+}
+.idcard.is-flipping .badge-flip{will-change:transform}
+/* 卡扣常驻合成层：翻转开始/结束时不再做提升与销毁，省掉一帧抖动 */
+.clasp{will-change:transform;transform-origin:50% 50%}
+.badge-face .face-in{
+  position:absolute;inset:0;border-radius:22px;overflow:hidden;
+  color:#fff;display:flex;flex-direction:column;padding:0;
+  background:
+    radial-gradient(104% 50% at 86% -10%,rgba(255,206,199,.10),transparent 62%),
+    radial-gradient(96% 54% at -6% 106%,rgba(104,12,16,.13),transparent 70%),
+    linear-gradient(166deg,
+      rgba(146,30,35,.975) 0%,
+      rgba(166,40,44,.965) 24%,
+      rgba(178,48,50,.955) 51%,
+      rgba(168,43,46,.958) 77%,
+      rgba(152,36,40,.966) 100%);
+  box-shadow:
+    inset 0 0 0 1.2px rgba(255,255,255,.48),
+    inset 0 2px 0 rgba(255,255,255,.62),
+    inset 0 -2px 0 rgba(255,255,255,.24);
+  /* 顶部中央真打孔：mask 挖掉一块，孔里透出页面本身 */
+  -webkit-mask-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='316' height='492' viewBox='0 0 316 492' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M0 0h316v492H0z M152.5 16h11a4.5 4.5 0 0 1 0 9h-11a4.5 4.5 0 0 1 0-9z'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='316' height='492' viewBox='0 0 316 492' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M0 0h316v492H0z M152.5 16h11a4.5 4.5 0 0 1 0 9h-11a4.5 4.5 0 0 1 0-9z'/%3E%3C/svg%3E");
+  -webkit-mask-size:100% 100%;mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+}
+/* 玻璃反光：两道斜光，从左上打下来 */
+.badge-face .face-in::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:
+    linear-gradient(103deg,transparent 21%,rgba(255,255,255,.21) 30%,rgba(255,255,255,.04) 38%,transparent 46%),
+    linear-gradient(103deg,transparent 60%,rgba(255,255,255,.11) 68%,transparent 76%);
+}
+.badge-face .face-in::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:radial-gradient(104% 56% at 8% 2%,rgba(255,255,255,.16),transparent 56%);
+}
+/* 穿绳孔：卡面 mask 已经挖穿，这里只画孔壁的厚度与高光 */
+.badge-slot{
+  /* 与 mask 里的 viewBox 同源：148/316=46.835%, 16/492=3.252%, 20/316=6.329%, 9/492=1.829% */
+  position:absolute;top:3.252%;left:46.835%;width:6.329%;height:1.829%;
+  border-radius:999px;z-index:6;pointer-events:none;
+  background:transparent;
+  box-shadow:
+    inset 0 1.6px 2px rgba(44,2,4,.4),
+    inset 0 -1.1px 0 rgba(255,255,255,.6),
+    0 0 0 .7px rgba(70,6,8,.2);
+}
+/* ---------- 上半：身份 ---------- */
+.bp-body{
+  position:relative;z-index:3;flex:1 1 auto;min-height:0;overflow:hidden;
+  padding:20px 22px 8px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;
+}
+.bp-head{
+  position:absolute;top:36px;left:22px;right:22px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;
+}
+.badge-brand{
+  display:flex;align-items:center;gap:8px;margin:0;
+  font-family:var(--font-sans);font-size:.6rem;font-weight:800;letter-spacing:.26em;
+  color:rgba(255,255,255,.95);text-transform:uppercase;white-space:nowrap;
+}
+/* 圆孔：字标前的小打孔 */
+.badge-brand::before{
+  content:"";width:10px;height:10px;border-radius:50%;flex:0 0 auto;
+  background:radial-gradient(circle at 50% 62%,#fffdfc 0%,#f6eeec 58%,#c9a9a6 100%);
+  box-shadow:
+    inset 0 1.6px 1.8px rgba(58,4,6,.72),
+    inset 0 -1px 1px rgba(255,255,255,.9),
+    0 0 0 1px rgba(90,10,12,.28),
+    0 1px 0 rgba(255,255,255,.4);
+}
+.badge-status{
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  font-family:var(--font-sans);font-size:.5rem;font-weight:800;letter-spacing:.16em;
+  color:rgba(255,255,255,.8);
+}
+.badge-status::before{content:"";width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.48)}
+.badge-status.is-vip{color:#ffecc2}
+.badge-status.is-vip::before{background:#ffe08a;box-shadow:0 0 6px rgba(255,220,140,.85)}
+.bp-idrow{display:flex;align-items:center;justify-content:center;margin-top:18px}
+.badge-avatar-wrap{
+  display:block;width:92px;height:92px;flex:0 0 auto;border-radius:50%;overflow:hidden;position:relative;
+  background:rgba(255,255,255,.94);
+  border:2px solid rgba(255,255,255,.9);
+  box-shadow:0 14px 28px -13px rgba(80,8,8,.66), inset 0 0 0 1px rgba(255,255,255,.4),
+    0 0 0 4px rgba(255,255,255,.09);
+}
+.badge-avatar{
+  width:100%;height:100%;object-fit:cover;display:block;
+  /* 头像原图自带白边，轻微放大把白圈裁掉 */
+  transform:scale(1.07);
+}
+.badge-avatar--ph{
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:1.9rem;color:#fff;
+  background:rgba(255,255,255,.22);
+}
+.badge-group{
+  display:inline-flex;align-items:center;gap:5px;margin-top:10px;
+  padding:3px 10px;border-radius:999px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.38);
+  font-family:var(--font-sans);font-size:.55rem;font-weight:800;letter-spacing:.1em;
+  color:#fff;white-space:nowrap;max-width:78%;overflow:hidden;text-overflow:ellipsis;
+}
+.badge-name{
+  margin:19px 0 0;font-family:var(--font-display);font-size:1.66rem;line-height:1.2;
+  letter-spacing:.015em;white-space:normal;word-break:break-word;
+  overflow:visible;
+  text-shadow:0 2px 10px rgba(90,6,8,.32);
+}
+.badge-school{
+  margin:.42rem 0 0;font-family:var(--font-sans);font-size:.66rem;font-weight:700;
+  letter-spacing:.1em;color:rgba(255,255,255,.76);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* 中段留白里的空心字，被底栏切一刀 */
+.bp-ghost{
+  position:absolute;left:0;right:0;bottom:-7px;z-index:1;pointer-events:none;
+  text-align:center;font-family:var(--font-display);font-size:44px;line-height:.8;
+  letter-spacing:.08em;color:transparent;
+  -webkit-text-stroke:1.1px rgba(255,255,255,.44);opacity:.42;
+}
+/* ---------- 下半：奶白票根 ---------- */
+.bp-stub{
+  position:relative;z-index:3;flex:0 0 auto;
+  padding:32px 20px 12px;display:flex;flex-direction:column;
+  /* 拼色在虚线处截止：上缘只留 2px 抗锯齿，红到线为止 */
+  background:linear-gradient(180deg,
+    rgba(255,250,246,1) 0px,
+    rgba(255,250,246,1) 100%);
+  box-shadow:0 -5px 12px -16px rgba(120,16,16,.26);
+}
+.bp-stub::before{
+  content:"";position:absolute;left:17px;right:17px;top:-1px;height:2px;
+  pointer-events:none;border-radius:0;
+  background-image:repeating-linear-gradient(90deg,
+    rgba(180,40,44,.55) 0 5px, transparent 5px 11px);
+}
+.bp-stub-row{display:flex;align-items:center;gap:13px;width:100%}
+.bp-qr{
+  width:116px;height:116px;flex:0 0 auto;border-radius:9px;background:#fff;overflow:hidden;
+  box-shadow:0 7px 16px -9px rgba(90,12,12,.5), 0 0 0 1px rgba(196,140,132,.32);
+}
+.bp-qr canvas{width:100%;height:100%;display:block}
+/* 插件成员可能没有加好友链接：二维码位与按钮一起收起，避免留下空白方块 */
+.bp-qr.is-empty{display:none}
+.bp-link.is-empty{display:none}
+.bp-label.is-empty,.bp-qq.is-empty{display:none}
+.bp-addcol{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+.bp-label{
+  font-family:var(--font-sans);font-size:.5rem;font-weight:800;letter-spacing:.16em;
+  color:rgba(160,54,50,.8);
+}
+.bp-qq{
+  display:flex;align-items:baseline;gap:5px;font-family:var(--font-sans);
+  font-size:.56rem;font-weight:800;letter-spacing:.14em;color:rgba(120,44,40,.62);
+}
+.bp-qq b{font-family:var(--font-sans);font-size:1rem;font-weight:800;letter-spacing:.005em;color:#241a18}
+.bp-link{
+  display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 11px;
+  border-radius:999px;border:1px solid rgba(196,42,46,.42);background:rgba(255,255,255,.62);
+  color:#b13236;text-decoration:none;font-family:var(--font-sans);
+  font-size:.6rem;font-weight:800;letter-spacing:.1em;
+  transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease;
+}
+.bp-link:hover{background:#b13236;border-color:#b13236;color:#fff;transform:translateY(-1px)}
+.bp-link svg{width:9px;height:9px;flex:0 0 auto}
+.bp-org{
+  margin:12px 0 0;text-align:center;font-family:var(--font-sans);
+  font-size:.5rem;font-weight:800;letter-spacing:.22em;color:rgba(150,70,64,.55);
+  white-space:nowrap;
+}
+/* ================= 背面：奶白亚克力 ================= */
+.badge-back .face-in{
+  color:#241d1c;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 32%),
+    radial-gradient(86% 44% at 96% 104%,rgba(221,51,51,.10),transparent 62%),
+    linear-gradient(158deg,rgba(253,249,246,.955) 0%,rgba(250,244,239,.945) 46%,rgba(246,235,229,.95) 100%);
+  box-shadow:
+    inset 0 0 0 1.2px rgba(255,255,255,.9),
+    inset 0 2px 0 rgba(255,255,255,.92),
+    inset 0 -2px 0 rgba(196,156,144,.32);
+  -webkit-mask-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='316' height='492' viewBox='0 0 316 492' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M0 0h316v492H0z M152.5 16h11a4.5 4.5 0 0 1 0 9h-11a4.5 4.5 0 0 1 0-9z'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='316' height='492' viewBox='0 0 316 492' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M0 0h316v492H0z M152.5 16h11a4.5 4.5 0 0 1 0 9h-11a4.5 4.5 0 0 1 0-9z'/%3E%3C/svg%3E");
+  -webkit-mask-size:100% 100%;mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+}
+.badge-back .face-in::before{
+  background:
+    linear-gradient(103deg,transparent 26%,rgba(255,255,255,.65) 34%,transparent 44%),
+    linear-gradient(103deg,transparent 64%,rgba(255,255,255,.34) 71%,transparent 79%);
+}
+.badge-back .face-in::after{
+  background:radial-gradient(96% 54% at 10% 4%,rgba(255,255,255,.5),transparent 60%);
+}
+.bk-body{
+  position:relative;z-index:3;flex:1 1 auto;min-height:0;overflow:hidden;
+  padding:24px 22px 0;display:flex;flex-direction:column;
+}
+.bk-head{
+  display:flex;align-items:baseline;gap:8px;margin:0;
+  font-family:var(--font-sans);font-size:.6rem;font-weight:800;letter-spacing:.2em;
+}
+.bk-head span{color:#b13236}
+.bk-head em{font-style:normal;font-size:.52rem;letter-spacing:.14em;color:rgba(60,40,38,.3)}
+.bk-head::after{
+  content:"";flex:1;height:1px;transform:translateY(-3px);
+  background:linear-gradient(90deg,rgba(60,40,38,.16),transparent);
+}
+.bk-id{display:flex;align-items:center;gap:13px;margin-top:22px}
+.badge-back-avatar-wrap{
+  display:block;width:64px;height:64px;border-radius:50%;overflow:hidden;flex:0 0 auto;
+  background:#fff;border:1.5px solid rgba(255,255,255,.95);
+  box-shadow:0 5px 12px -5px rgba(120,30,20,.42);
+}
+.badge-back-avatar{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.07)}
+.bk-idt{min-width:0;flex:1 1 auto}
+.badge-back-name{
+  margin:0;font-family:var(--font-display);font-size:1.42rem;line-height:1.2;
+  letter-spacing:.01em;color:#231c1a;
+  white-space:normal;word-break:break-word;
+  overflow:visible;
+}
+.badge-back-school{
+  margin:.28rem 0 0;font-family:var(--font-sans);font-size:.68rem;color:rgba(70,48,44,.62);
+  letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.bk-panel{
+  flex:1 1 auto;min-height:0;margin-top:18px;
+  display:flex;flex-direction:column;
+}
+.bk-intro{
+  margin:0;font-size:.86rem;line-height:1.98;color:rgba(48,36,34,.82);letter-spacing:.02em;
+}
+/* 插件成员没有简介（插件不存 intro）时收起这一块，别留一个只有 ABOUT 的空标题 */
+.bk-intro.is-empty{display:none}
+.bk-ghost{
+  margin:auto 0;text-align:center;font-family:var(--font-display);
+  font-size:42px;line-height:1;letter-spacing:.1em;color:transparent;
+  -webkit-text-stroke:1px rgba(120,64,56,.13);
+}
+.bk-intro::before{
+  content:"ABOUT";display:block;margin:0 0 8px;
+  font-family:var(--font-sans);font-size:.5rem;font-weight:800;letter-spacing:.26em;
+  color:rgba(177,50,54,.88);
+}
+.bk-meta{
+  margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;
+  padding-top:13px;border-top:1px dashed rgba(60,40,38,.16);
+}
+.bk-meta span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bk-meta em{
+  font-style:normal;font-family:var(--font-sans);font-size:.5rem;font-weight:800;
+  letter-spacing:.18em;color:rgba(70,48,44,.42);
+}
+.bk-meta b{
+  font-family:var(--font-sans);font-size:.76rem;font-weight:800;color:#2a2220;
+  letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.bk-foot{position:relative;z-index:3;flex:0 0 auto;padding:0 22px 14px}
+.badge-barcode{
+  height:12px;border-radius:1px;position:relative;
+  background:repeating-linear-gradient(90deg,
+    #9c1f24 0 2px, transparent 2px 4px,
+    #9c1f24 4px 7px, transparent 7px 8px,
+    #9c1f24 8px 9px, transparent 9px 12px,
+    #9c1f24 12px 15px, transparent 15px 16px);
+}
+.badge-barcode--back{
+  margin-top:12px;opacity:.34;
+  background:repeating-linear-gradient(90deg,
+    rgba(60,40,38,.9) 0 2px, transparent 2px 4px,
+    rgba(60,40,38,.9) 4px 7px, transparent 7px 8px,
+    rgba(60,40,38,.9) 8px 9px, transparent 9px 12px,
+    rgba(60,40,38,.9) 12px 15px, transparent 15px 16px);
+}
+.bk-tip{
+  margin:8px 0 0;text-align:center;font-family:var(--font-sans);
+  font-size:.53rem;letter-spacing:.2em;color:rgba(70,48,44,.4);
+}
+/* ---------- 右：白色浮窗（传达「页面不存在」，与工牌平行） ---------- */
+.err404-copy{
+  position:relative;z-index:1;padding:0;box-sizing:border-box;
+  display:flex;flex-direction:column;
+}
+.floatwin{
+  position:relative;flex:1 1 auto;min-height:0;width:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;
+  text-align:center;
+  background:linear-gradient(180deg,#ffffff 0%,#fffaf8 100%);
+  border-radius:22px;padding:30px 30px 26px;box-sizing:border-box;
+  border:1px solid rgba(214,196,190,.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 36px 64px -32px rgba(150,24,28,.30),
+    0 10px 26px -18px rgba(120,30,24,.22);
+}
+.fw-art{
+  margin:4px 0 8px;width:120px;height:120px;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.fw-duck{width:116px;height:116px;display:block;object-fit:contain;
+  filter:drop-shadow(0 10px 18px rgba(180,120,20,.22));
+  transform-origin:50% 92%;animation:duckBob 3.2s ease-in-out infinite;}
+@keyframes duckBob{
+  0%,100%{transform:translateY(0) rotate(-2.5deg)}
+  50%{transform:translateY(-3px) rotate(2.5deg)}
+}
+.fw-top{display:flex;align-items:center;justify-content:center;gap:.7rem}
+.fw-badge{
+  display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 12px;
+  border-radius:999px;font-family:var(--font-sans);font-size:.74rem;font-weight:800;letter-spacing:.12em;
+  color:#fff;background:linear-gradient(180deg,#e03a3c,#c6292d);
+  box-shadow:0 8px 16px -8px rgba(150,24,28,.7);
+}
+.fw-eyebrow{
+  font-family:var(--font-sans);font-size:.66rem;font-weight:800;letter-spacing:.24em;
+  color:rgba(70,48,44,.5);text-transform:uppercase;
+}
+.fw-title{
+  margin:10px 0 0;font-family:var(--font-display);font-weight:400;
+  font-size:clamp(28px,3vw,40px);line-height:1.12;letter-spacing:.01em;color:#241d1c;
+}
+.fw-title em{font-style:normal;color:#c32a2e}
+.fw-sub{
+  margin:.8rem auto 0;max-width:34ch;font-size:.8rem;line-height:1.85;color:rgba(70,48,44,.64);letter-spacing:.01em;
+}
+.fw-actions{display:flex;align-items:center;justify-content:center;gap:.8rem;margin-top:1.35rem;flex-wrap:wrap}
+.fw-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+  height:46px;padding:0 1.4rem;border-radius:11px;
+  font-family:var(--font-sans);font-size:.86rem;font-weight:800;letter-spacing:.1em;
+  color:#fff;text-decoration:none;white-space:nowrap;
+  background:linear-gradient(180deg,#e03a3c,#c6292d);
+  box-shadow:0 14px 24px -14px rgba(150,24,28,.9),inset 0 1px 0 rgba(255,255,255,.24);
+  transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s ease,background .2s ease;
+}
+.fw-btn svg{width:15px;height:15px;transition:transform .24s cubic-bezier(.22,1,.36,1)}
+.fw-btn:hover{
+  transform:translateY(-1.5px);background:linear-gradient(180deg,#ea4644,#d12d31);
+  box-shadow:0 18px 30px -14px rgba(150,24,28,.95),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.fw-btn:hover svg{transform:translateX(3px)}
+.fw-back{
+  text-decoration:none;
+  display:inline-flex;align-items:center;height:46px;padding:0 1.1rem;border-radius:11px;
+  font-family:var(--font-sans);font-size:.8rem;font-weight:700;letter-spacing:.06em;
+  color:#9c262a;background:transparent;border:1px solid rgba(196,42,46,.32);cursor:pointer;
+  transition:background .2s ease,border-color .2s ease;
+}
+.fw-back:hover{background:rgba(221,51,51,.06);border-color:rgba(196,42,46,.5)}
+.fw-footline{
+  margin-top:1.6rem;width:100%;display:flex;flex-direction:column;align-items:center;gap:.78rem;
+}
+.fw-div{
+  width:56px;height:3px;border-radius:2px;
+  background:linear-gradient(90deg,#eec3c1,#dd3333,#eec3c1);
+}
+.fw-tip{
+  margin:0;border:0;background:none;padding:0;cursor:pointer;
+  display:inline-flex;align-items:center;gap:.42rem;
+  font-family:var(--font-sans);font-size:.74rem;line-height:1.65;letter-spacing:.01em;
+  color:rgba(70,48,44,.56);
+  transition:color .2s ease;
+}
+.fw-tip svg{width:14px;height:14px;flex:0 0 auto;transition:transform .24s cubic-bezier(.22,1,.36,1)}
+.fw-tip:hover{color:#b13236}
+.fw-tip:hover svg{transform:translateX(-3px)}
+[data-theme="dark"] .floatwin{
+  background:linear-gradient(180deg,#221d1c 0%,#1b1615 100%);
+  border-color:rgba(255,255,255,.09);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 36px 64px -32px rgba(0,0,0,.7),0 10px 26px -18px rgba(0,0,0,.6);
+}
+[data-theme="dark"] .fw-eyebrow{color:rgba(241,231,228,.5)}
+[data-theme="dark"] .fw-title{color:#f1e7e4}
+[data-theme="dark"] .fw-sub{color:rgba(241,231,228,.6)}
+[data-theme="dark"] .fw-back{color:#e2635f;border-color:rgba(226,97,95,.4)}
+[data-theme="dark"] .fw-back:hover{background:rgba(226,97,95,.1)}
+[data-theme="dark"] .fw-tip{color:rgba(241,231,228,.5)}
+[data-theme="dark"] .fw-tip:hover{color:#f0a3a0}
+/* ---------- 响应式 ---------- */
+.badge-name.is-two,.badge-back-name.is-two{line-height:1.34}
+.badge-name.is-two + .badge-school{margin-top:1.18rem}
+@media (max-width:1120px){
+  .err404-wrap{grid-template-columns:minmax(400px,1fr) minmax(320px,.95fr);gap:1.5rem;padding:1rem 1.8rem 2.2rem}
+}
+@media (max-width:960px){
+  .err404-wrap{grid-template-columns:minmax(0,1fr);gap:0;padding:0 1.5rem 2.4rem}
+  .err404-copy{padding:1.9rem 0 2.2rem;height:auto}
+}
+@media (max-width:560px){
+  .idcard{width:252px;height:424px;transform-origin:126px 16px}
+  .floatwin{padding:24px 22px 22px}
+  .fw-art{width:104px;height:104px}
+  .fw-duck{width:104px;height:104px}
+  .fw-title{font-size:1.5rem}
+  .fw-btn{height:44px;padding:0 1.3rem;font-size:.8rem}
+  .fw-sub{font-size:.78rem}
+  .fw-tip{font-size:.7rem}
+  .bp-body{padding:20px 16px 0}
+  .bp-head{top:38px;left:16px;right:16px}
+  .badge-brand{font-size:.5rem;letter-spacing:.15em}
+  .badge-brand::before{width:8px;height:8px}
+  .badge-status{font-size:.45rem;letter-spacing:.12em}
+  .bp-idrow{margin-top:14px}
+  .badge-avatar-wrap{width:68px;height:68px}
+  .badge-group{font-size:.49rem;padding:2px 7px}
+  .badge-name{font-size:1.36rem;margin-top:16px}
+  .badge-school{font-size:.61rem;letter-spacing:.06em}
+  .bp-ghost{font-size:50px;left:12px;bottom:-11px}
+  .bp-stub{padding:25px 15px 9px}
+  .bp-stub::before{left:12px;right:12px;top:-1px;height:1.8px}
+  .bp-qr{width:78px;height:78px;border-radius:7px}
+  .bp-stub-row{gap:10px}
+  .bp-label{font-size:.46rem;letter-spacing:.12em}
+  .bp-qq b{font-size:.78rem}
+  .bp-link{height:24px;padding:0 9px;font-size:.55rem;letter-spacing:.06em}
+  .bp-org{font-size:.45rem;letter-spacing:.16em;margin-top:8px}
+  .bk-body{padding:18px 16px 0}
+  .bk-head{font-size:.55rem;letter-spacing:.16em}
+  .bk-id{margin-top:16px;gap:11px}
+  .badge-back-avatar-wrap{width:50px;height:50px}
+  .badge-back-name{font-size:1.06rem}
+  .badge-back-school{font-size:.62rem}
+  .bk-intro{font-size:.76rem;line-height:1.85;margin-top:14px;padding-top:12px}
+  .bk-meta{gap:10px;padding-top:11px}
+  .bk-meta b{font-size:.7rem}
+  .bk-foot{padding:0 16px 11px}
+  .badge-barcode--back{margin-top:9px;height:11px}
+  .bk-tip{font-size:.5rem;margin-top:6px}
+}
+
+/* ---------- 与主题视觉风格对齐（header 高度按风格微调） ---------- */
+[data-visual-style="portal"] .err404-main{--err404-h:64px}
+@media (max-width:640px){
+  .err404-main{--err404-h:60px}
+}
+
+/* ---------- 「不显示工牌」时说明卡片单列并垂直居中 ---------- */
+.err404-wrap--copy-only{
+  display:flex;align-items:center;justify-content:center;
+  min-height:calc(var(--err404-vh,100vh) - var(--err404-h));
+  padding:2.4rem 1.5rem;
+}
+.err404-wrap--copy-only .err404-copy{width:min(720px,100%)}
+.err404-wrap--copy-only .floatwin{flex:0 0 auto}

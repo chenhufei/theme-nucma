@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="https://www.thymeleaf.org" th:replace="~{modules/layout :: html(title=|${#messages.msg('error.404.title')} - ${site.title}|, content=~{::content}, headExtra=~{::err404Head}, description=|${#messages.msg('error.404.message')}|, canonical='', image=${site.logo}, pageType='website', robots='noindex, nofollow')}">
+
+<!--
+  404 · 工牌重构版
+  ---------------------------------------------------------------------------
+  工牌样式只在错误页加载（headExtra 插槽 → /assets/err404/err404.css），
+  不进主样式包，也不影响任何正常页面。
+  文案、按钮、插图、入场动画、织带颜色全部走「主题设置 → 404 页面」；
+  模板里只剩结构与默认值。改默认值要同步改 settings.yaml 的 value，
+  否则「没进过后台的站点」和「点过保存的站点」会长得不一样。
+  简化版（error404_style=classic）保留原来的极简 404，作为可回退方案。
+-->
+<th:block th:fragment="err404Head">
+  <link rel="stylesheet"
+        th:if="${theme.config.error_page?.error404_style != 'classic'}"
+        th:href="@{/assets/err404/err404.css(v=${theme.spec.version})}" />
+</th:block>
+
+<th:block th:fragment="content"
+          th:with="ep=${theme.config.error_page},
+                   epClassic=${ep?.error404_style == 'classic'},
+                   showBadge=${ep?.error404_show_badge != false},
+                   showArt=${ep?.error404_show_art != false},
+                   showBack=${ep?.error404_show_back != false},
+                   flipEnabled=${ep?.error404_badge_flip != false},
+                   randomMember=${ep?.error404_badge_random != false},
+                   badgeSource=${#strings.isEmpty(ep?.error404_badge_source) ? 'plugin' : ep.error404_badge_source},
+                   titleText=${#strings.isEmpty(ep?.error404_title) ? #messages.msg('error404.title.default') : ep.error404_title},
+                   accentText=${#strings.isEmpty(ep?.error404_title_accent) ? #messages.msg('error404.accent.default') : ep.error404_title_accent},
+                   subText=${#strings.isEmpty(ep?.error404_subtitle) ? #messages.msg('error404.subtitle.default') : ep.error404_subtitle},
+                   eyebrowText=${#strings.isEmpty(ep?.error404_eyebrow) ? #messages.msg('error.404.title') : ep.error404_eyebrow},
+                   badgeLabel=${#strings.isEmpty(ep?.error404_badge_label) ? 'Members Pass' : ep.error404_badge_label},
+                   homeText=${#strings.isEmpty(ep?.error404_home_text) ? #messages.msg('error404.home.default') : ep.error404_home_text},
+                   backText=${#strings.isEmpty(ep?.error404_back_text) ? #messages.msg('error.back') : ep.error404_back_text},
+                   tipText=${#strings.isEmpty(ep?.error404_tip_text) ? #messages.msg('error404.tip.default') : ep.error404_tip_text},
+                   statusCode=${error?.status ?: 404}">
+
+  <!-- ===================== 工牌互动版（默认） ===================== -->
+  <th:block th:unless="${epClassic}">
+    <main id="mainContent" class="err404-main" aria-labelledby="err404Title">
+      <div class="err404-wrap" th:classappend="${showBadge} ? '' : ' err404-wrap--copy-only'">
+
+        <!-- 左：工牌 + 织带。可拖拽、可点翻面，逻辑全在 err404.js 里 -->
+        <section class="err404-scene" th:if="${showBadge}"
+                 th:aria-label="#{error404.aria.scene}">
+          <canvas class="strap-canvas" id="strapCanvas" aria-hidden="true"></canvas>
+          <div class="idcard" id="badge" tabindex="0" role="button"
+               th:aria-label="#{error404.aria.badge}">
+            <div class="badge-flip">
+              <!-- 正面 -->
+              <section class="badge-face badge-front is-on">
+                <div class="face-in">
+                  <div class="bp-body">
+                    <div class="bp-head">
+                      <p class="badge-brand" th:text="${badgeLabel}">Members Pass</p>
+                      <span class="badge-status" id="badgeStatus"></span>
+                    </div>
+                    <div class="bp-idrow">
+                      <span id="badgeAvatarWrap"></span>
+                    </div>
+                    <h2 class="badge-name" id="badgeName"></h2>
+                    <p class="badge-school" id="badgeSchool"></p>
+                    <span class="badge-group" id="badgeGroup"></span>
+                    <span class="bp-ghost" aria-hidden="true">NUCMA</span>
+                  </div>
+                  <div class="bp-stub">
+                    <div class="bp-stub-row">
+                      <div class="bp-qr"><canvas id="badgeQr" width="200" height="200" th:aria-label="#{members.previewQrLabel}"></canvas></div>
+                      <div class="bp-addcol">
+                        <span class="bp-label" th:text="#{error404.scanAdd}">扫码加好友</span>
+                        <span class="bp-qq">QQ <b id="badgeFootQq"></b></span>
+                        <a class="bp-link" id="badgeAdd" target="_blank" rel="noopener noreferrer" th:text="#{members.previewAdd}">加好友
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                        </a>
+                      </div>
+                    </div>
+                    <p class="bp-org" th:text="${site.title}">全国高校自媒体联盟</p>
+                  </div>
+                </div>
+                <span class="badge-slot" aria-hidden="true"></span>
+              </section>
+              <!-- 背面 -->
+              <section class="badge-face badge-back">
+                <div class="face-in">
+                  <div class="bk-body">
+                    <p class="bk-head"><span th:text="#{error404.memberFile}">成员档案</span><em>Member File</em></p>
+                    <div class="bk-id">
+                      <span id="backAvatarWrap"></span>
+                      <div class="bk-idt">
+                        <h3 class="badge-back-name" id="backName"></h3>
+                        <p class="badge-back-school" id="backSchool"></p>
+                      </div>
+                    </div>
+                    <div class="bk-panel">
+                      <p class="bk-intro" id="backIntro"></p>
+                      <p class="bk-ghost" aria-hidden="true">NUCMA</p>
+                      <div class="bk-meta">
+                        <span><em th:text="#{members.previewGroup}">分组</em><b id="backGroup"></b></span>
+                        <span><em>QQ</em><b id="backQq"></b></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="bk-foot">
+                    <div class="badge-barcode badge-barcode--back" aria-hidden="true"></div>
+                    <p class="bk-tip" th:text="#{error404.flipBackTip}">点击卡片翻回正面</p>
+                  </div>
+                </div>
+                <span class="badge-slot" aria-hidden="true"></span>
+              </section>
+            </div>
+          </div>
+
+          <!--
+            金属卡扣（卡孔 + 挂环 + 织带压片）。
+            渐变与裁剪必须放在根节点：clipPath 按「引用元素的用户坐标系」解析，
+            而这个元素在 <g transform="translate(158 15)"> 里，所以 ringVis 用的是 g 坐标
+            （孔 148..168/16..25 → g -10..10/1..10）。写绝对坐标会整体错位 15px。
+          -->
+          <svg class="clasp" id="claspWrap" viewBox="0 0 316 492" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="mBarrel" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#ffffff"/>
+                <stop offset=".16" stop-color="#e8edf2"/>
+                <stop offset=".44" stop-color="#b3bcc7"/>
+                <stop offset=".6" stop-color="#dfe5ec"/>
+                <stop offset=".82" stop-color="#8e97a4"/>
+                <stop offset="1" stop-color="#c3cad3"/>
+              </linearGradient>
+              <linearGradient id="mRod" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#fdfefe"/>
+                <stop offset=".34" stop-color="#eef2f6"/>
+                <stop offset=".68" stop-color="#96a0ac"/>
+                <stop offset="1" stop-color="#dfe5ec"/>
+              </linearGradient>
+              <linearGradient id="mWire" x1=".12" y1="0" x2=".88" y2="1">
+                <stop offset="0" stop-color="#ffffff"/>
+                <stop offset=".14" stop-color="#cfd7e0"/>
+                <stop offset=".32" stop-color="#fbfcfd"/>
+                <stop offset=".52" stop-color="#98a2ae"/>
+                <stop offset=".72" stop-color="#f2f6f9"/>
+                <stop offset="1" stop-color="#87919d"/>
+              </linearGradient>
+              <linearGradient id="rimGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="rgba(24,1,3,.72)"/>
+                <stop offset=".55" stop-color="rgba(58,8,10,.4)"/>
+                <stop offset="1" stop-color="rgba(255,255,255,.5)"/>
+              </linearGradient>
+              <linearGradient id="holeShade" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="rgba(30,2,4,.40)"/>
+                <stop offset=".5" stop-color="rgba(30,2,4,.12)"/>
+                <stop offset="1" stop-color="rgba(30,2,4,0)"/>
+              </linearGradient>
+              <radialGradient id="shFloor">
+                <stop offset="0" stop-color="rgba(56,4,6,.5)"/>
+                <stop offset="1" stop-color="rgba(56,4,6,0)"/>
+              </radialGradient>
+              <clipPath id="ringVis">
+                <path d="M-200 -200 H400 V1 H-200 Z M-10 1 H10 V10 H-10 Z"/>
+              </clipPath>
+              <clipPath id="holeClip"><rect x="148" y="16" width="20" height="9" rx="4.5"/></clipPath>
+            </defs>
+
+            <g transform="translate(158 15)">
+              <!-- ① 环 · 右半：先画 → 挂在横杆后面 -->
+              <path d="M0 -33 A8.6 30 0 0 1 0 27" fill="none" stroke="#6d7683" stroke-width="3.9"
+                    stroke-linecap="butt" clip-path="url(#ringVis)"/>
+              <path d="M0 -33 A8.6 30 0 0 1 0 27" fill="none" stroke="url(#mWire)" stroke-width="2.9"
+                    stroke-linecap="butt" clip-path="url(#ringVis)"/>
+              <!-- ② 连接颈：跟压片同一组，绕横杆中心 (0,-32) 微摆 -->
+              <g class="clip-head">
+                <rect x="-3.5" y="-39.4" width="7" height="7.6" rx="2" fill="url(#mBarrel)"
+                      stroke="#69727f" stroke-width=".7"/>
+                <path d="M-1.6 -38.6 L-1.6 -32.6" stroke="rgba(255,255,255,.55)" stroke-width="1"/>
+              </g>
+              <!-- ③ 横杆：环从它身上穿过去 -->
+              <rect x="-8.6" y="-27.6" width="17.2" height="3.9" rx="1.95" fill="url(#mRod)"
+                    stroke="#6d7683" stroke-width=".65"/>
+              <path d="M-7.2 -26.7 L7.2 -26.7" stroke="rgba(255,255,255,.9)" stroke-width=".85" stroke-linecap="round"/>
+              <!-- ④ 环 · 左半：后画 → 压在横杆前面（一前一后） -->
+              <path d="M0 -33 A8.6 30 0 0 0 0 27" fill="none" stroke="#6d7683" stroke-width="3.9"
+                    stroke-linecap="butt" clip-path="url(#ringVis)"/>
+              <path d="M0 -33 A8.6 30 0 0 0 0 27" fill="none" stroke="url(#mWire)" stroke-width="2.9"
+                    stroke-linecap="butt" clip-path="url(#ringVis)"/>
+              <path d="M-6.4 -28.4 A8.6 30 0 0 0 -5.6 -25.2" fill="none"
+                    stroke="rgba(34,42,54,.55)" stroke-width="1.4" stroke-linecap="round"/>
+              <path d="M5.6 -24.4 A8.6 30 0 0 1 6.4 -27.2" fill="none"
+                    stroke="rgba(34,42,54,.4)" stroke-width="1.2" stroke-linecap="round"/>
+              <!-- ⑤ 织带压片：夹口始终对着织带来向 -->
+              <g class="clip-head">
+                <path d="M-13.9 -59.2 Q-13.9 -60.6 -12.5 -60.6 L12.5 -60.6 Q13.9 -60.6 13.9 -59.2
+                         L13.1 -39.4 Q13.1 -38 11.7 -38 L-11.7 -38 Q-13.1 -38 -13.1 -39.4 Z"
+                      fill="url(#mBarrel)" stroke="#69727f" stroke-width=".9" stroke-linejoin="round"/>
+                <path d="M-12.9 -58.2 L12.9 -58.2" stroke="rgba(255,255,255,.9)" stroke-width="1.2" stroke-linecap="round"/>
+                <path d="M-12.1 -56.8 L12.1 -56.8" stroke="rgba(46,54,66,.18)" stroke-width=".8"/>
+                <path d="M-12.2 -41.4 L12.2 -41.4" stroke="rgba(38,44,54,.3)" stroke-width="1.1" stroke-linecap="round"/>
+                <path d="M-13 -40.4 L13 -40.4" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
+                <circle cx="-8.4" cy="-51.4" r="1.2" fill="#f2f5f8" stroke="#6d7683" stroke-width=".45"/>
+                <circle cx="8.4" cy="-51.4" r="1.2" fill="#f2f5f8" stroke="#6d7683" stroke-width=".45"/>
+                <path d="M-12.2 -59.6 L12.2 -59.6" stroke="rgba(30,38,48,.55)" stroke-width="1.6"/>
+                <path d="M-11.4 -38.6 L11.4 -38.6" stroke="rgba(28,34,44,.42)" stroke-width="1.3"/>
+              </g>
+            </g>
+
+            <!-- ⑦ 孔：真透明（页面背景透出）；顶影给孔一点深度 -->
+            <rect x="148" y="16" width="20" height="9" rx="4.5" fill="url(#holeShade)"/>
+            <rect x="148" y="16" width="20" height="9" rx="4.5" fill="none"
+                  stroke="url(#rimGrad)" stroke-width="1.45"/>
+            <path d="M150.4 17.15 H165.6" stroke="rgba(26,1,3,.2)" stroke-width="1.15"
+                  stroke-linecap="round"/>
+          </svg>
+        </section>
+
+        <!-- 右：说明与按钮 -->
+        <section class="err404-copy">
+          <div class="floatwin" id="floatwin">
+            <div class="fw-art" aria-hidden="true" th:if="${showArt}">
+              <img class="fw-duck" th:if="${!#strings.isEmpty(ep?.error404_art)}"
+                   th:src="${ep.error404_art}" th:alt="#{error404.artAlt}" width="116" height="116" />
+              <img class="fw-duck" th:unless="${!#strings.isEmpty(ep?.error404_art)}"
+                   th:src="@{/assets/err404/duck.png(v=${theme.spec.version})}"
+                   th:alt="#{error404.duckAlt}" width="116" height="116" />
+            </div>
+
+            <div class="fw-top">
+              <span class="fw-badge" th:text="${statusCode}">404</span>
+              <span class="fw-eyebrow" th:text="${eyebrowText}">页面未找到</span>
+            </div>
+
+            <h1 class="fw-title" id="err404Title"><span th:text="${titleText}">这一页</span><em th:if="${!#strings.isEmpty(accentText)}" th:text="${accentText}">不存在</em></h1>
+            <p class="fw-sub" th:text="${subText}">你访问的地址没有对应的内容。它可能已被移动、改了名字，或者从来就不存在。</p>
+
+            <div class="fw-actions">
+              <a class="fw-btn" th:href="@{/}">
+                <span th:text="${homeText}">回到首页</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="m13 6 6 6-6 6"/></svg>
+              </a>
+              <!-- data-history-back 由主题主脚本增强：有历史就后退，否则回首页 -->
+              <a class="fw-back" th:if="${showBack}" th:href="@{/}" data-history-back>
+                <span th:text="${backText}">返回上一页</span>
+              </a>
+            </div>
+
+            <div class="fw-footline" th:if="${showBadge and !#strings.isEmpty(tipText)}">
+              <span class="fw-div" aria-hidden="true"></span>
+              <button class="fw-tip" type="button" id="fwTip" th:title="${tipText}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 6 5 12l6 6"/><path d="M5 12h14"/></svg>
+                <span th:text="${tipText}">认识一个成员，尝试拖拽一下卡片吧！</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!--
+      成员数据：插件来源时由服务端读取 PluginMembers 已审核通过的成员，写成 data-* 交给 err404.js。
+      外层 th:if 先判断来源与插件可用性，子节点里的 th:with 才会被执行 —— 插件停用时不会调用 finder。
+      选「手动数据」或插件没有已通过成员时这里不渲染，脚本自动回落到 JSON / 内置快照。
+    -->
+    <div id="err404MemberData" hidden
+         th:if="${badgeSource == 'plugin' and pluginFinder.available('PluginMembers')}">
+      <th:block th:with="memberResult=${memberFinder.listApprovedMembers()}">
+        <th:block th:each="g : ${memberResult != null ? memberResult.items : {}}">
+          <span class="err404-member" th:each="mm : ${g.members}"
+                th:attr="data-name=${mm.spec.displayName ?: ''},
+                         data-school=${mm.spec.school ?: ''},
+                         data-group=${g.spec.displayName ?: #messages.msg('members.ungrouped')},
+                         data-gid=${g.metadata.name ?: ''},
+                         data-avatar=${mm.spec.avatar ?: ''},
+                         data-qq=${mm.spec.qq ?: ''},
+                         data-link=${mm.spec.qqFriendLink ?: ''},
+                         data-mid=${mm.metadata.name ?: ''}"></span>
+        </th:block>
+      </th:block>
+    </div>
+
+    <!--
+      配置注入：err404.js 只读 window.__ERR404__，模板负责把后台设置翻成 JS 值。
+      members 传的是后台「工牌成员数据」里的 JSON 原文，交给脚本解析 ——
+      在模板里解析会让一段手滑的 JSON 直接把 404 页变成 500。
+    -->
+    <script th:inline="javascript">
+      window.__ERR404__ = {
+        strapColor: /*[[${ep?.error404_strap_color} ?: '#cf3538']]*/ '#cf3538',
+        animation: /*[[${ep?.error404_animation} ?: 'full']]*/ 'full',
+        flipEnabled: /*[[${flipEnabled}]]*/ true,
+        randomMember: /*[[${randomMember}]]*/ true,
+        memberName: /*[[${ep?.error404_badge_member} ?: '']]*/ '',
+        memberSource: /*[[${badgeSource}]]*/ 'plugin',
+        memberGroups: /*[[${ep?.error404_badge_groups} ?: '']]*/ '',
+        memberPick: /*[[${ep?.error404_badge_pick} ?: '']]*/ '',
+        members: /*[[${ep?.error404_badge_members} ?: '']]*/ ''
+      };
+    </script>
+    <script th:src="@{/assets/err404/qrcode.js(v=${theme.spec.version})}"></script>
+    <script th:src="@{/assets/err404/err404.js(v=${theme.spec.version})}"></script>
+  </th:block>
+
+  <!-- ===================== 简洁版（error404_style=classic） ===================== -->
+  <div class="error-page" th:if="${epClassic}">
+    <h1 class="error-code" th:text="${statusCode}">404</h1>
+    <p class="error-message" th:text="${subText}">页面未找到</p>
+    <a th:href="@{/}" class="error-link" data-history-back th:text="#{error.back}">返回上一页</a>
+  </div>
+
+</th:block>
+</html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{modules/layout :: html(title=|${#messages.msg('common.tags')} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=|${#messages.msg('tags.description')}|, canonical=${site.routes.tagsUri}, image=${site.logo}, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+  <div class="page-header">
+    <h1 class="page-title" th:text="#{common.tags}">标签</h1>
+  </div>
+  
+  <div class="tag-cloud" th:if="${tags != null and !tags.isEmpty()}">
+    <a th:each="tag : ${tags}" th:href="@{${tag.status?.permalink}}" class="badge badge-outline tag-item"
+       th:text="${tag.spec?.displayName}"></a>
+  </div>
+  
+  <div class="alert alert-soft alert-vertical empty-state" th:unless="${tags != null and !tags.isEmpty()}">
+    <p th:text="#{tags.emptyList}">暂无标签</p>
+  </div>
+</th:block>
+</html>

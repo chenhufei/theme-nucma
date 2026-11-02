@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{modules/layout :: html(title=|${#messages.msg('home.members')} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=|${#messages.msg('members.description')}|, canonical='/members', image=${site.logo}, pageType='website', robots=null)}">
+<th:block th:fragment="content">
+
+  <div class="page-header">
+    <div class="page-header-row page-header-row--with-tools">
+      <div>
+        <h1 class="page-title page-title--with-count">
+          <span th:text="#{home.members}">成员公示</span>
+          <span id="memberTotalCount" class="page-title-count" title="成员总数" th:title="#{members.totalTitle}" hidden>0</span>
+        </h1>
+        <p class="page-desc" th:text="#{home.membersSubtitle}">共同维护校园沟通秩序</p>
+      </div>
+
+      <div class="page-header-tools">
+        <label class="input input-bordered page-search member-search-box">
+          <span class="visually-hidden" th:text="#{members.searchLabel}">搜索成员</span>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="M21 21l-4.3-4.3"></path>
+          </svg>
+          <input type="search" id="memberSearchInput" name="memberSearch" placeholder="搜索名称、学校、QQ 或拼音，空格分隔多关键词" th:placeholder="#{members.searchPlaceholder}"
+                 autocomplete="off" spellcheck="false" />
+        </label>
+
+        <button th:if="${pluginFinder.available('PluginMembers')}"
+                type="button"
+                class="btn btn-primary apply-btn"
+                data-widget-open="MemberApplyWidget">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"></path>
+          </svg>
+          <span th:text="#{members.apply}">申请加入</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    成员申请 widget 的脚本、样式与悬浮按钮均由 PluginMembers 插件在 /members 路由
+    通过 TemplateFooterProcessor 自动注入，主题不再重复引入，避免两个悬浮按钮重叠。
+    页头的「申请加入」按钮调用插件注入的 MemberApplyWidget.open()。
+  -->
+
+  <div class="directory-content directory-content--members">
+
+  <!--
+    成员页数据由 PluginMembers 的 MemberController 注入：
+      groups       已按 ?group= 过滤的分组列表，每个分组内含 members
+      allGroups    未过滤的全部分组，用来渲染筛选条
+      currentGroup 当前分组名，未指定分组时为 null
+
+    主题与插件可以各自独立升级，模板不能假设插件一定提供了全部变量，因此下面统一归一：
+      memberGroups 筛选条数据源，旧插件没有 allGroups 时回退到 groups
+      activeGroup  当前分组，旧插件没有 currentGroup 时回退到查询参数 ?group=
+    旧实现里筛选条也遍历 groups，而 groups 已被插件按 ?group= 过滤过，
+    所以点进任一分组后，其余分组标签会全部消失，只剩「全部」和当前分组。
+  -->
+  <th:block th:if="${pluginFinder.available('PluginMembers')}"
+            th:with="memberGroups = ${allGroups != null ? allGroups : groups},
+                     activeGroup = ${currentGroup != null ? currentGroup : (param.group != null and !#arrays.isEmpty(param.group) ? param.group[0] : null)},
+                     isAllGroups = ${activeGroup == null or #strings.isEmpty(activeGroup)}">
+
+    <div class="member-filter-bar">
+      <!-- 分组筛选：数据源必须用未过滤的全量分组，否则进入分组后其余标签会消失 -->
+      <nav class="member-filters" aria-label="成员分组筛选" th:aria-label="#{members.filterAria}">
+        <a th:href="@{/members}"
+           class="directory-filter-item member-filter-item"
+           th:classappend="${isAllGroups} ? 'is-active' : ''"
+           th:aria-current="${isAllGroups ? 'page' : null}"
+           th:text="#{common.all}">
+          全部
+        </a>
+        <th:block th:each="g : ${memberGroups}"
+                  th:if="${g.members != null and !#lists.isEmpty(g.members)}">
+          <a th:href="@{/members(group=${g.metadata.name})}"
+             class="directory-filter-item member-filter-item"
+             th:classappend="${!isAllGroups and activeGroup == g.metadata.name} ? 'is-active' : ''"
+             th:aria-current="${!isAllGroups and activeGroup == g.metadata.name ? 'page' : null}">
+            <span th:text="${g.spec.displayName ?: #messages.msg('members.ungrouped')}">分组</span>
+          </a>
+        </th:block>
+      </nav>
+
+      <!-- 显示方式切换：与分组筛选共用一行，避免页头为它单独腾出一排 -->
+      <div class="member-view-toggle" role="group" aria-label="成员显示方式" th:aria-label="#{members.viewAria}" data-member-view-toggle>
+        <button type="button" class="member-view-btn is-active" data-member-view="grid" aria-pressed="true">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+          </svg>
+          <span class="member-view-btn-text" th:text="#{members.viewGrid}">网格</span>
+        </button>
+        <button type="button" class="member-view-btn" data-member-view="network" aria-pressed="false">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="6" cy="7" r="2.4"></circle>
+            <circle cx="18" cy="6" r="2.4"></circle>
+            <circle cx="12" cy="18" r="2.4"></circle>
+            <path d="M8.2 8.4l7.6-1.2M7.2 9.2l3.6 6.6M16.6 8.2l-3.4 7.6"></path>
+          </svg>
+          <span class="member-view-btn-text" th:text="#{members.viewNetwork}">关系网</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 成员概览：由页面内真实成员数据实时统计，无数据时不渲染；可在主题「独立页面」设置中关闭 -->
+    <section th:if="${isAllGroups and theme.config.pages?.members_overview_enabled != false}"
+             id="memberOverview" class="member-overview" data-member-overview hidden>
+      <div class="member-overview-bar">
+        <div class="member-overview-head">
+          <h2 class="member-overview-title" th:text="#{members.overviewTitle}">成员概览</h2>
+          <p class="member-overview-desc" th:text="#{members.overviewDesc}">基于本站已公示成员实时统计</p>
+        </div>
+        <div class="member-stat-grid">
+          <div class="member-stat">
+            <strong class="member-stat-value" data-stat-total>0</strong>
+            <span class="member-stat-label" th:text="#{members.labelMembers}">成员</span>
+          </div>
+          <div class="member-stat">
+            <strong class="member-stat-value" data-stat-groups>0</strong>
+            <span class="member-stat-label" th:text="#{members.labelGroups}">分组</span>
+          </div>
+          <div class="member-stat">
+            <strong class="member-stat-value" data-stat-schools>0</strong>
+            <span class="member-stat-label" th:text="#{members.school}">学校</span>
+          </div>
+          <div class="member-stat">
+            <strong class="member-stat-value" data-stat-recent>0</strong>
+            <span class="member-stat-label" th:text="#{members.statNew30}">近 30 天新增</span>
+          </div>
+        </div>
+        <button type="button" class="member-overview-toggle" data-overview-toggle
+                aria-expanded="false" aria-controls="memberOverviewBody">
+          <span data-overview-toggle-text th:text="#{members.overviewToggle}">地区与最近加入</span>
+          <svg class="member-overview-chevron" width="12" height="12" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <path d="M6 9l6 6 6-6"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="member-overview-body" id="memberOverviewBody" data-overview-body hidden>
+        <div class="member-overview-main">
+          <div class="member-overview-panel">
+            <h3 class="member-overview-panel-title" th:text="#{members.regionTitle}">地区分布</h3>
+            <ul class="member-region-list" data-member-region-list></ul>
+            <p class="member-overview-empty" data-member-region-empty hidden th:text="#{members.regionEmpty}">暂无可识别的地区信息</p>
+          </div>
+          <div class="member-overview-panel">
+            <h3 class="member-overview-panel-title" th:text="#{members.recentTitle}">最近加入</h3>
+            <ol class="member-timeline" data-member-timeline></ol>
+            <p class="member-overview-empty" data-member-timeline-empty hidden th:text="#{members.recentEmpty}">暂无加入记录</p>
+          </div>
+        </div>
+        <figure class="member-map-panel" data-member-map-panel hidden>
+          <figcaption class="member-overview-panel-title" th:text="#{members.mapTitle}">省份分布</figcaption>
+          <div class="member-map" data-member-map
+               th:attr="data-member-map-src=@{/assets/data/china-provinces.json(v=${theme.spec.version})}"></div>
+          <p class="member-map-note" th:text="#{members.mapNote}">按学校信息中的省市关键字归入省级行政区</p>
+          <p class="member-map-note member-map-attrib"
+             th:if="${theme.config.pages?.members_map_review_number != null and !#strings.isEmpty(theme.config.pages.members_map_review_number)}"
+             th:text="${#messages.msg('members.mapReviewNumber') + theme.config.pages.members_map_review_number}">审图号：</p>
+        </figure>
+      </div>
+    </section>
+
+    <section class="member-network" data-member-network hidden aria-label="成员关系网视图" th:aria-label="#{members.networkViewAria}"
+             th:attr="data-affinity-enabled=${theme.config.globe?.globe_affinity_enabled != false},
+                      data-affinity-min-strength=${theme.config.globe?.globe_affinity_min_strength ?: '0.35'},
+                      data-affinity-show-reason=${theme.config.globe?.globe_affinity_show_reason != false},
+                      data-default-view=${theme.config.globe?.globe_default_view ?: 'grid'}">
+      <canvas data-member-network-canvas tabindex="0" role="application"
+              aria-roledescription="可拖动的成员关系网" th:aria-roledescription="#{members.networkRoleDesc}"
+              aria-label="成员关系网，拖动可平移整张网，鼠标移到关联线上可查看判断依据" th:aria-label="#{members.networkAria}"></canvas>
+      <div class="member-network-tip" data-member-network-tip hidden></div>
+      <!-- 关联线提示：鼠标聚焦到某条关联线时显示判断依据，由 network.js 填充 -->
+      <div class="member-network-link-tip" data-member-network-link-tip hidden aria-live="polite"></div>
+      <div class="member-network-meta">
+        <span data-member-network-count th:text="${#messages.msg('members.networkCount', 0)}">0 位成员</span>
+        <span class="member-network-hint" th:text="#{members.networkHint}">拖动平移 · 悬停连线看依据 · 点击头像查看详情</span>
+      </div>
+      <!-- 学校关联分析依据：由 network.js 在取得分析结果后填充，关闭「显示分析依据」时不出现 -->
+      <aside class="member-network-affinity" data-member-network-affinity hidden
+             aria-label="学校关联分析依据" th:aria-label="#{members.schoolBasisTitle}"></aside>
+      <!-- 关系网的键盘与读屏等价入口：视觉隐藏但可聚焦，焦点落上时同步高亮对应头像 -->
+      <ul class="visually-hidden member-network-list" data-member-network-list></ul>
+    </section>
+
+    <!-- 全量视图：按分组分段展示 -->
+    <div th:if="${isAllGroups}" class="members-list">
+      <th:block th:each="group : ${groups}"
+                th:if="${group.members != null and !#lists.isEmpty(group.members)}">
+        <div class="member-group">
+          <h2 class="member-group-title">
+            <span th:text="${group.spec.displayName ?: #messages.msg('members.ungrouped')}">分组名</span>
+            <span class="badge badge-primary badge-soft badge-sm member-group-count"
+                  th:text="${#lists.size(group.members)}"
+                  th:attr="data-total=${#lists.size(group.members)}">0</span>
+          </h2>
+
+          <div class="member-grid">
+            <th:block th:each="member : ${group.members}">
+              <th:block th:replace="~{::memberCard(member=${member}, group=${group})}"></th:block>
+            </th:block>
+          </div>
+        </div>
+      </th:block>
+    </div>
+
+    <!-- 单分组视图：groups 已由插件按 ?group= 过滤，这里直接展开，不再按名称二次匹配 -->
+    <div class="member-grid" data-member-single-list
+         th:unless="${isAllGroups or #lists.isEmpty(groups)}">
+      <th:block th:each="group : ${groups}">
+        <th:block th:each="member : ${group.members}">
+          <th:block th:replace="~{::memberCard(member=${member}, group=${group})}"></th:block>
+        </th:block>
+      </th:block>
+    </div>
+
+    <div class="member-feed-sentinel" data-member-feed-sentinel hidden>
+      <span class="member-feed-status" data-member-feed-status th:text="#{members.feedStatus}">向下滚动加载更多成员</span>
+    </div>
+
+    <div id="memberSearchEmpty" class="alert alert-soft alert-vertical empty-state" role="status" hidden>
+      <p class="empty-text" th:text="#{members.searchEmpty}">未找到匹配成员</p>
+      <p class="empty-sub" th:text="#{members.searchEmptyHint}">请尝试其他名称、学校或 QQ 号</p>
+    </div>
+
+    <!-- 空态：当前分组不存在或该分组没有成员 -->
+    <div th:if="${!isAllGroups and #lists.isEmpty(groups)}"
+         class="alert alert-soft alert-vertical empty-state" role="status">
+      <div class="empty-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <p class="empty-text" th:text="#{members.groupEmpty}">该分组暂无成员</p>
+      <a th:href="@{/members}" class="btn btn-ghost btn-sm more-link" th:text="#{common.viewAll}">查看全部</a>
+    </div>
+
+    <!-- 空态：全站还没有任何已公示成员 -->
+    <div th:if="${isAllGroups and #lists.isEmpty(groups)}"
+         class="alert alert-soft alert-vertical empty-state" role="status">
+      <div class="empty-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <p class="empty-text" th:text="#{members.empty}">暂无成员信息</p>
+      <p class="empty-sub" th:text="#{members.emptyHint}">请在后台添加成员并审核通过</p>
+    </div>
+
+    <!-- 评论区 -->
+    <section th:if="${haloCommentEnabled and (theme.config.pages?.members_comment_enabled != null ? theme.config.pages.members_comment_enabled : theme.config.content?.members_comment_enabled) != false}" class="post-comments">
+      <halo:comment group="plugin.halo.run" kind="Plugin" th:attr="name=${pluginName}" />
+    </section>
+
+  </th:block>
+
+  <div th:unless="${pluginFinder.available('PluginMembers')}" class="alert alert-soft alert-vertical empty-state"
+       role="status" data-plugin-status="missing" data-plugin="PluginMembers">
+    <div class="empty-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+    </div>
+    <p class="empty-text" th:text="#{members.pluginMissing}">成员管理插件未启用</p>
+    <p class="empty-sub" th:text="#{members.pluginMissingHint}">请在后台安装并启用「成员管理」插件</p>
+  </div>
+
+  </div>
+
+  <!-- 自助认领弹窗 -->
+  <dialog th:if="${pluginFinder.available('PluginMembers')}"
+          id="claimModal" class="modal" data-claim-modal>
+    <div class="modal-box claim-modal-box">
+      <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+              data-claim-modal-close aria-label="关闭" th:aria-label="#{common.close}">✕</button>
+      <h3 class="font-bold text-lg" th:text="#{members.claimTitle}">补全我的 QQ 链接</h3>
+      <p class="text-sm text-base-content/60 mt-1" th:text="#{members.claimDesc}">
+        确认头像和个人资料，填入 QQ 加好友链接即可被其他成员添加
+      </p>
+
+      <!-- 步骤 1：确认资料 + 输入链接和验证码 -->
+      <div id="claimStep1" data-claim-step="1">
+        <div class="claim-modal-form">
+          <!-- 头像已收敛为只读：统一使用 QQ 头像，不再提供上传入口 -->
+          <div class="claim-profile">
+            <div class="claim-avatar">
+              <img class="claim-avatar-img" data-claim-avatar-preview alt="" width="56" height="56" hidden />
+              <span class="claim-avatar-fallback" data-claim-avatar-fallback aria-hidden="true">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                </svg>
+              </span>
+            </div>
+            <div class="claim-avatar-side">
+              <p class="claim-modal-hint" data-avatar-hint th:text="#{members.claimAvatarHint}">头像统一使用你的 QQ 头像，不支持自定义上传</p>
+            </div>
+          </div>
+          <div class="claim-modal-field">
+            <label class="claim-modal-label" for="claimName" th:text="#{members.claimName}">账号名称</label>
+            <input type="text" id="claimName" class="input input-bordered claim-modal-input"
+                   placeholder="例如：清华大学表白墙" th:placeholder="#{members.claimNamePlaceholder}" autocomplete="off" maxlength="100" />
+          </div>
+          <div class="claim-modal-field">
+            <label class="claim-modal-label" for="claimSchool" th:text="#{members.school}">学校</label>
+            <input type="text" id="claimSchool" class="input input-bordered claim-modal-input"
+                   placeholder="例如：清华大学" th:placeholder="#{members.claimSchoolPlaceholder}" autocomplete="off" maxlength="100" />
+            <p class="claim-modal-hint" th:text="#{members.claimSchoolHint}">学校用于统计成员分布里的地区，修改后刷新页面生效</p>
+          </div>
+          <div class="claim-modal-field">
+            <label class="claim-modal-label" for="claimQq" th:text="#{members.claimQq}">QQ 号</label>
+            <input type="text" id="claimQq" class="input input-bordered claim-modal-input"
+                   placeholder="输入你的 QQ 号" th:placeholder="#{members.claimQqPlaceholder}" autocomplete="off" readonly />
+          </div>
+          <div class="claim-modal-field">
+            <label class="claim-modal-label" for="claimLink" th:text="#{members.claimLink}">QQ 加好友链接</label>
+            <div class="claim-link-row">
+              <input type="url" id="claimLink" class="input input-bordered claim-modal-input"
+                     placeholder="https://qm.qq.com/q/xxxxx" autocomplete="off" />
+              <button type="button" class="claim-mini-btn" data-qr-upload-btn th:text="#{members.claimUploadQr}">上传二维码</button>
+            </div>
+            <input type="file" accept="image/*" class="claim-file-input" data-qr-input />
+            <div class="claim-link-hint">
+              <p class="claim-modal-hint">
+                <span th:text="#{members.claimLinkHint}">支持 qm.qq.com 的加好友链接；</span><a href="https://qm.qq.com/" target="_blank" rel="noopener" class="link link-primary" th:text="#{members.claimLinkHintLink}">前往 QQ 官网获取</a>
+              </p>
+              <span class="claim-modal-inline-status" data-qr-status></span>
+            </div>
+          </div>
+          <div class="claim-modal-field" data-claim-email-field>
+            <label class="claim-modal-label" for="claimCode" th:text="#{members.claimCode}">邮箱验证码</label>
+            <div class="claim-modal-code-row">
+              <input type="text" id="claimCode" class="input input-bordered claim-modal-input claim-modal-code-input"
+                     placeholder="输入 6 位验证码" th:placeholder="#{members.claimCodePlaceholder}" autocomplete="off" inputmode="numeric" maxlength="6" />
+              <button type="button" id="claimSendCodeBtn" class="btn btn-outline btn-sm claim-modal-send-code"
+                      data-send-code>
+                <span data-send-code-text th:text="#{members.claimSendCode}">发送验证码</span>
+                <span class="loading loading-spinner loading-xs" data-send-code-loading hidden></span>
+              </button>
+            </div>
+            <p class="claim-modal-hint" id="claimCodeHint" th:text="#{members.claimCodeHint}">验证码将发送至你的 QQ 邮箱（QQ号@qq.com）</p>
+          </div>
+          <div class="claim-modal-field" data-claim-captcha hidden>
+            <label class="claim-modal-label" for="claimCaptchaCode" th:text="#{members.claimCaptcha}">图形验证码</label>
+            <div class="claim-modal-code-row">
+              <input type="text" id="claimCaptchaCode" class="input input-bordered claim-modal-input claim-modal-code-input"
+                     placeholder="输入图中字符" th:placeholder="#{members.claimCaptchaPlaceholder}" autocomplete="off" maxlength="8" />
+              <button type="button" class="claim-mini-btn" data-claim-captcha-refresh
+                      title="点击刷新验证码" th:title="#{members.claimCaptchaRefresh}" aria-label="刷新验证码" th:aria-label="#{links.captchaRefresh}">
+                <img data-claim-captcha-img alt="图形验证码" th:alt="#{members.claimCaptcha}" width="112" height="38" style="height:38px;width:auto;display:block" />
+              </button>
+            </div>
+            <p class="claim-modal-hint" data-claim-captcha-hint th:text="#{members.claimCaptchaHint}">看不清？点击图片刷新</p>
+          </div>
+        </div>
+        <p class="claim-modal-hint claim-modal-hint--review" style="margin-top:-4px;" th:text="#{members.claimReviewHint}">提交后需管理员审核，审核通过后方可在成员列表中显示。</p>
+        <div class="claim-modal-actions">
+          <button type="button" class="btn btn-ghost" data-claim-modal-close th:text="#{common.cancel}">取消</button>
+          <button type="button" class="btn btn-primary" data-claim-submit>
+            <span data-claim-submit-text th:text="#{members.claimSubmit}">提交</span>
+            <span class="loading loading-spinner loading-sm" data-claim-submit-loading hidden></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 步骤 2：结果 -->
+      <div id="claimStep2" data-claim-step="2" hidden>
+        <div id="claimSuccess" class="mt-4" hidden>
+          <div class="alert alert-success">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span data-claim-success-message th:text="#{members.claimSuccess}">资料已提交，待管理员审核后显示在成员列表中。</span>
+          </div>
+        </div>
+        <div id="claimError" class="mt-4" hidden>
+          <div class="alert alert-error">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span data-claim-error-message th:text="#{links.submitFailed}">提交失败</span>
+          </div>
+        </div>
+        <p class="claim-modal-hint claim-modal-hint--review" style="margin-top:-4px;" th:text="#{members.claimReviewHint}">提交后需管理员审核，审核通过后方可在成员列表中显示。</p>
+        <div class="claim-modal-actions">
+          <button type="button" class="btn btn-ghost" data-claim-modal-close th:text="#{common.close}">关闭</button>
+          <button type="button" class="btn btn-primary" data-claim-retry hidden th:text="#{common.retry}">重试</button>
+        </div>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button data-claim-modal-close>close</button>
+    </form>
+  </dialog>
+
+  <script th:if="${pluginFinder.available('PluginMembers')}"
+          type="module"
+          th:src="@{/assets/js/members.js(v=${theme.spec.version})}"></script>
+
+</th:block>
+
+<!--
+  单张成员卡片。全量视图与单分组视图共用同一份标记，
+  避免两份近似的卡片结构各自漂移（此前全量视图就漏了 title 属性）。
+  参数：member —— Member 对象；group —— 该成员所属分组，用来写入 data-group 供筛选使用。
+-->
+<div class="member-card-slot" th:fragment="memberCard(member, group)"
+     th:with="memberAvatar=${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar) ? member.spec.avatar : (member.spec.qq != null and !#strings.isEmpty(member.spec.qq) ? 'https://q1.qlogo.cn/g?b=qq&amp;nk=' + member.spec.qq + '&amp;s=640' : '')},
+              memberJoinedAt=${member.spec.joinedAt != null and !#strings.isEmpty(member.spec.joinedAt) ? member.spec.joinedAt : member.metadata.creationTimestamp}">
+
+  <!-- 已补全 QQ 加好友链接：整张卡片可点击跳转 -->
+  <a th:if="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
+     th:href="${member.spec.qqFriendLink}" target="_blank" rel="noopener noreferrer"
+     class="card card-border member-card member-card-verified"
+     th:title="${member.spec.school}"
+     th:attr="data-qq=${member.spec.qq ?: ''}, data-school=${member.spec.school ?: ''}, data-created=${memberJoinedAt}, data-group=${group.spec.displayName ?: #messages.msg('members.ungrouped')}">
+    <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
+          class="member-card-background" aria-hidden="true"
+          th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
+    <div class="member-avatar">
+      <img th:if="${!#strings.isEmpty(memberAvatar)}" th:src="${memberAvatar}"
+           th:classappend="${#strings.isEmpty(member.spec.avatar)} ? 'member-avatar-default' : ''"
+           th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
+      <svg th:if="${#strings.isEmpty(memberAvatar)}"
+           fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+      </svg>
+    </div>
+    <div class="member-info">
+      <div class="member-name-row">
+        <span class="member-name" th:text="${member.spec.displayName}">名称</span>
+        <span class="member-status-badge member-status-badge--verified" th:text="#{members.verified}">已认证</span>
+      </div>
+      <div class="member-school"
+           th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
+           th:text="${member.spec.school}">学校</div>
+      <div class="member-school member-school-empty"
+           th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}" th:text="#{members.noBio}">暂无简介</div>
+    </div>
+    <!-- 桌面端聚焦时在浏览器本地生成 QQ 链接二维码 -->
+    <div class="member-qr-popup" data-member-qr-popup aria-hidden="true">
+      <canvas data-member-qr
+              th:attr="data-qr-text=${member.spec.qqFriendLink}" th:aria-label="|添加 ${member.spec.displayName} 的 QQ 二维码|"
+              width="240" height="240" role="img"></canvas>
+      <span class="member-qr-status" data-member-qr-status th:text="#{members.generating}">生成中</span>
+    </div>
+  </a>
+
+  <!-- 尚未补全：展示「待补全」状态，有 QQ 号时给出补全入口 -->
+  <div th:unless="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
+     class="card card-border member-card member-card-incomplete"
+     th:title="${member.spec.school}"
+     th:attr="data-qq=${member.spec.qq ?: ''}, data-school=${member.spec.school ?: ''}, data-created=${memberJoinedAt}, data-group=${group.spec.displayName ?: #messages.msg('members.ungrouped')}">
+    <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
+          class="member-card-background" aria-hidden="true"
+          th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
+    <div class="member-avatar">
+      <img th:if="${!#strings.isEmpty(memberAvatar)}" th:src="${memberAvatar}"
+           th:classappend="${#strings.isEmpty(member.spec.avatar)} ? 'member-avatar-default' : ''"
+           th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
+      <svg th:if="${#strings.isEmpty(memberAvatar)}"
+           fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+      </svg>
+    </div>
+    <div class="member-info" th:classappend="${member.spec.qq != null and !#strings.isEmpty(member.spec.qq)} ? ' member-info-with-claim' : ''">
+      <div class="member-name-row">
+        <span class="member-name" th:text="${member.spec.displayName}">名称</span>
+        <span class="member-status-badge member-status-badge--pending" th:text="#{members.pending}">待补全</span>
+      </div>
+      <div class="member-school"
+           th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
+           th:text="${member.spec.school}">学校</div>
+      <div class="member-school member-school-empty"
+           th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}" th:text="#{members.noBio}">暂无简介</div>
+      <button th:if="${member.spec.qq != null and !#strings.isEmpty(member.spec.qq)}"
+              type="button" class="member-claim-btn" data-claim-modal-open
+              th:attr="data-claim-qq=${member.spec.qq},
+                       data-claim-name=${member.spec.displayName},
+                       data-claim-school=${member.spec.school},
+                       data-claim-avatar=${member.spec.avatar}"
+              title="补全 QQ 加好友链接" th:title="#{members.claimLinkTitle}">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+        </svg>
+        <span th:text="#{members.claimShort}">补全链接</span>
+      </button>
+    </div>
+  </div>
+
+  <button type="button" class="member-preview-trigger" data-member-preview aria-label="查看成员详情" th:aria-label="#{members.viewDetail}" title="查看详情" th:title="#{moments.viewDetail}">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7S19 19 12 19 1.5 12 1.5 12Z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+  </button>
+</div>
+</html>

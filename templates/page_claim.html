@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{modules/layout :: html(title=|认领 QQ 链接 - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=|${#messages.msg('claim.description')}|, canonical='/claim', image=${site.logo}, pageType='website', robots='noindex')}">
+<th:block th:fragment="content">
+
+  <div class="page-header">
+    <h1 class="page-title" th:text="#{claim.title}">认领 QQ 链接</h1>
+    <p class="page-desc" th:text="#{claim.subtitle}">补全您的 QQ 加好友链接，方便其他成员联系您</p>
+  </div>
+
+  <div class="directory-content">
+    <div class="claim-container">
+      
+      <!-- 加载中 -->
+      <div id="claimLoading" class="claim-state" hidden>
+        <div class="claim-spinner" aria-label="加载中" th:aria-label="#{common.loadingShort}"></div>
+        <p class="claim-message" th:text="#{claim.verifying}">正在验证认领链接...</p>
+      </div>
+
+      <!-- 错误状态 -->
+      <div id="claimError" class="alert alert-soft alert-vertical empty-state" hidden>
+        <div class="empty-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <p class="empty-text" data-error-title th:text="#{claim.invalid}">认领链接无效</p>
+        <p class="empty-sub" data-error-message th:text="#{claim.invalidHint}">该链接可能已过期或不存在，请联系管理员重新获取。</p>
+      </div>
+
+      <!-- 已认领状态 -->
+      <div id="claimSuccess" class="alert alert-soft alert-vertical empty-state" hidden>
+        <div class="empty-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <p class="empty-text" th:text="#{claim.success}">认领成功</p>
+        <p class="empty-sub" th:text="#{claim.successHint}">资料和 QQ 链接已提交，待管理员审核通过后将在成员列表显示。</p>
+        <a th:href="@{/members}" class="btn btn-primary btn-sm" th:text="#{claim.back}">返回成员列表</a>
+      </div>
+
+      <!-- 认领表单 -->
+      <div id="claimForm" class="claim-form" hidden>
+        <div class="claim-profile">
+          <div class="claim-avatar">
+            <img class="claim-avatar-img" data-claim-avatar-preview alt="" width="56" height="56" hidden />
+            <span class="claim-avatar-fallback" data-claim-avatar-fallback aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+              </svg>
+            </span>
+          </div>
+          <div class="claim-avatar-side">
+            <p class="claim-hint" data-avatar-hint th:text="#{members.claimAvatarHint}">头像统一使用你的 QQ 头像，不支持自定义上传</p>
+          </div>
+        </div>
+
+        <form id="claimFormElement" class="claim-input-group">
+          <div class="form-group">
+            <label for="claimDisplayName" class="form-label" th:text="#{members.claimName}">账号名称</label>
+            <input type="text" id="claimDisplayName" name="displayName" class="input input-bordered"
+                   placeholder="例如：清华大学表白墙" th:placeholder="#{members.claimNamePlaceholder}" maxlength="100" required autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="claimSchool" class="form-label" th:text="#{members.school}">学校</label>
+            <input type="text" id="claimSchool" name="school" class="input input-bordered"
+                   placeholder="例如：清华大学" th:placeholder="#{members.claimSchoolPlaceholder}" maxlength="100" autocomplete="off" />
+            <p class="form-help" th:text="#{members.claimSchoolHint}">学校用于统计成员分布里的地区，修改后刷新页面生效</p>
+          </div>
+          <div class="form-group">
+            <label for="qqFriendLink" class="form-label" th:text="#{members.claimLink}">
+              QQ 加好友链接
+              <span class="form-label-hint" th:text="#{claim.required}">必填</span>
+            </label>
+            <div class="claim-link-row">
+              <input type="url" id="qqFriendLink" name="qqFriendLink" class="input input-bordered"
+                     placeholder="例如：https://qm.qq.com/q/xxxxx" th:placeholder="#{claim.linkPlaceholder}" required autocomplete="off" />
+              <button type="button" class="claim-mini-btn" data-qr-upload-btn th:text="#{members.claimUploadQr}">上传二维码</button>
+            </div>
+            <input type="file" accept="image/*" class="claim-file-input" data-qr-input />
+            <span class="form-help qr-status" data-qr-status></span>
+            <p class="form-help" th:text="#{claim.linkHelp}">
+              链接需以 https://qm.qq.com/q/ 开头：打开 QQ → 设置 → 隐私 → 加好友方式 → 复制"推荐名片链接"或"二维码链接"
+            </p>
+          </div>
+          <div class="claim-field claim-field-inline">
+            <span class="claim-label" th:text="#{members.claimQq}">QQ 号</span>
+            <span class="claim-value" data-member-qq>-</span>
+          </div>
+
+          <div class="form-actions">
+            <p class="claim-hint claim-submit-error" data-submit-error hidden></p>
+            <p class="form-help" style="margin-bottom:8px;" th:text="#{members.claimReviewHint}">提交后需管理员审核，审核通过后方可在成员列表中显示。</p>
+            <button type="submit" class="btn btn-primary" data-submit-button>
+              <span data-submit-text th:text="#{claim.submit}">提交认领</span>
+              <span class="btn-loading" data-submit-loading hidden>
+                <span class="loading loading-spinner loading-sm"></span>
+                <span th:text="#{claim.submitting}">提交中...</span>
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module"
+          th:src="@{/assets/js/claim.js(v=${theme.spec.version})}"></script>
+
+</th:block>
+</html>
