@@ -209,7 +209,11 @@
       root.style.setProperty('--auth-muted', '#a3a3a3');
       root.style.setProperty('--auth-border', '#2a2a2a');
       root.style.setProperty('--auth-field', '#1f1f1f');
-      root.style.setProperty('--auth-primary', '#e8686d');
+      // 主色跟随后台设置，暗色下自动提亮（原先写死 #e8686d，用户改主色在暗色下无效）。
+      // 用 color-mix 提亮而不是在 JS 里解析颜色：任意 CSS 颜色写法都能用，
+      // 且 auth.css 本身已依赖 color-mix。
+      var primary = /*[[${primaryColor}]]*/ '#dd3333';
+      root.style.setProperty('--auth-primary', 'color-mix(in srgb, ' + primary + ' 68%, #ffffff)');
     })();
   </script>
 </body>

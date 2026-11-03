@@ -9,13 +9,12 @@
 
   <!-- Banner - 校园风格（关闭新版首屏时回退到原横幅） -->
   <section class="banner"
-           th:with="heroConfig = ${theme.config.home?.show_hero != null ? theme.config.home : theme.config.hero},
-                     legacyBg = ${heroConfig?.bg_image != null and !#strings.isEmpty(heroConfig.bg_image) ? heroConfig.bg_image : ''},
+           th:with="heroConfig = ${theme.config.home},
                      backgrounds = ${heroConfig?.bg_carousel},
                      hasBackgrounds = ${backgrounds != null and !#lists.isEmpty(backgrounds)},
                      singleBackground = ${hasBackgrounds ? backgrounds[0] : null},
                      carousel = ${hasBackgrounds and #lists.size(backgrounds) > 1},
-                     singleBgUrl = ${singleBackground != null and singleBackground.url != null and !#strings.isEmpty(singleBackground.url) ? singleBackground.url : legacyBg},
+                     singleBgUrl = ${singleBackground != null and singleBackground.url != null ? singleBackground.url : ''},
                      hasBg = ${!#strings.isEmpty(singleBgUrl)},
                      bgInterval = ${heroConfig?.carousel_interval ?: 5000},
                      fullW = ${heroConfig?.full_width == true},
@@ -143,37 +142,41 @@
 
   <div class="home-sections"
        th:with="homeBlocks=${theme.config.home?.section_blocks},
-                homeOrder=${homeBlocks != null ? homeBlocks.![type] : theme.config.home?.section_order},
+                homeOrder=${homeBlocks != null ? homeBlocks.![type] : null},
                 newsBlocks=${homeBlocks != null ? homeBlocks.?[type == 'news'] : null},
                 memberBlocks=${homeBlocks != null ? homeBlocks.?[type == 'members'] : null},
                 linkBlocks=${homeBlocks != null ? homeBlocks.?[type == 'links'] : null},
                 newsBlock=${newsBlocks != null and !#lists.isEmpty(newsBlocks) ? newsBlocks[0] : null},
                 memberBlock=${memberBlocks != null and !#lists.isEmpty(memberBlocks) ? memberBlocks[0] : null},
                 linkBlock=${linkBlocks != null and !#lists.isEmpty(linkBlocks) ? linkBlocks[0] : null},
-                newsCategories=${newsBlock != null and newsBlock.category_blocks != null ? newsBlock.category_blocks : theme.config.home?.category_blocks},
-                newsLimit=${newsBlock != null and newsBlock.news_limit != null ? newsBlock.news_limit : (theme.config.home?.news_limit ?: 8)},
-                memberLimit=${memberBlock != null and memberBlock.member_limit != null ? memberBlock.member_limit : (theme.config.home?.member_limit ?: 6)},
-                memberPinned=${memberBlock != null and memberBlock.member_pinned != null ? memberBlock.member_pinned : theme.config.home?.member_pinned},
-                linkLimit=${linkBlock != null and linkBlock.link_limit != null ? linkBlock.link_limit : (theme.config.home?.link_limit ?: 8)},
-                linkPinned=${linkBlock != null and linkBlock.link_pinned != null ? linkBlock.link_pinned : theme.config.home?.link_pinned}"
+                newsCategories=${newsBlock?.category_blocks},
+                newsLimit=${newsBlock?.news_limit ?: 8},
+                memberLimit=${memberBlock?.member_limit ?: 6},
+                memberPinned=${memberBlock?.member_pinned},
+                linkLimit=${linkBlock?.link_limit ?: 8},
+                linkPinned=${linkBlock?.link_pinned}"
        th:data-section-order="${homeOrder != null ? #strings.listJoin(homeOrder, ',') : 'news,members,links'}">
 
   <!-- 信息公告 -->
   <section class="section" data-home-section="news"
            th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and (newsCategories == null or #lists.isEmpty(newsCategories))}">
-    <div class="section-container" th:if="${posts != null and posts.items != null and !posts.items.isEmpty()}">
+    <!-- 条数按「默认显示数量」自己取数：首页分页只有一页（默认 10 条），
+         直接切 posts.items 会让 11–30 的设置静默失效。 -->
+    <th:block th:with="newsItems = ${postFinder.list({page: 1, size: newsLimit})?.items}">
+    <div class="section-container" th:if="${newsItems != null and !#lists.isEmpty(newsItems)}">
       <div class="section-header-bar">
         <h2 class="section-title-bar" th:text="#{home.announcements}">信息公告</h2>
         <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
       </div>
       <div class="news-list">
-        <a th:each="post, iter : ${posts.items}" th:if="${iter.index < newsLimit}"
+        <a th:each="post : ${newsItems}"
            th:href="@{${post.status?.permalink}}" target="_blank" rel="noopener noreferrer" class="news-item">
           <span class="news-date" th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}"></span>
           <span class="news-title" th:text="${post.spec?.title}"></span>
         </a>
       </div>
     </div>
+    </th:block>
   </section>
 
   <!-- 首页自选分类栏 -->
@@ -298,7 +301,7 @@
        th:with="homeBlocks=${theme.config.home?.section_blocks},
                 newsBlocks=${homeBlocks != null ? homeBlocks.?[type == 'news'] : null},
                 newsBlock=${newsBlocks != null and !#lists.isEmpty(newsBlocks) ? newsBlocks[0] : null},
-                newsCategories=${newsBlock != null and newsBlock.category_blocks != null ? newsBlock.category_blocks : theme.config.home?.category_blocks}"
+                newsCategories=${newsBlock?.category_blocks}"
        th:if="${posts != null and (posts.hasPrevious() or posts.hasNext()) and (newsCategories == null or #lists.isEmpty(newsCategories))}">
     <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn" th:text="#{common.previousPage}">上一页</a>
     <span class="badge badge-outline join-item page-info" th:text="|${posts.page} / ${posts.totalPages}|"></span>

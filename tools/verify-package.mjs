@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import AdmZip from 'adm-zip';
 import * as yaml from 'js-yaml';
@@ -45,6 +46,51 @@ if (!existsSync(zipPath)) {
   const packagedCss = find('templates/assets/css/main.css')?.getData().toString('utf8') || '';
   if (!packagedCss.includes('KuaiKanShiJieTi.woff2')) failures.push('安装包样式缺少快看世界体引用');
   if (/url\(["']?\/css\/KuaiKanShiJieTi\.woff2/.test(packagedCss)) failures.push('安装包中的快看世界体仍使用错误根路径');
+
+  // ── 资源指纹 ────────────────────────────────────────────────
+  // 模板里的 ?v= 必须是「版本号-内容指纹」，且指纹与包内资源字节吻合。
+  // 这是「同版本重装吃旧缓存」的兜底：打包漏注入、或注入的指纹过期，这里直接失败，
+  // 不用等到浏览器里出现样式错乱才发现。
+  const normalize = (name) => name.replaceAll('\\', '/');
+  const assetEntries = [];
+  for (const entry of entries) {
+    if (entry.isDirectory) continue;
+    const name = normalize(entry.entryName);
+    const index = name.indexOf('templates/assets/');
+    if (index < 0) continue;
+    const rel = name.slice(index + 'templates/assets/'.length);
+    if (!rel || rel === 'build-info.json') continue;
+    assetEntries.push({ rel, entry });
+  }
+  assetEntries.sort((a, b) => (a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0));
+  const assetHash = createHash('sha256');
+  for (const { rel, entry } of assetEntries) {
+    assetHash.update(rel);
+    assetHash.update('\0');
+    assetHash.update(entry.getData());
+    assetHash.update('\0');
+  }
+  const expectedVersion = `${packageJson.version}-${assetHash.digest('hex').slice(0, 8)}`;
+
+  const versions = new Set();
+  for (const entry of entries) {
+    if (entry.isDirectory || !entry.entryName.endsWith('.html')) continue;
+    const text = entry.getData().toString('utf8');
+    for (const match of text.matchAll(/\(v=([^)\s"']+)\)/g)) {
+      versions.add(match[1]);
+      if (match[1].includes('${')) {
+        failures.push(`${normalize(entry.entryName)} 资源版本参数未注入指纹：${match[0]}`);
+      }
+    }
+  }
+  if (versions.size !== 1) {
+    failures.push(`安装包内资源版本参数不一致：${[...versions].join(', ') || '一处都没有'}`);
+  } else {
+    const [assetVersion] = [...versions];
+    if (assetVersion !== expectedVersion) {
+      failures.push(`资源版本 ${assetVersion} 与包内资源不匹配，期望 ${expectedVersion}（打包后又改过资源？）`);
+    }
+  }
 }
 
 if (failures.length) {

@@ -22,7 +22,7 @@
                   useMenu=${navMenu != null and navMenu.menuItems != null and !#lists.isEmpty(navMenu.menuItems)},
                   navItems=${hero?.nav_items},
                   hasNavItems=${navItems != null and !#lists.isEmpty(navItems)},
-                  title1=${hero?.title_line1},
+                  title1=${#strings.isEmpty(hero?.title_line1) ? site.title : hero.title_line1},
                   titleAccent=${hero?.title_accent},
                   subtitle=${hero?.subtitle},
                   lead=${hero?.lead},

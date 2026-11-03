@@ -4,7 +4,7 @@
 
 - `npm run check`：版本、配置、SEO、H1、图片 alt、设置字段、i18n 键集合与字典同步、插件契约。
 - `npm run build`：源码检查、生产构建和生成物检查。
-- `npm run package`：完整构建、主题 ZIP 打包及 ZIP 内容二次检查。
+- `npm run package`：完整构建、资源指纹注入、主题 ZIP 打包及 ZIP 内容二次检查（含「`?v=` 指纹与包内资源字节一致」）。
 - `npm run i18n`：脚本新增或删除 `t('key')` 引用后重生成 `templates/modules/i18n-dict.html`（不跑会被 `npm run check` 拦下）。
 
 ## 文案与图片
@@ -38,6 +38,7 @@
 - `package.json` 与 `theme.yaml` 版本一致。
 - `theme.yaml spec.requires` 仍是实际验证过的最低 Halo 版本。
 - ZIP 文件名版本正确，包含最新 manifest、设置、模板、i18n 资源与前端资源。
+- 页面资源地址是 `?v=<版本>-<8 位指纹>`（如 `?v=0.0.3-3c07f907`）：同版本号覆盖安装时该值必须变化，否则浏览器会继续用旧 CSS/JS。
 - 在目标 Halo 版本完成安装、启用、配置、主要流程、停用和卸载检查。
 - 只推 Gitee：`git push gitee main --follow-tags`，GitHub 由 Push 镜像自动同步；发行版资产不随镜像，需要 GitHub Release 时单独补。
 - Gitee 发行版附上 `theme-nucma-<version>.zip`，并按 `-L` 下载一次比对字节数（发行版 `assets[].size` 恒为 0，不能作为校验依据）。

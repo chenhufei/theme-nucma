@@ -195,6 +195,13 @@ git push gitee HEAD
 - 仅 `npm run build` 不够，**安装包内容变化必须 `npm run package`**。
 - 维护者一键：`.\scripts\verify-all.ps1`（三仓全检）、`-Package` 追加打包。
 
+**打包链多了一层指纹注入**：`npm run package` = `build` → `tools/pack-theme.mjs` → `tools/verify-package.mjs`。打包脚本先在暂存区按 `templates/assets/**` 的字节算出 8 位指纹，把模板里的 `(v=${theme.spec.version})` 换成 `(v=<版本>-<指纹>)`（形如 `?v=0.0.3-3c07f907`），再交给本地固定版本的 `theme-package` 出 zip。
+
+- 源码模板永远写 `(v=${theme.spec.version})`，**不要硬编码版本号、不要省掉该参数**——`npm run check` 会拦（这是缓存失效的唯一开关）。
+- 为什么必须指纹：Halo 把 `/assets/**` 当不可变资源，浏览器按完整 URL 缓存。只带版本号时，同一版本号重复安装（换测试包、打同版补丁）URL 完全不变，浏览器继续用旧 CSS/JS，表现为「改了没生效」「样式错乱」。
+- 指纹只存在于安装包里，工作区模板不被改写；资源内容不变则指纹不变，缓存正常复用。
+- `verify-package.mjs` 会重算包内资源指纹，与模板里的 `?v=` 不一致直接失败。
+
 ### 6.2 自动检查覆盖了什么
 
 `npm run check`（`tools/verify-theme.mjs`）会核对：版本一致（`package.json` / `theme.yaml` / `package-lock.json` 三处）、模板契约、插件契约标记、`haloCommentEnabled`、`layout.html` 契约、`<halo:footer />`、i18n 键集合与字典同步、图片 alt、SEO 与 H1、CSS 禁用 `transition: all`。

@@ -141,8 +141,8 @@
           <span th:text="${site.title}"></span>
         </a>
         <nav class="main-nav"
-             th:with="headerLinks=${theme.config.navigation?.custom_links != null ? theme.config.navigation.custom_links : theme.config.carousel?.custom_links},
-                      headerLinkInterval=${theme.config.navigation?.carousel_interval != null ? theme.config.navigation.carousel_interval : (theme.config.carousel?.carousel_interval ?: 3500)}">
+             th:with="headerLinks=${theme.config.navigation?.custom_links},
+                      headerLinkInterval=${theme.config.navigation?.carousel_interval ?: 3500}">
           <!-- 主菜单（header_menu 为空则不显示） -->
           <th:block th:if="${theme.config.navigation?.header_menu != null and !#strings.isEmpty(theme.config.navigation?.header_menu)}"
              th:with="menu = ${menuFinder.getByName(theme.config.navigation?.header_menu)}">
@@ -322,7 +322,7 @@
             </div>
           </th:block>
         </th:block>
-        <th:block th:with="mobileHeaderLinks=${theme.config.navigation?.custom_links != null ? theme.config.navigation.custom_links : theme.config.carousel?.custom_links}">
+        <th:block th:with="mobileHeaderLinks=${theme.config.navigation?.custom_links}">
           <th:block th:if="${mobileHeaderLinks != null and !#lists.isEmpty(mobileHeaderLinks)}">
             <div class="mobile-nav-section mobile-nav-section--custom" role="group" aria-label="自定义链接" th:aria-label="#{nav.customLinks}">
               <div class="mobile-custom-links">
@@ -506,11 +506,11 @@
                 </nav>
               </div>
             </th:block>
-            <!-- 兼容：未配置新列表时，按「旧版页脚菜单 → 页头菜单」依次回退。
+            <!-- 兼容：未配置新列表时，回退到页头菜单。
                  页头菜单是站点自己的「站点」栏目，大多数站点只维护这一份菜单，
                  页脚直接复用它，比凭空渲染一组内置链接更符合预期。 -->
             <th:block th:unless="${footerColumns != null and !#lists.isEmpty(footerColumns)}"
-                      th:with="footerMenuName = ${theme.config.footer?.footer_menu ?: (theme.config.navigation?.footer_menu ?: (theme.config.navigation?.header_menu ?: ''))}">
+                      th:with="footerMenuName = ${theme.config.navigation?.header_menu ?: ''}">
               <div class="footer-col"
                    th:if="${!#strings.isEmpty(footerMenuName)}"
                    th:with="menu = ${menuFinder.getByName(footerMenuName)}">
@@ -728,6 +728,14 @@ footer.site-footer .footer-links a:hover{color:var(--n-red)!important}
   var JOIN_STYLE = /*[[${theme.config.footer?.footer_join_style ?: 'solid'}]]*/ 'solid';
   var JOIN_ICON = /*[[${theme.config.footer?.footer_join_icon ?: 'arrow'}]]*/ 'arrow';
   var JOIN_IMAGE = /*[[${theme.config.footer?.footer_join_image ?: ''}]]*/ '';
+  // 页脚文案全部来自站点与后台设置：之前版权兜底写死了 NUCMA 的品牌字串，
+  // 非联盟站点照着这套页脚只能显示别人的名字。留空即不渲染，不再凭空编一句。
+  var SITE_SUBTITLE = /*[[${site.subtitle ?: ''}]]*/ '';
+  var SLOGAN_CFG = /*[[${theme.config.footer?.footer_slogan}]]*/ null;
+  // 没配置过 → 站点副标题优先，其次是主题默认标语；明确清空（空串）则不显示。
+  var SLOGAN_TEXT = SLOGAN_CFG == null ? (SITE_SUBTITLE || '互动宣教 · 多元交流') : SLOGAN_CFG;
+  var FOOTER_COPYRIGHT = /*[[${theme.config.footer?.copyright ?: ''}]]*/ '';
+  var COPYRIGHT_TEXT = '\u00a9 ' + new Date().getFullYear() + ' ' + SITE_TITLE;
   var f=document.querySelector('footer.site-footer');
   if(!f||f.dataset.l) return; f.dataset.l='1';
   var inner=f.querySelector('.footer-inner');
@@ -785,7 +793,7 @@ footer.site-footer .footer-links a:hover{color:var(--n-red)!important}
     mark.appendChild(lg); mark.appendChild(el('span','l-word','NUCMA'));
     brand.appendChild(mark);
     brand.appendChild(el('div','l-name', SITE_TITLE));
-    brand.appendChild(el('div','l-slogan','互动宣教 · 多元交流'));
+    if(SLOGAN_TEXT) brand.appendChild(el('div','l-slogan', SLOGAN_TEXT));
     cols[0].appendChild(brand);
     cols[0].appendChild(makeJoinButton()); }
   var hasMenuNav=[].some.call(inner.querySelectorAll('.footer-nav a'),function(a){var h=a.getAttribute('href')||'';return h!==''&&h.charAt(0)!=='#';});
@@ -957,6 +965,12 @@ footer.site-footer .footer-bottom{display:none!important}
   var JOIN_STYLE = /*[[${theme.config.footer?.footer_join_style ?: 'solid'}]]*/ 'solid';
   var JOIN_ICON = /*[[${theme.config.footer?.footer_join_icon ?: 'arrow'}]]*/ 'arrow';
   var JOIN_IMAGE = /*[[${theme.config.footer?.footer_join_image ?: ''}]]*/ '';
+  // 与 12 号页脚同一套兜底：标语、版权都取自站点与后台设置，不再写死品牌字串。
+  var SITE_SUBTITLE = /*[[${site.subtitle ?: ''}]]*/ '';
+  var SLOGAN_CFG = /*[[${theme.config.footer?.footer_slogan}]]*/ null;
+  var SLOGAN_TEXT = SLOGAN_CFG == null ? (SITE_SUBTITLE || '互动宣教 · 多元交流') : SLOGAN_CFG;
+  var FOOTER_COPYRIGHT = /*[[${theme.config.footer?.copyright ?: ''}]]*/ '';
+  var COPYRIGHT_TEXT = '\u00a9 ' + new Date().getFullYear() + ' ' + SITE_TITLE;
   var f=document.querySelector('footer.site-footer');
   if(!f||f.dataset.v) return; f.dataset.v='1';
   var inner=f.querySelector('.footer-inner');
@@ -1010,7 +1024,7 @@ footer.site-footer .footer-bottom{display:none!important}
   /* 后台「页脚菜单栏目」= 一张白卡；「自定义栏目内容」= 二维码。
      只有含真实链接（非空、非 # 锚点）的栏目才建卡，
      站点栏目没有菜单时整块回退到内置 NAV，不会渲染出空卡或死链。 */
-  var cards=[], qrs=[], say='', seen={};
+  var cards=[], qrs=[], seen={};
   [].forEach.call(inner.querySelectorAll('.footer-col'),function(c){
     var t=c.querySelector('.footer-col-title'), name=t?t.textContent.trim():'';
     if(c.querySelector('.footer-custom-items')){
@@ -1020,8 +1034,6 @@ footer.site-footer .footer-bottom{display:none!important}
       });
       return;
     }
-    var info=c.querySelector('.footer-info p');
-    if(info&&!say) say=info.textContent.trim();
     var as=[].slice.call(c.querySelectorAll('.footer-nav a')), real=[], i=0;
     while(i!==as.length){
       var h=(as[i].getAttribute('href')||'').trim();
@@ -1053,7 +1065,7 @@ footer.site-footer .footer-bottom{display:none!important}
   h.appendChild(el('span',null,'NUCMA')); h.appendChild(el('i',null,'·'));
   h.appendChild(el('em',null,SITE_TITLE));
   txt.appendChild(h);
-  txt.appendChild(el('div','fl-say',say||'互动宣教 多元交流'));
+  if(SLOGAN_TEXT) txt.appendChild(el('div','fl-say', SLOGAN_TEXT));
   var cta=makeJoinButton();
   if(cta){ txt.appendChild(cta); }
   idw.appendChild(logo); idw.appendChild(txt);
@@ -1075,7 +1087,7 @@ footer.site-footer .footer-bottom{display:none!important}
   var cp=f.querySelector('.footer-copyright'), icpA=f.querySelector('.footer-links a');
   var cpTxt=cp?(cp.textContent.replace(/\s+/g,' ').trim()||''):'';
   var base=el('div','fl-base');
-  base.appendChild(el('span',null,cpTxt||'© 2026 全国高校自媒体联盟 NUCMA'));
+  base.appendChild(el('span',null, cpTxt || FOOTER_COPYRIGHT || COPYRIGHT_TEXT));
   var right=el('span');
   if(icpA){ var ia=el('a',null,icpA.textContent.trim());
     ia.setAttribute('href',icpA.getAttribute('href')||'#'); ia.setAttribute('target','_blank');

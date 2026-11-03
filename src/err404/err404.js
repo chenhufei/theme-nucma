@@ -91,13 +91,15 @@
     return out.length ? out : pool;
   }
   var MEMBERS = (function () {
-    var pool = null;
+    var pool = null, fromPluginPool = false;
     if (CONF.memberSource !== 'manual') {
       var fromPlugin = pluginMembers();
-      if (fromPlugin.length) pool = fromPlugin;
+      if (fromPlugin.length) { pool = fromPlugin; fromPluginPool = true; }
     }
     if (!pool) pool = manualMembers();
-    return pickMembers(pool);
+    /* 分组 / 名单过滤属于「插件来源」的配置，手动模式与回落快照下这两项在后台是隐藏的；
+       继续套用旧值会把手动名单悄悄筛掉一部分成员，所以只在真拿到插件成员时过滤。 */
+    return fromPluginPool ? pickMembers(pool) : pool;
   })();
 
   /* ================= 主题 / 状态 ================= */

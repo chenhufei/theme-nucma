@@ -76,6 +76,18 @@ function clampText(ctx, text, maxW) {
 /* 图片必须走 blob 再交给 <img>：跨域头像/Logo 若拿不到 CORS 就静默退回字形，
    绝不把未授权的图片画进画布（否则 toBlob 会因画布被污染而失败）。
    外链头像不可达时最多等 4s，不能把「保存」按钮一直卡在生成中。 */
+
+/* QQ 头像 CDN（q1.qlogo.cn 等）不返回 CORS 头：<img> 能显示，但 fetch 与画布绘制
+   都会被浏览器拒绝，导出的工作证上只剩占位字母。头像改走成员插件的同源代理
+   （0.0.3+ 的 /plugins/PluginMembers/avatar），代理不可用时仍按原逻辑退回字形。 */
+var AVATAR_CDN = /^https?:\/\/(?:q[1-3]?|thirdqq)\.qlogo\.cn\//i;
+var AVATAR_PROXY = '/apis/api.plugin.halo.run/v1alpha1/plugins/PluginMembers/avatar?url=';
+
+function proxyAvatar(url) {
+  if (!url || !AVATAR_CDN.test(url)) return url;
+  return AVATAR_PROXY + encodeURIComponent(url);
+}
+
 function loadImage(url) {
   if (!url) return Promise.resolve(null);
   var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
@@ -697,7 +709,7 @@ export function renderBadgeShare(data) {
   var tasks = [
     fontLoad,
     fontsReady,
-    loadImage(data.avatar),
+    loadImage(proxyAvatar(data.avatar)),
     loadImage(data.logo),
     loadSvgImage(document.getElementById('claspWrap'))
   ];

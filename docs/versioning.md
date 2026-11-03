@@ -1,6 +1,6 @@
 # 版本号规则
 
-`theme-nucma`、`plugin-members`、`plugin-link-submit-next` 三个仓库各自独立计数，互不联动。当前版本：`theme-nucma` **0.0.2**、`plugin-members` **0.0.2**、`plugin-link-submit-next` **0.0.1**。
+`theme-nucma`、`plugin-members`、`plugin-link-submit-next` 三个仓库各自独立计数，互不联动。当前版本：`theme-nucma` **0.0.4**、`plugin-members` **0.0.3**、`plugin-link-submit-next` **0.0.2**。
 
 ## 一、编号格式
 

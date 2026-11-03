@@ -87,13 +87,13 @@ spec:
           language: javascript
           height: 240px
     - group: navigation
-      label: 页头设置
+      label: 页头设置（站点页头）
       formSchema:
         - $formkit: select
           name: nav_align
           label: 菜单对齐
           value: center
-          help: header 内菜单与自定义链接的水平对齐
+          help: header 内菜单与自定义链接的水平对齐；首页由「首屏 Hero」自带的页头接管，本组在首页不生效（登录、搜索、明暗切换入口也随之隐藏）
           options:
             - label: 居中对齐
               value: center
@@ -121,12 +121,12 @@ spec:
           value: true
         - $formkit: number
           name: carousel_interval
-          label: 自定义链接轮播间隔（毫秒）
+          label: 链接轮播间隔（页头，毫秒）
           value: 3500
           min: 1500
           max: 10000
           step: 500
-          help: 当自定义链接超过 1 个时会自动上下滚动轮播，此处设置每个链接在导航栏上的停留显示时间，单位毫秒，默认 3500ms
+          help: 页头「自定义链接」超过 1 个时会自动上下滚动轮播，此处设置每个链接的停留时间，默认 3500ms。只影响页头，首页横幅的轮播间隔在「首页横幅（旧版）」组里单独设置。
         - $formkit: array
           name: custom_links
           label: 自定义链接
@@ -170,7 +170,7 @@ spec:
                   value: _self
 
     - group: home
-      label: 首页设置
+      label: 首页横幅（旧版）
       formSchema:
         - $formkit: array
           name: bg_carousel
@@ -178,7 +178,7 @@ spec:
           value: []
           addLabel: 添加背景图
           emptyText: 留空使用默认背景
-          help: 添加 1 张作为单图背景，添加多张自动轮播；建议图片尺寸一致（1920x600 以上）
+          help: 添加 1 张作为单图背景，添加多张自动轮播；建议图片尺寸一致（1920x600 以上）。本组只在「首屏 Hero → 启用新版首屏」关闭后生效，开启时首页首屏由上方的「首屏 Hero」组接管。
           itemLabels:
             - type: image
               label: $value.url
@@ -202,12 +202,12 @@ spec:
           value: true
         - $formkit: number
           name: carousel_interval
-          label: 轮播间隔（毫秒）
+          label: 横幅轮播间隔（旧版横幅，毫秒）
           value: 5000
           min: 2500
           max: 15000
           step: 500
-          help: 每张图停留显示的时间，单位毫秒，默认 5000ms
+          help: 每张图停留显示的时间，单位毫秒，默认 5000ms。只影响旧版首页横幅，页头「自定义链接」的滚动间隔在「页头设置」组里单独设置。
         - $formkit: select
           name: bg_overlay
           label: 背景遮罩
@@ -578,7 +578,7 @@ spec:
           name: eyebrow
           label: 首屏小字
           value: NUCMA / 2026
-          help: 仅极简大字版式显示在标题左上方。
+          help: 在 5 号（柔光渐层）、6 号（双色分栏）、7 号（带小字原稿）、10 号（极简大字）四种版式里显示在标题上方；其余版式忽略此项。
         - $formkit: text
           name: primary_text
           label: 主按钮文字
@@ -601,7 +601,7 @@ spec:
           label: 首屏数字
           addLabel: 添加数字
           emptyText: 暂无数字
-          help: 数字、单位、指代含义都可以改；封面版式最多显示 4 个，其余版式显示 3 个。
+          help: 数字、单位、指代含义都可以改。1/2/7 号版式取前 3 个，3/4/9 号取前 4 个，6 号取前 3 个（第 1 个同时作为左侧竖面的主数字），5 号只把第 1 个放进右侧圆环，8/10/11 号不显示数字。
           itemLabels:
             - type: text
               label: $value.value
@@ -640,7 +640,7 @@ spec:
           label: 图文并置三块
           addLabel: 添加内容块
           emptyText: 暂无内容块
-          help: 1 号版式右侧的三块内容：默认是色块，填了图片就换成图片；标题、说明与链接都可改。8 号版式用同样的三块生成层叠卡片。
+          help: 1 号版式右侧的三块内容：默认是色块，填了图片就换成图片；标题、说明与链接都可改。8 号版式用同样的三块生成层叠卡片，11 号版式取前三块的标题做线上标签。
           itemLabels:
             - type: text
               label: $value.title
@@ -708,7 +708,7 @@ spec:
           value: 3
           min: 1
           max: 12
-          help: 未指定成员时，每个成员分组最多展示几位（最多读取 8 个分组）；指定成员时以选择为准。
+          help: 未指定成员时，每个成员分组最多展示几位（最多读取 8 个分组）；指定成员时以选择为准。只影响首屏 2 号版式，首页「成员公示」区块的数量在「首页横幅（旧版）→ 首页区块排序」里单独设置。
         - $formkit: select
           name: member_pinned
           label: 指定展示的成员
@@ -717,7 +717,7 @@ spec:
           sortable: true
           clearable: true
           searchable: true
-          help: 留空展示全部审核通过的成员；选中后只展示这些成员。需启用成员插件。
+          help: 留空展示全部审核通过的成员；选中后只展示这些成员。需启用成员插件。只影响首屏 2 号版式，首页「成员公示」区块的指定成员在「首页横幅（旧版）→ 首页区块排序」里单独设置。
           action: /apis/member.plugin.halo.run/v1alpha1/members
           requestOption:
             method: GET
@@ -734,7 +734,7 @@ spec:
           name: member_names
           label: 成员跑马灯兜底名单（2 号版式）
           value: 重庆大学,西南大学,西南政法大学,重庆师范大学,重庆邮电大学,四川外国语大学,重庆交通大学,重庆工商大学
-          help: 逗号分隔。仅在成员插件不可用或没有审核通过的成员时使用。
+          help: 逗号分隔。2 号版式的成员跑马灯在成员插件不可用、或没有审核通过的成员时用它兜底；5 号（文字行）与 9 号（环形标签）始终用它渲染文字，与插件是否可用无关。
         - $formkit: text
           name: footnote
           label: 首屏底部注脚
@@ -787,7 +787,7 @@ spec:
               title: 最近文章
             - type: toc
               title: 文章目录
-          help: 拖动调整顺序；列表中存在即显示。支持移除后重新添加，每种区块建议只添加一次
+          help: 拖动调整顺序；列表中存在即显示。支持移除后重新添加，每种区块建议只添加一次。这是文章页侧边栏的配置，与「首页横幅（旧版）」里的首页区块排序互不影响。
           itemLabels:
             - type: text
               label: $value.title
@@ -1247,7 +1247,7 @@ spec:
           label: 工牌成员数据（手动）
           language: json
           height: 200px
-          help: 仅「成员来源 = 手动数据」时生效；插件来源会忽略这里。留空使用主题内置快照（5 位成员，含一位测试号）。格式为 JSON 数组，每项支持 name/qq/school/group/url/verified/intro/no 字段；头像由 QQ 号自动取，无需填 avatar。
+          help: 「成员来源」为「手动数据」时使用这里；选「成员管理插件」但插件没有已通过成员时，也回落到这里兜底。留空使用主题内置快照（5 位成员，含一位测试号）。格式为 JSON 数组，每项支持 name/qq/school/group/url/verified/intro/no 字段；头像由 QQ 号自动取，无需填 avatar。
         - $formkit: checkbox
           name: error404_show_art
           label: 显示插图
@@ -1423,7 +1423,7 @@ spec:
             - label: 关系网
               value: network
           help: 访客首次打开成员页时使用的视图；访客手动切换后会记住自己的选择，不再跟随此处设置。
-        - $formkit: switch
+        - $formkit: checkbox
           name: globe_affinity_enabled
           label: 显示学校关联连线
           value: true
@@ -1440,7 +1440,7 @@ spec:
             - label: 仅强关联
               value: "0.7"
           help: 只显示关联强度不低于该值的连线；阈值越高连线越少，画面更干净。线宽与透明度按当前最强关联等比归一，强关联永远最粗。
-        - $formkit: switch
+        - $formkit: checkbox
           name: globe_affinity_show_reason
           label: 显示分析依据
           value: true
@@ -1517,7 +1517,7 @@ spec:
           value: []
           addLabel: 添加菜单栏目
           emptyText: 暂无菜单栏目
-          help: 可添加多个带标题的 Halo 菜单栏目；每个栏目对应一个菜单。留空时依次回退到「旧版页脚菜单」与「页头菜单」，都不存在才使用内置的首页/文章/分类/成员四项。
+          help: 可添加多个带标题的 Halo 菜单栏目；每个栏目对应一个菜单。留空时回退到「页头设置」里选择的顶部菜单，顶部菜单也没有配置才使用内置的首页/文章/分类/成员四项。
           itemLabels:
             - type: text
               label: $value.title
@@ -1545,6 +1545,12 @@ spec:
                 labelField: spec.displayName
                 valueField: metadata.name
                 fieldSelectorKey: metadata.name
+        - $formkit: text
+          name: footer_slogan
+          label: 页脚标语
+          value: 互动宣教 · 多元交流
+          placeholder: 留空则用站点副标题
+          help: 12 号（品牌水印）与 33 号（卡片漂浮）页脚品牌卡上的那行小字；留空时用站点副标题，两者都没有则不显示这一行。
         - $formkit: textarea
           name: copyright
           label: 版权信息
@@ -1579,8 +1585,7 @@ spec:
               label: 图片
               value: ""
               accepts: ["image/*"]
-              help: 从媒体库选择图片，如二维码、Logo 等
-              validation: required
+              help: 从媒体库选择图片，如二维码、Logo 等；不需要图就留空，只显示标题文字
             - $formkit: text
               name: url
               label: 链接地址

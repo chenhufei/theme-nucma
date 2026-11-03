@@ -38,8 +38,19 @@ const packageCliVersion = packageJson.devDependencies?.['@halo-dev/theme-package
 if (!/^\d+\.\d+\.\d+$/.test(packageCliVersion || '')) {
   fail('主题打包工具必须使用固定版本');
 }
-if (!packageJson.scripts?.package?.includes('theme-package') || packageJson.scripts.package.includes('npx ')) {
-  fail('主题打包必须使用本地固定版本的 theme-package');
+// 打包必须走 tools/pack-theme.mjs：它负责资源指纹注入（见脚本头部说明），
+// 直接调 theme-package 会跳过指纹，同版本重装时浏览器继续吃旧缓存。
+const packageScript = packageJson.scripts?.package || '';
+if (!packageScript.includes('node tools/pack-theme.mjs') || packageScript.includes('npx ')) {
+  fail('主题打包必须走 node tools/pack-theme.mjs，且不得用 npx 拉取未锁定的打包工具');
+}
+if (!existsSync(join(root, 'tools/pack-theme.mjs'))) {
+  fail('缺少打包脚本：tools/pack-theme.mjs');
+} else {
+  const packTool = read('tools/pack-theme.mjs');
+  for (const marker of ['@halo-dev/theme-package-cli', '(v=${theme.spec.version})']) {
+    if (!packTool.includes(marker)) fail(`打包脚本缺少 ${marker}`);
+  }
 }
 if (packageLock.includes('registry.npmmirror.com')) {
   fail('package-lock.json 不得固化第三方镜像下载地址');
@@ -207,6 +218,16 @@ for (const path of templates) {
 }
 
 const allTemplates = templates.map(read).join('\n');
+// 资源版本参数只有一种写法：(v=${theme.spec.version})。打包时靠它注入内容指纹，
+// 写成别的形式（硬编码版本、省略参数）就等于那条资源永远吃旧缓存。
+for (const path of templates) {
+  const source = read(path);
+  for (const match of source.matchAll(/\(v=([^)\s"']+)\)/g)) {
+    if (match[1] !== '${theme.spec.version}') {
+      fail(path + ' 资源版本参数必须统一写成 (v=${theme.spec.version})：' + match[0]);
+    }
+  }
+}
 if (/href=["']javascript:/i.test(allTemplates)) {
   fail('模板不得使用 javascript: 链接');
 }
@@ -233,20 +254,39 @@ for (const staleKey of [
 }
 
 for (const compatibilityMarker of [
-  'theme.config.hero',
-  'theme.config.carousel',
+  // content 组是 3.34.x 的老配置组，升级上来的站点可能还留着自定义 CSS/JS
+  // 与评论开关，这里保留读取，避免静默丢配置。
   'theme.config.content?.auto_toc',
   'theme.config.content?.post_comment_enabled',
-  'theme.config.navigation?.footer_menu',
-  'theme.config.home?.member_limit',
-  'theme.config.home?.link_limit',
-  'theme.config.home?.category_blocks',
-  'newsBlock.category_blocks',
-  'memberBlock.member_pinned',
-  'linkBlock.link_pinned',
+  'theme.config.content?.custom_css',
+  'theme.config.content?.custom_js',
 ]) {
   if (!allTemplates.includes(compatibilityMarker)) {
     fail(`模板缺少旧配置回退：${compatibilityMarker}`);
+  }
+}
+
+// 已从 settings.yaml 移除的组与字段：继续回退只会读到永久空值，等于死分支。
+// 匹配时要求后面不再是标识符字符，避免 footer_menu 命中 footer_menus。
+const hasRemovedFallback = (marker) =>
+  new RegExp(`${marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9_])`).test(allTemplates);
+
+for (const removedFallback of [
+  'theme.config.hero',
+  'theme.config.carousel',
+  'theme.config.navigation?.footer_menu',
+  'theme.config.footer?.footer_menu',
+  'theme.config.home?.section_order',
+  'theme.config.home?.category_blocks',
+  'theme.config.home?.news_limit',
+  'theme.config.home?.member_limit',
+  'theme.config.home?.member_pinned',
+  'theme.config.home?.link_limit',
+  'theme.config.home?.link_pinned',
+  'theme.config.sidebar?.section_order',
+]) {
+  if (hasRemovedFallback(removedFallback)) {
+    fail(`模板仍在回退已删除的设置项：${removedFallback}`);
   }
 }
 
