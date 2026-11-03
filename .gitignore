@@ -9,6 +9,7 @@ templates/assets/build-info.json
 *.log
 dist/
 .pack-stage/
+.pack-stage-manifest.json
 *.zip
 
 # 本地快捷方式与临时诊断文件

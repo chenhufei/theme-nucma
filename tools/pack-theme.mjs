@@ -12,12 +12,15 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 import * as yaml from 'js-yaml';
+import { zipContentDigest } from './zip-digest.mjs';
 
 const root = process.cwd();
 const stage = join(root, '.pack-stage');
+// 清单放在暂存目录之外：暂存目录会被打包工具整体收进 zip，清单不能混进去。
+const manifestPath = join(root, '.pack-stage-manifest.json');
 const TOKEN = '(v=${theme.spec.version})';
 const CLI = join(root, 'node_modules/@halo-dev/theme-package-cli/index.js');
 
@@ -65,19 +68,61 @@ const assetVersion = `${packageJson.version}-${fingerprint}`;
 
 // ── 2. 暂存区 ──────────────────────────────────────────────────
 // theme-package 只认 cwd，且只会收 templates/**、i18n/**、根目录 yaml、README/LICENSE、截图。
-// 这里按同一份清单把要进包的内容复制到 .pack-stage，改完再打包，避免动到工作区。
-rmSync(stage, { recursive: true, force: true });
+// 这里按同一份清单把要进包的内容同步到 .pack-stage，改完再打包，避免动到工作区。
+//
+// 用「清单 + 增量覆盖」而不是「整目录删除后重拷」：一次性删掉上百个文件会撞上宿主的
+// 批量删除保护（单轮 50 个以上需人工确认），把一次正常打包变成失败。改成对比清单后
+// 只删除「上一版有、这一版没有」的文件，常态是 0 个，重复打包稳定可复现。
 mkdirSync(stage, { recursive: true });
 const stageEntries = ['templates', 'i18n', 'README.md', 'LICENSE'];
 for (const entry of readdirSync(root)) {
   if (/\.ya?ml$/.test(entry) || /^screenshot\.(?:png|jpe?g|webp)$/i.test(entry)) stageEntries.push(entry);
 }
 if (existsSync(join(root, 'ui-plugin', 'dist'))) stageEntries.push(join('ui-plugin', 'dist'));
+
+const desired = new Set();
 for (const entry of stageEntries) {
   const from = join(root, entry);
   if (!existsSync(from)) fail(`暂存清单里的 ${entry} 不存在`);
-  cpSync(from, join(stage, entry), { recursive: statSync(from).isDirectory() });
+  if (statSync(from).isDirectory()) {
+    for (const file of walk(from)) desired.add(relative(root, file).replaceAll('\\', '/'));
+  } else {
+    desired.add(entry.replaceAll('\\', '/'));
+  }
 }
+
+// 上一次的清单；首次运行（旧版脚本直接全量拷贝、没有清单）就按目录现状当基线，
+// 这样迁移过程也不会一次性删除整目录。
+let previous;
+try {
+  previous = new Set(JSON.parse(readFileSync(manifestPath, 'utf8')));
+} catch {
+  previous = new Set(
+    walk(stage)
+      .map((file) => relative(stage, file).replaceAll('\\', '/'))
+      .filter((rel) => !rel.startsWith('dist/')),
+  );
+}
+
+let removed = 0;
+for (const rel of previous) {
+  if (desired.has(rel)) continue;
+  const target = join(stage, rel);
+  if (!existsSync(target)) continue;
+  unlinkSync(target);
+  removed += 1;
+}
+
+for (const rel of desired) {
+  const target = join(stage, rel);
+  mkdirSync(dirname(target), { recursive: true });
+  cpSync(join(root, rel), target, { force: true });
+}
+// 统一时间戳：zip 会记录每个条目的 mtime，不固定的话同样内容两次打包 md5 也不同，
+// 发版时无法用哈希佐证「线上资产与本地包一致」。固定后打包可复现，只随内容变化。
+const FIXED_TIME = new Date('2000-01-01T00:00:00Z');
+for (const rel of desired) utimesSync(join(stage, rel), FIXED_TIME, FIXED_TIME);
+writeFileSync(manifestPath, `${JSON.stringify([...desired].sort(), null, 2)}\n`, 'utf8');
 
 // ── 3. 盖章 ────────────────────────────────────────────────────
 // 只替换 (v=${theme.spec.version}) 这一种写法（Thymeleaf 链接表达式里的版本参数），
@@ -105,12 +150,12 @@ try {
   renameSync(built, join(root, 'dist', zipName));
   console.log(`资源指纹：${fingerprint}（${hashedFiles} 个文件）→ 安装包内资源版本 ${assetVersion}`);
   console.log(`已写入 ${stamped} 处资源引用，涉及 ${untouched.length} 个模板`);
+  if (removed) console.log(`同步暂存区：移除 ${removed} 个已不存在的旧文件`);
+  const finalZip = join(root, 'dist', zipName);
+  const { digest, files } = zipContentDigest(finalZip);
+  console.log(`内容摘要：${digest}（${files} 个文件，发版后与线上资产比对用这个）`);
   console.log(`安装包：dist/${zipName}`);
-} finally {
-  // 暂存目录被占用（杀毒/编辑器索引）时不要连带把已经打好的包判成失败。
-  try {
-    rmSync(stage, { recursive: true, force: true });
-  } catch (error) {
-    console.warn(`暂存目录清理失败（不影响已生成的安装包）：${error.message}`);
-  }
+} catch (error) {
+  // 打包失败时保留暂存区，方便直接进去复现；下次打包会按清单覆盖。
+  fail(`theme-package 执行失败：${error.message}`);
 }
