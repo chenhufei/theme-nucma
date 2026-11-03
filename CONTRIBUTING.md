@@ -202,6 +202,16 @@ git push gitee HEAD
 - 指纹只存在于安装包里，工作区模板不被改写；资源内容不变则指纹不变，缓存正常复用。
 - `verify-package.mjs` 会重算包内资源指纹，与模板里的 `?v=` 不一致直接失败。
 
+**暂存区是「清单 + 增量覆盖」，不是整目录重拷**：宿主对单轮删除超过 50 个文件有批量删除保护，`rm -rf .pack-stage` 会让正常打包失败。脚本用 `.pack-stage-manifest.json` 记录上一版文件清单，只删「上版有、这版没有」的文件（常态 0 个），其余覆盖写入，所以重复打包稳定可复现。
+
+**校验用内容摘要，不用 zip 的 md5**：打包工具按 glob 展开顺序追加条目，同一份内容两次打包字节不同。`npm run package` 结束会打印 `内容摘要：<sha256>（N 个文件）`，发版后下载线上资产用同一脚本比对：
+
+```bash
+node tools/zip-digest.mjs dist/theme-nucma-0.0.4.zip   # 本地
+node tools/zip-digest.mjs /tmp/dl-theme.zip             # 线上
+```
+
+
 ### 6.2 自动检查覆盖了什么
 
 `npm run check`（`tools/verify-theme.mjs`）会核对：版本一致（`package.json` / `theme.yaml` / `package-lock.json` 三处）、模板契约、插件契约标记、`haloCommentEnabled`、`layout.html` 契约、`<halo:footer />`、i18n 键集合与字典同步、图片 alt、SEO 与 H1、CSS 禁用 `transition: all`。
