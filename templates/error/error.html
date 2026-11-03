@@ -3,7 +3,7 @@
       th:replace="~{modules/layout :: html(title=|${#messages.msg('error.label')}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=|${#messages.msg('error.generic.title')}|, canonical='', image=${site.logo}, pageType='website', robots='noindex, nofollow')}">
 <th:block th:fragment="content">
   <div class="error-page">
-    <h1 class="error-code" th:text="${error?.status ?: 'Error'}"></h1>
+    <h1 class="error-code" th:text="${#strings.defaultString(error?.status, 'Error')}"></h1>
     <p class="error-message" th:text="${#strings.defaultString(error?.title, #messages.msg('error.generic.message'))}"></p>
     <p class="error-detail" th:if="${not #strings.isEmpty(error?.detail)}" th:text="${error?.detail}"></p>
     <a th:href="@{/}" class="error-link" th:text="#{error.home}">返回首页</a>

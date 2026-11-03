@@ -3,24 +3,25 @@
 <body>
 <!--
   首页首屏：5 套版式（1/2/3/8/10）共用一套后台设置。
-  页头、文案、按钮、数字、三块内容、成员名单全部来自 theme.config.home_hero，
+  文案、按钮、数字、三块内容、成员名单来自 theme.config.home_hero；页头（Logo/站名/导航/按钮）来自 theme.config.navigation，与内页页头同源，
   版式只决定排布，不写死任何展示内容。
 -->
 <section th:fragment="hero"
          class="nh"
          th:classappend="${heroLayout == 'p42' ? ' nh--p42r' : ' nh--' + heroLayout}"
          th:with="hero=${theme.config.home_hero},
-                  heroLayout=${hero?.layout ?: 'p42r'},
-                  logoMode=${hero?.logo_mode ?: 'mark'},
-                  logoImage=${hero?.logo_image},
-                  brandName=${#strings.isEmpty(hero?.brand_name) ? site.title : hero.brand_name},
-                  brandEn=${hero?.brand_en},
-                  ctaText=${hero?.header_cta_text},
-                  ctaUrl=${hero?.header_cta_url ?: '/'},
-                  navMenuName=${hero?.nav_menu},
+                  heroLayout=${#strings.defaultString(hero?.layout, 'p42r')},
+                  nav=${theme.config.navigation},
+                  logoMode=${#strings.defaultString(nav?.logo_mode, 'mark')},
+                  logoImage=${nav?.logo_image},
+                  brandName=${#strings.isEmpty(nav?.brand_name) ? site.title : nav.brand_name},
+                  brandEn=${nav?.brand_en},
+                  ctaText=${nav?.header_cta_text},
+                  ctaUrl=${#strings.defaultString(nav?.header_cta_url, '/')},
+                  navMenuName=${nav?.header_menu},
                   navMenu=${navMenuName != null and !#strings.isEmpty(navMenuName) ? menuFinder.getByName(navMenuName) : null},
                   useMenu=${navMenu != null and navMenu.menuItems != null and !#lists.isEmpty(navMenu.menuItems)},
-                  navItems=${hero?.nav_items},
+                  navItems=${nav?.custom_links},
                   hasNavItems=${navItems != null and !#lists.isEmpty(navItems)},
                   title1=${#strings.isEmpty(hero?.title_line1) ? site.title : hero.title_line1},
                   titleAccent=${hero?.title_accent},
@@ -28,9 +29,9 @@
                   lead=${hero?.lead},
                   eyebrow=${hero?.eyebrow},
                   primaryText=${hero?.primary_text},
-                  primaryUrl=${hero?.primary_url ?: '/archives'},
+                  primaryUrl=${#strings.defaultString(hero?.primary_url, '/archives')},
                   secondaryText=${hero?.secondary_text},
-                  secondaryUrl=${hero?.secondary_url ?: '/members'},
+                  secondaryUrl=${#strings.defaultString(hero?.secondary_url, '/members')},
                   stats=${hero?.stats},
                   hasStats=${stats != null and !#lists.isEmpty(stats)},
                   blocks=${hero?.blocks},
@@ -67,10 +68,9 @@
       <th:block th:unless="${useMenu}">
         <th:block th:if="${hasNavItems}">
           <a th:each="item : ${navItems}"
-             th:if="${item.label != null and !#strings.isEmpty(item.label) and item.url != null and !#strings.isEmpty(item.url)}"
+             th:if="${item.text != null and !#strings.isEmpty(item.text) and item.url != null and !#strings.isEmpty(item.url)}"
              th:href="@{${item.url}}"
-             th:classappend="${item.active == true} ? ' on' : ''"
-             th:text="${item.label}"></a>
+             th:text="${item.text}"></a>
         </th:block>
       </th:block>
     </nav>
@@ -244,9 +244,9 @@
       </th:block>
       <th:block th:unless="${useMenu}">
         <a th:each="item : ${navItems}"
-           th:if="${item.label != null and !#strings.isEmpty(item.label) and item.url != null and !#strings.isEmpty(item.url)}"
+           th:if="${item.text != null and !#strings.isEmpty(item.text) and item.url != null and !#strings.isEmpty(item.url)}"
            th:href="@{${item.url}}">
-          <span th:text="${item.label}"></span>
+          <span th:text="${item.text}"></span>
           <u th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" th:text="${item.badge}"></u>
         </a>
       </th:block>
@@ -280,9 +280,9 @@
         </th:block>
         <th:block th:unless="${useMenu}">
           <a class="nhaur-chip" th:each="item, ns : ${navItems}"
-             th:if="${ns.index < 4 and item.label != null and !#strings.isEmpty(item.label)}"
+             th:if="${ns.index < 4 and item.text != null and !#strings.isEmpty(item.text)}"
              th:attr="href=${item.url != null and !#strings.isEmpty(item.url) ? item.url : '/'}">
-            <b th:text="${item.label}"></b>
+            <b th:text="${item.text}"></b>
           </a>
         </th:block>
       </div>

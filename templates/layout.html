@@ -3,11 +3,11 @@
       th:fragment="html (head, content)"
       class="no-js"
       data-theme="light" data-color-scheme="auto" data-visual-style="portal"
-      th:data-visual-style="${theme.config.appearance?.visual_style ?: 'portal'}">
+      th:data-visual-style="${#strings.defaultString(theme.config.appearance?.visual_style, 'portal')}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" th:content="${theme.config.appearance?.primary_color ?: '#D13E43'}">
+  <meta name="theme-color" th:content="${#strings.defaultString(theme.config.appearance?.primary_color, '#D13E43')}">
   <title th:if="${head == null}" th:text="${site.title}"></title>
   <th:block th:if="${head != null}" th:replace="${head}"></th:block>
   <!-- favicon 由 Halo 的 DefaultFaviconHeadProcessor 注入，此处不再重复输出 -->
@@ -22,7 +22,7 @@
       html.classList.remove('no-js');
       html.classList.add('js-enabled');
       var saved = localStorage.getItem('theme-mode') || localStorage.getItem('theme');
-      var mode = /*[[${theme.config.appearance?.default_theme_mode ?: 'system'}]]*/ 'system';
+      var mode = /*[[${#strings.defaultString(theme.config.appearance?.default_theme_mode, 'system')}]]*/ 'system';
       var isDark = saved === 'dark' || (!saved && mode === 'dark')
         || ((saved || mode) === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
       var effectiveMode = isDark ? 'dark' : 'light';
@@ -30,7 +30,7 @@
       html.setAttribute('data-color-scheme', effectiveMode);
       html.classList.remove('light', 'dark');
       html.classList.add(effectiveMode);
-      var primaryColor = /*[[${theme.config.appearance?.primary_color ?: '#D13E43'}]]*/ '#D13E43';
+      var primaryColor = /*[[${#strings.defaultString(theme.config.appearance?.primary_color, '#D13E43')}]]*/ '#D13E43';
       if (primaryColor && primaryColor !== '#D13E43') {
         html.style.setProperty('--primary', primaryColor);
         html.style.setProperty('--color-primary', primaryColor);

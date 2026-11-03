@@ -6,7 +6,7 @@
   <div class="page-container text-center" style="max-width:var(--site-reading-width)">
     <div class="py-20">
       <div class="guofeng-divider mb-8">◆</div>
-      <h1 class="section-title mb-4" th:text="${error?.status ?: '5xx'}">错误</h1>
+      <h1 class="section-title mb-4" th:text="${#strings.defaultString(error?.status, '5xx')}">错误</h1>
       <p class="mb-6" style="color:rgb(var(--color-text-muted))"
          th:text="${#strings.defaultString(error?.title, #messages.msg('error.500.title'))}"></p>
       <p th:if="${not #strings.isEmpty(error?.detail)}" class="text-sm mb-8"

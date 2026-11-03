@@ -3,13 +3,15 @@
       th:replace="~{modules/layout :: html(title=${site.title}, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=${site.seo?.description ?: site.subtitle}, canonical=${site.url}, image=${site.logo}, pageType='website', robots=null)}">
 <th:block th:fragment="content" th:with="dateFmt=${theme.config.appearance?.date_format == null or #strings.isEmpty(theme.config.appearance?.date_format) ? #messages.msg('format.date') : #strings.replace(#strings.replace(theme.config.appearance.date_format, 'YYYY', 'yyyy'), 'DD', 'dd')}">
   <!-- 新版首屏：11 套版式，内容全部来自后台「首屏 Hero」设置组 -->
-  <th:block th:if="${theme.config.home_hero?.enabled != false}">
+  <th:block th:if="${theme.config.home_hero?.layout != 'none' and !#strings.startsWith(#strings.defaultString(theme.config.home_hero?.layout, 'p42r'), 'legacy-')}">
     <th:block th:replace="~{modules/home-hero :: hero}"></th:block>
   </th:block>
 
   <!-- Banner - 校园风格（关闭新版首屏时回退到原横幅） -->
   <section class="banner"
-           th:with="heroConfig = ${theme.config.home},
+           th:with="heroConfig = ${theme.config.home_hero},
+                     heroLayoutRaw = ${#strings.defaultString(theme.config.home_hero?.layout, 'p42r')},
+                     legacyStyle = ${#strings.startsWith(#strings.defaultString(heroLayoutRaw, 'p42r'), 'legacy-') ? #strings.substring(heroLayoutRaw, 7) : 'floaters'},
                      backgrounds = ${heroConfig?.bg_carousel},
                      hasBackgrounds = ${backgrounds != null and !#lists.isEmpty(backgrounds)},
                      singleBackground = ${hasBackgrounds ? backgrounds[0] : null},
@@ -20,9 +22,9 @@
                      fullW = ${heroConfig?.full_width == true},
                      overlay = ${heroConfig?.bg_overlay != null and !#strings.isEmpty(heroConfig.bg_overlay) ? heroConfig.bg_overlay : 'medium'},
                      heroH = ${heroConfig?.min_height},
-                     heroStyle = ${(hasBg or carousel) ? 'classic' : (heroConfig?.hero_style ?: 'floaters')},
-                     heroEyebrow = ${#strings.isEmpty(heroConfig?.hero_eyebrow) ? #messages.msg('home.heroEyebrowDefault') : heroConfig.hero_eyebrow},
-                     heroLead = ${#strings.isEmpty(heroConfig?.hero_lead) ? (!#strings.isEmpty(site.subtitle) ? site.subtitle : #messages.msg('home.heroLeadDefault')) : heroConfig.hero_lead},
+                     heroStyle = ${(hasBg or carousel) ? 'classic' : legacyStyle},
+                     heroEyebrow = ${#strings.isEmpty(heroConfig?.eyebrow) ? #messages.msg('home.heroEyebrowDefault') : heroConfig.eyebrow},
+                     heroLead = ${#strings.isEmpty(heroConfig?.lead) ? (!#strings.isEmpty(site.subtitle) ? site.subtitle : #messages.msg('home.heroLeadDefault')) : heroConfig.lead},
                      latestPost = ${posts != null and posts.items != null and !#lists.isEmpty(posts.items) ? posts.items[0] : null},
                      memberList = ${heroStyle != 'classic' and pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null},
                      memberTotal = ${memberList != null and memberList.items != null and !#lists.isEmpty(memberList.items) ? #aggregates.sum(memberList.items.![members.size()]) : 0},
@@ -31,8 +33,7 @@
                      heroClass = ${(hasBg or carousel ? 'has-custom-bg' : '') + ' ' + (fullW ? 'full-width' : '') + ' overlay-' + overlay + (carousel ? ' has-bg-carousel' : '') + (heroStyle == 'classic' ? '' : ' hero-' + heroStyle)},
                      heroStyleAttr = ${heroH != null ? 'min-height:' + heroH + 'px' : ''},
                      heroInterval = ${carousel ? bgInterval : null}"
-           th:if="${heroConfig == null or heroConfig.show_hero != false}"
-           th:unless="${theme.config.home_hero?.enabled != false}"
+           th:if="${#strings.startsWith(#strings.defaultString(theme.config.home_hero?.layout, 'p42r'), 'legacy-')}"
            th:classappend="${heroClass}"
            th:style="${heroStyle == 'classic' ? heroStyleAttr : ''}"
            th:data-bg-interval="${heroInterval}">
@@ -90,7 +91,7 @@
           <h1 class="hero-title" th:text="${site.title}">NUCMA</h1>
           <p class="hero-lead" th:text="${heroLead}">把校园里的创作、记录与连接，放在同一个地方。</p>
           <div class="hero-actions">
-            <a class="hero-btn" th:href="@{${site.routes?.archivesUri ?: '/archives'}}">
+            <a class="hero-btn" th:href="@{${#strings.defaultString(site.routes?.archivesUri, '/archives')}}">
               <span th:text="#{home.heroRead}">阅读文章</span><span class="hero-btn-go" aria-hidden="true">→</span>
             </a>
             <a class="hero-btn-ghost" th:href="@{/members}" th:text="#{home.heroMembers}">成员名录</a>
@@ -141,7 +142,7 @@
   </section>
 
   <div class="home-sections"
-       th:with="homeBlocks=${theme.config.home?.section_blocks},
+       th:with="homeBlocks=${theme.config.home_hero?.section_blocks},
                 homeOrder=${homeBlocks != null ? homeBlocks.![type] : null},
                 newsBlocks=${homeBlocks != null ? homeBlocks.?[type == 'news'] : null},
                 memberBlocks=${homeBlocks != null ? homeBlocks.?[type == 'members'] : null},
@@ -166,7 +167,7 @@
     <div class="section-container" th:if="${newsItems != null and !#lists.isEmpty(newsItems)}">
       <div class="section-header-bar">
         <h2 class="section-title-bar" th:text="#{home.announcements}">信息公告</h2>
-        <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
+        <a th:href="@{${#strings.defaultString(site.routes?.archivesUri, '/archives')}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
       </div>
       <div class="news-list">
         <a th:each="post : ${newsItems}"
@@ -222,7 +223,7 @@
                       data-pinned-ids=${memberPinned == null or #lists.isEmpty(memberPinned) ? '' : #strings.listJoin(memberPinned, ',')}">
           <th:block th:each="group : ${groupsResult.items}">
             <th:block th:each="member : ${group.members}">
-              <div class="card card-border member-card" th:attr="data-id=${member.metadata?.name ?: ''}">
+              <div class="card card-border member-card" th:attr="data-id=${#strings.defaultString(member.metadata?.name, '')}">
                 <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
                       class="member-card-background" aria-hidden="true"
                       th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
@@ -264,7 +265,7 @@
             <th:block th:each="link : ${group?.links}">
               <a th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer"
                  class="card card-border link-card" th:title="${link.spec?.description}"
-                 th:attr="data-id=${link.metadata?.name ?: ''}">
+                 th:attr="data-id=${#strings.defaultString(link.metadata?.name, '')}">
                 <div class="link-logo">
                   <img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec?.logo)}"
                        th:src="${link.spec?.logo}" th:alt="${link.spec?.displayName}" loading="lazy" width="48" height="48" />
@@ -298,7 +299,7 @@
 
   <!-- 分页 -->
   <nav class="join pagination"
-       th:with="homeBlocks=${theme.config.home?.section_blocks},
+       th:with="homeBlocks=${theme.config.home_hero?.section_blocks},
                 newsBlocks=${homeBlocks != null ? homeBlocks.?[type == 'news'] : null},
                 newsBlock=${newsBlocks != null and !#lists.isEmpty(newsBlocks) ? newsBlocks[0] : null},
                 newsCategories=${newsBlock?.category_blocks}"

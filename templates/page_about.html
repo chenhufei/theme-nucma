@@ -41,7 +41,7 @@
         <th:block th:with="recentPosts = ${postFinder.list({page: 1, size: 6})}">
         <section class="about-section"
                  th:if="${recentPosts != null and recentPosts.items != null and !#lists.isEmpty(recentPosts.items)}">
-          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{about.latestPosts}">最新文章</h2><a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a></div>
+          <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{about.latestPosts}">最新文章</h2><a th:href="@{${#strings.defaultString(site.routes?.archivesUri, '/archives')}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a></div>
           <div class="about-latest-list">
             <a class="news-item" th:each="recent : ${recentPosts.items}" th:href="@{${recent.status?.permalink}}">
               <time class="news-date" th:text="${#temporals.format(recent.spec?.publishTime, 'MM-dd')}"></time>
@@ -132,7 +132,7 @@
           <div class="section-header-bar"><h2 class="section-title-bar" th:text="#{home.links}">友情链接</h2><a th:href="@{/links}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a></div>
           <div class="link-grid" th:if="${randomLinks != null and !#lists.isEmpty(randomLinks)}">
             <a class="card card-border link-card" th:each="link : ${randomLinks}" th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer" th:aria-label="${link.spec?.displayName}">
-              <div class="link-logo"><img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:src="${link.spec.logo}" th:alt="${link.spec?.displayName}" width="48" height="48" loading="lazy" /><span class="link-logo-text" th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:text="${#strings.substring(link.spec?.displayName ?: '?', 0, 1)}"></span></div>
+              <div class="link-logo"><img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:src="${link.spec.logo}" th:alt="${link.spec?.displayName}" width="48" height="48" loading="lazy" /><span class="link-logo-text" th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:text="${#strings.substring(#strings.defaultString(link.spec?.displayName, '?'), 0, 1)}"></span></div>
               <div class="link-body"><div class="link-name" th:text="${link.spec?.displayName}"></div></div>
             </a>
           </div>
@@ -199,7 +199,7 @@
         <section th:if="${recentPosts != null and recentPosts.items != null and !#lists.isEmpty(recentPosts.items)}" class="about-section">
           <div class="section-header-bar">
             <h2 class="section-title-bar" th:text="${block.title ?: #messages.msg('about.latestPosts')}"></h2>
-            <a th:href="@{${site.routes?.archivesUri ?: '/archives'}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
+            <a th:href="@{${#strings.defaultString(site.routes?.archivesUri, '/archives')}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
           </div>
           <div class="about-latest-list" th:if="${recentPosts != null and recentPosts.items != null}">
             <a class="news-item" th:each="recent : ${recentPosts.items}" th:href="@{${recent.status?.permalink}}">
@@ -325,7 +325,7 @@
             <a class="card card-border link-card" th:each="link : ${randomLinks}" th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer">
               <div class="link-logo">
                 <img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:src="${link.spec.logo}" th:alt="${link.spec?.displayName}" width="48" height="48" loading="lazy" />
-                <span class="link-logo-text" th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:text="${#strings.substring(link.spec?.displayName ?: '?', 0, 1)}"></span>
+                <span class="link-logo-text" th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo)}" th:text="${#strings.substring(#strings.defaultString(link.spec?.displayName, '?'), 0, 1)}"></span>
               </div>
               <div class="link-body"><div class="link-name" th:text="${link.spec?.displayName}"></div></div>
             </a>

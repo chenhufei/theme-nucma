@@ -61,7 +61,7 @@
            th:with="sidebarOrder=${theme.config.sidebar?.section_blocks != null ? theme.config.sidebar.section_blocks.![type] : null}"
            th:data-sidebar-order="${sidebarOrder != null ? #strings.listJoin(sidebarOrder, ',') : 'menu,info,author,recent,toc'}">
       <!-- 自定义菜单 -->
-      <th:block th:with="sidebarMenuName = ${theme.config.sidebar?.sidebar_menu != null ? theme.config.sidebar.sidebar_menu : (theme.config.navigation?.sidebar_menu ?: '')}">
+      <th:block th:with="sidebarMenuName = ${theme.config.sidebar?.sidebar_menu != null ? theme.config.sidebar.sidebar_menu : (#strings.defaultString(theme.config.navigation?.sidebar_menu, ''))}">
         <div class="card card-border sidebar-card" data-sidebar-section="menu"
              th:if="${(sidebarOrder == null or #lists.contains(sidebarOrder, 'menu')) and !#strings.isEmpty(sidebarMenuName)}"
              th:with="menu = ${menuFinder.getByName(sidebarMenuName)}">

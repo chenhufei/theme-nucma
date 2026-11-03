@@ -90,16 +90,11 @@ spec:
     - group: home_hero
       label: 首页首屏
       formSchema:
-        - $formkit: checkbox
-          name: enabled
-          label: 启用新版首屏
-          value: true
-          help: 关闭后回到原来的首页横幅；开启后首页改用下方面板控制的整屏首屏。
         - $formkit: select
           name: layout
           label: 首屏版式
           value: p42r
-          help: 11 套版式共用同一组文案、数字、导航与按钮设置，切换版式不会丢内容。
+          help: 一个开关决定首页顶部长什么样。1–11 号是新版首屏，12–14 号是旧版横幅的三种样式，15 号不显示首屏、直接从内容开始。所有版式共用下方同一组文案、数字与按钮，切换版式不会丢内容。
           options:
             - label: 1 · 图文并置（左文右三块）
               value: p42r
@@ -123,101 +118,15 @@ spec:
               value: minimal
             - label: 11 · 红线穿过（一条线串起校墙）
               value: p83
-
-        - $formkit: select
-          name: logo_mode
-          label: 页头 Logo
-          value: mark
-          help: 默认使用主题红色标记；可换成媒体库图片，也可以完全去掉标记只留站名。
-          options:
-            - label: 默认标记
-              value: mark
-            - label: 自定义图片
-              value: image
-            - label: 不显示 Logo
+            - label: 12 · 旧版横幅 · 浮标卡
+              value: legacy-floaters
+            - label: 13 · 旧版横幅 · 杂志栏
+              value: legacy-magazine
+            - label: 14 · 旧版横幅 · 经典居中
+              value: legacy-classic
+            - label: 15 · 不显示首屏
               value: none
-        - $formkit: attachment
-          name: logo_image
-          label: 自定义 Logo 图片
-          value: ""
-          accepts: ["image/*"]
-          help: 仅在「页头 Logo」选择「自定义图片」时生效，建议使用透明底 PNG/SVG。
-        - $formkit: text
-          name: brand_name
-          label: 站名
-          value: 全国高校自媒体联盟
-        - $formkit: text
-          name: brand_en
-          label: 站名英文缩写
-          value: NUCMA
-          help: 显示在站名右侧，同时用作默认标记的字母。
-        - $formkit: menuSelect
-          name: nav_menu
-          label: 页头导航菜单
-          clearable: true
-          help: 选择 Halo 后台菜单后，首屏导航完全跟随菜单增删改；留空则使用下方自定义导航。
-        - $formkit: array
-          name: nav_items
-          label: 自定义页头导航
-          addLabel: 添加导航项
-          emptyText: 暂无导航项
-          help: 仅在未选择「页头导航菜单」时生效；数字角标用于极简大字版式的右侧列表。
-          itemLabels:
-            - type: text
-              label: $value.label
-            - type: text
-              label: $value.url
-          value:
-            - label: 首页
-              url: /
-              badge: ""
-              active: true
-            - label: 联盟动态
-              url: /archives
-              badge: "38"
-              active: false
-            - label: 三下乡
-              url: /categories
-              badge: "96"
-              active: false
-            - label: 信息公告
-              url: /archives
-              badge: "24"
-              active: false
-            - label: 成员公示
-              url: /members
-              badge: "104"
-              active: false
-          children:
-            - $formkit: text
-              name: label
-              label: 显示文字
-              value: ""
-              validation: required
-            - $formkit: text
-              name: url
-              label: 链接地址
-              value: ""
-              placeholder: /archives
-              validation: required
-            - $formkit: text
-              name: badge
-              label: 数字角标（可选）
-              value: ""
-              placeholder: 如 38
-            - $formkit: checkbox
-              name: active
-              label: 默认高亮
-              value: false
-              help: 浏览器会按当前地址自动高亮匹配项，这里只作为兜底。
-        - $formkit: text
-          name: header_cta_text
-          label: 页头按钮文字
-          value: 加入联盟
-        - $formkit: text
-          name: header_cta_url
-          label: 页头按钮链接
-          value: /members
+
 
         - $formkit: text
           name: title_line1
@@ -371,7 +280,7 @@ spec:
           value: 3
           min: 1
           max: 12
-          help: 未指定成员时，每个成员分组最多展示几位（最多读取 8 个分组）；指定成员时以选择为准。只影响首屏 2 号版式，首页「成员公示」区块的数量在「首页横幅（旧版）→ 首页区块排序」里单独设置。
+          help: 未指定成员时，每个成员分组最多展示几位（最多读取 8 个分组）；指定成员时以选择为准。只影响首屏 2 号版式，首页「成员公示」区块的数量在本组下方的「首页区块」里单独设置。
         - $formkit: select
           name: member_pinned
           label: 指定展示的成员
@@ -380,7 +289,7 @@ spec:
           sortable: true
           clearable: true
           searchable: true
-          help: 留空展示全部审核通过的成员；选中后只展示这些成员。需启用成员插件。只影响首屏 2 号版式，首页「成员公示」区块的指定成员在「首页横幅（旧版）→ 首页区块排序」里单独设置。
+          help: 留空展示全部审核通过的成员；选中后只展示这些成员。需启用成员插件。只影响首屏 2 号版式，首页「成员公示」区块的指定成员在本组下方的「首页区块」里单独设置。
           action: /apis/member.plugin.halo.run/v1alpha1/members
           requestOption:
             method: GET
@@ -404,16 +313,13 @@ spec:
           value: 重庆 · 秘书处　|　nucma.cn
           help: 仅极简大字版式显示。
 
-    - group: home
-      label: 首页横幅（旧版）
-      formSchema:
         - $formkit: array
           name: bg_carousel
           label: 横幅背景
           value: []
           addLabel: 添加背景图
           emptyText: 留空使用默认背景
-          help: 添加 1 张作为单图背景，添加多张自动轮播；建议图片尺寸一致（1920x600 以上）。本组只在「首屏 Hero → 启用新版首屏」关闭后生效，开启时首页首屏由上方的「首屏 Hero」组接管。
+          help: 添加 1 张作为单图背景，添加多张自动轮播；建议图片尺寸一致（1920x600 以上）。只在「首屏版式」选 12–14 号（旧版横幅）时生效。
           itemLabels:
             - type: image
               label: $value.url
@@ -431,18 +337,14 @@ spec:
               label: 图片说明（可选）
               value: ""
               placeholder: 如：春日校园
-        - $formkit: checkbox
-          name: show_hero
-          label: 显示横幅
-          value: true
         - $formkit: number
           name: carousel_interval
-          label: 横幅轮播间隔（旧版横幅，毫秒）
+          label: 横幅轮播间隔（毫秒）
           value: 5000
           min: 2500
           max: 15000
           step: 500
-          help: 每张图停留显示的时间，单位毫秒，默认 5000ms。只影响旧版首页横幅，页头「自定义链接」的滚动间隔在「页头设置」组里单独设置。
+          help: 每张图停留显示的时间，默认 5000ms。只影响旧版横幅（12–14 号版式），页头「自定义链接」的滚动间隔在「页头」组里单独设置。
         - $formkit: select
           name: bg_overlay
           label: 背景遮罩
@@ -464,35 +366,12 @@ spec:
           help: 开启后 Hero 区域顶到页面边缘和 header，不留容器边距
         - $formkit: range
           name: min_height
-          label: 横幅高度（像素）
+          label: 首屏最小高度（像素）
           value: 320
           min: 200
           max: 800
           step: 10
           help: 通过拖动条调节 Hero 区域最小高度（当前值会实时显示在右侧输入框中，默认 320px）
-        - $formkit: select
-          name: hero_style
-          label: 首屏样式
-          value: floaters
-          help: 浮标卡/杂志栏沿用页脚的白卡与浅色面板语言；填了自定义背景图时自动回到经典居中，保证文字可读。
-          options:
-            - label: 浮标卡（白卡骑在面板上沿）
-              value: floaters
-            - label: 杂志栏（左文右目录）
-              value: magazine
-            - label: 经典居中
-              value: classic
-        - $formkit: text
-          name: hero_eyebrow
-          label: 首屏眉标
-          value: 全国高校自媒体联盟 · CAMPUS MEDIA
-          help: 标题上方那行小字，留空使用默认文案。
-        - $formkit: text
-          name: hero_lead
-          label: 首屏副标题
-          value: ""
-          placeholder: 留空使用站点副标题
-          help: 站点副标题为空时使用主题默认文案；只在浮标卡/杂志栏样式下显示。
 
         - $formkit: array
           name: section_blocks
@@ -663,10 +542,47 @@ spec:
       label: 页头
       formSchema:
         - $formkit: select
+          name: logo_mode
+          label: 页头 Logo
+          value: mark
+          help: 全站统一生效，首页首屏自带的页头与内页页头读同一份配置。默认使用主题红色标记；可换成媒体库图片，也可以完全去掉标记只留站名。
+          options:
+            - label: 默认标记
+              value: mark
+            - label: 自定义图片
+              value: image
+            - label: 不显示 Logo
+              value: none
+        - $formkit: attachment
+          name: logo_image
+          label: 自定义 Logo 图片
+          value: ""
+          accepts: ["image/*"]
+          help: 仅在「页头 Logo」选择「自定义图片」时生效，建议使用透明底 PNG/SVG。
+        - $formkit: text
+          name: brand_name
+          label: 站名
+          value: 全国高校自媒体联盟
+          help: 留空则使用站点标题。
+        - $formkit: text
+          name: brand_en
+          label: 站名英文缩写
+          value: NUCMA
+          help: 显示在站名右侧，同时用作默认标记的字母。
+        - $formkit: text
+          name: header_cta_text
+          label: 页头按钮文字
+          value: 加入联盟
+          help: 留空则不显示页头按钮。
+        - $formkit: text
+          name: header_cta_url
+          label: 页头按钮链接
+          value: /members
+        - $formkit: select
           name: nav_align
           label: 菜单对齐
           value: center
-          help: header 内菜单与自定义链接的水平对齐；首页由「首屏 Hero」自带的页头接管，本组在首页不生效（登录、搜索、明暗切换入口也随之隐藏）
+          help: 页头内菜单与自定义链接的水平对齐。本组对所有页面生效，首页首屏自带的页头也读这里的设置。
           options:
             - label: 居中对齐
               value: center
@@ -699,7 +615,7 @@ spec:
           min: 1500
           max: 10000
           step: 500
-          help: 页头「自定义链接」超过 1 个时会自动上下滚动轮播，此处设置每个链接的停留时间，默认 3500ms。只影响页头，首页横幅的轮播间隔在「首页横幅（旧版）」组里单独设置。
+          help: 页头「自定义链接」超过 1 个时会自动上下滚动轮播，此处设置每个链接的停留时间，默认 3500ms。只影响页头，旧版横幅的轮播间隔在「首页首屏」组里单独设置。
         - $formkit: array
           name: custom_links
           label: 自定义链接
@@ -741,6 +657,12 @@ spec:
                   value: _blank
                 - label: 当前页
                   value: _self
+            - $formkit: text
+              name: badge
+              label: 数字角标（可选）
+              value: ""
+              placeholder: 如 38
+              help: 首页「极简大字」「光斑」版式把这些链接排成右侧编号列表时，用作行首编号；其它位置忽略。
 
     - group: footer
       label: 页脚
@@ -958,7 +880,7 @@ spec:
               title: 最近文章
             - type: toc
               title: 文章目录
-          help: 拖动调整顺序；列表中存在即显示。支持移除后重新添加，每种区块建议只添加一次。这是文章页侧边栏的配置，与「首页横幅（旧版）」里的首页区块排序互不影响。
+          help: 拖动调整顺序；列表中存在即显示。支持移除后重新添加，每种区块建议只添加一次。这是文章页侧边栏的配置，与「首页首屏」里的首页区块排序互不影响。
           itemLabels:
             - type: text
               label: $value.title

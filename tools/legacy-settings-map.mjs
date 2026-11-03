@@ -70,3 +70,37 @@ export const LEGACY_FIELD_MAP = {
 export function legacyFallbackExpression(legacyField) {
   return `theme.config.${LEGACY_GROUP}?.${legacyField}`;
 }
+
+/**
+ * 被并入其它组的分组（2026-11-03：`home`「首页横幅（旧版）」并入 `home_hero`「首页首屏」）。
+ *
+ * 背景：老版把「首页横幅」单列一个组，于是同一件事有两套字段：
+ *   - 首屏版式：`home_hero.layout`（11 套新版） vs `home.hero_style`（浮标卡/杂志栏/经典）
+ *   - 首屏文案：`home_hero.eyebrow/lead` vs `home.hero_eyebrow/hero_lead`
+ *   - 关掉首屏：`home_hero.enabled=false` vs `home.show_hero=false`
+ * 合并后只有一个 `layout` 取值决定首屏长什么样（含旧版横幅的三种样式）。
+ *
+ * 迁移规则：
+ *   1. `move` 里的字段同名搬到 `to` 组（目标已有值则不覆盖）；
+ *   2. `alias` 里的字段改名搬到 `to` 组（只补空位）；
+ *   3. `layoutFrom` 用旧开关推出新 `layout`：先看 `enabled`，再看 `show_hero`；
+ *   4. `drop` 里的字段直接丢弃（已被 layout 取代）。
+ */
+export const MERGED_GROUPS = [
+  {
+    from: 'home',
+    to: 'home_hero',
+    move: ['bg_carousel', 'carousel_interval', 'bg_overlay', 'full_width', 'min_height', 'section_blocks'],
+    alias: { hero_eyebrow: 'eyebrow', hero_lead: 'lead' },
+    layoutFrom: {
+      enabledField: 'enabled',
+      showField: 'show_hero',
+      styleField: 'hero_style',
+      legacyPrefix: 'legacy-',
+      noneValue: 'none',
+      fallback: 'floaters',
+    },
+    drop: ['show_hero', 'hero_style', 'enabled'],
+  },
+];
+

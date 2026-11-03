@@ -10,11 +10,11 @@
       class="no-js"
       data-theme="light" data-color-scheme="auto"
       data-visual-style="portal"
-      th:data-visual-style="${theme.config.appearance?.visual_style ?: 'portal'}">
+      th:data-visual-style="${#strings.defaultString(theme.config.appearance?.visual_style, 'portal')}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" th:content="${theme.config.appearance?.primary_color ?: '#D13E43'}" />
+  <meta name="theme-color" th:content="${#strings.defaultString(theme.config.appearance?.primary_color, '#D13E43')}" />
   <title th:text="${title ?: site.title}"></title>
   <meta name="keywords" th:if="${site.seo?.keywords != null and !#strings.isEmpty(site.seo.keywords)}" th:content="${site.seo.keywords}" />
   <!--
@@ -67,7 +67,7 @@
       html.classList.remove('no-js');
       html.classList.add('js-enabled');
       var saved = localStorage.getItem('theme-mode') || localStorage.getItem('theme');
-      var mode = /*[[${theme.config.appearance?.default_theme_mode ?: 'system'}]]*/ 'system';
+      var mode = /*[[${#strings.defaultString(theme.config.appearance?.default_theme_mode, 'system')}]]*/ 'system';
       var resolvedMode = saved || mode;
       var isDark = resolvedMode === 'dark'
         || (resolvedMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -77,7 +77,7 @@
       html.classList.remove('light', 'dark');
       html.classList.add(effectiveMode);
 
-      var primaryColor = /*[[${theme.config.appearance?.primary_color ?: '#D13E43'}]]*/ '#D13E43';
+      var primaryColor = /*[[${#strings.defaultString(theme.config.appearance?.primary_color, '#D13E43')}]]*/ '#D13E43';
       if (primaryColor && primaryColor !== '#D13E43') {
         document.documentElement.style.setProperty('--primary', primaryColor);
         document.documentElement.style.setProperty('--color-primary', primaryColor);
@@ -107,15 +107,25 @@
   <th:block th:if="${headExtra != null}" th:replace="${headExtra}"></th:block>
 </head>
 <body class="page-body"
-      th:with="siteBgStyle=${theme.config.appearance?.site_bg ?: 'auto'},
-               heroLayout=${theme.config.home_hero?.layout ?: 'p42r'},
-               heroKeepsTint=${heroLayout == 'cover' or heroLayout == 'aurora' or heroLayout == 'p41'}"
+      th:with="siteBgStyle=${#strings.defaultString(theme.config.appearance?.site_bg, 'auto')},
+               heroLayout=${#strings.defaultString(theme.config.home_hero?.layout, 'p42r')},
+               heroOn=${heroLayout != 'none' and !#strings.startsWith(heroLayout, 'legacy-')},
+               bgLayout=${#strings.startsWith(heroLayout, 'legacy-') ? 'legacy' : heroLayout},
+               heroKeepsTint=${bgLayout == 'cover' or bgLayout == 'aurora' or bgLayout == 'p41'},
+               navCfg=${theme.config.navigation},
+               hdrLogoMode=${#strings.defaultString(navCfg?.logo_mode, 'mark')},
+               hdrLogoImage=${navCfg?.logo_image},
+               hdrBrandName=${#strings.isEmpty(navCfg?.brand_name) ? site.title : navCfg.brand_name},
+               hdrBrandEn=${navCfg?.brand_en},
+               hdrCtaText=${navCfg?.header_cta_text},
+               hdrCtaUrl=${#strings.defaultString(navCfg?.header_cta_url, '/members')},
+               hdrLogoChar=${!#strings.isEmpty(navCfg?.brand_en) ? #strings.substring(navCfg.brand_en, 0, 1) : (!#strings.isEmpty(navCfg?.brand_name) ? #strings.substring(navCfg.brand_name, 0, 1) : 'N')}"
       th:classappend="${(seoPageType == 'article' ? ' page-article' : '') + (siteBgStyle == 'off' ? ' site-bg-off' : '') + (siteBgStyle == 'auto' and !heroKeepsTint ? ' site-bg-white' : '')}"
       th:data-template="${_templateId}"
       th:data-theme-version="${theme.spec.version}"
-      th:style="${'--site-paper:' + (theme.config.appearance?.site_bg_color ?: '#F8F6F1')}">
+      th:style="${'--site-paper:' + (#strings.defaultString(theme.config.appearance?.site_bg_color, '#F8F6F1'))}">
   <div class="site-bg" aria-hidden="true"
-       th:classappend="${' site-bg--' + siteBgStyle + (siteBgStyle == 'auto' ? ' site-bg--h-' + heroLayout : '')}"></div>
+       th:classappend="${' site-bg--' + siteBgStyle + (siteBgStyle == 'auto' ? ' site-bg--h-' + bgLayout : '')}"></div>
   <a class="skip-link" href="#mainContent" th:text="#{a11y.skipToContent}">跳到主要内容</a>
   <div th:if="${seoPageType == 'article'}"
        id="readingProgress"
@@ -130,15 +140,17 @@
 
   <!-- 顶部导航：首页启用新版首屏时由首屏自带的页头接管，这里不再重复渲染 -->
   <header class="site-header" th:fragment="siteHeader"
-          th:if="${!(_templateId == 'index' and theme.config.home_hero?.enabled != false)}">
+          th:if="${!(_templateId == 'index' and heroOn)}">
     <div class="container">
       <div class="header-inner"
-           th:with="navAlign = ${theme.config.navigation?.nav_align ?: 'center'}"
+           th:with="navAlign = ${#strings.defaultString(theme.config.navigation?.nav_align, 'center')}"
            th:classappend="${'nav-align-' + navAlign}">
         <a th:href="@{/}" class="logo">
-          <img th:if="${site.logo != null and !#strings.isEmpty(site.logo)}"
-               th:src="${site.logo}" th:alt="${site.title}" width="32" height="32" decoding="async" />
-          <span th:text="${site.title}"></span>
+          <img th:if="${hdrLogoMode == 'image' and hdrLogoImage != null and !#strings.isEmpty(hdrLogoImage)}"
+               th:src="${hdrLogoImage}" th:alt="${hdrBrandName}" width="32" height="32" decoding="async" />
+          <s th:if="${hdrLogoMode == 'mark'}" class="logo-mark" th:text="${hdrLogoChar}">N</s>
+          <span th:text="${hdrBrandName}"></span>
+          <u th:if="${!#strings.isEmpty(hdrBrandEn)}" th:text="${hdrBrandEn}">NUCMA</u>
         </a>
         <nav class="main-nav"
              th:with="headerLinks=${theme.config.navigation?.custom_links},
@@ -198,6 +210,8 @@
           </th:block>
         </nav>
         <div class="header-actions">
+          <a class="header-cta" th:if="${hdrCtaText != null and !#strings.isEmpty(hdrCtaText)}"
+             th:href="@{${hdrCtaUrl}}" th:text="${hdrCtaText}">加入联盟</a>
           <th:block th:if="${theme.config.navigation?.search_enabled != false}">
             <button th:if="${pluginFinder.available('PluginSearchWidget')}"
                     type="button"
@@ -283,30 +297,7 @@
         </button>
       </div>
       <nav class="mobile-nav" aria-label="移动端导航" th:aria-label="#{nav.mobileAria}">
-        <th:block th:if="${_templateId == 'index' and theme.config.home_hero?.enabled != false}">
-          <th:block th:with="heroMenuName=${theme.config.home_hero?.nav_menu},
-                             heroMenu=${heroMenuName != null and !#strings.isEmpty(heroMenuName) ? menuFinder.getByName(heroMenuName) : null}">
-            <div class="mobile-nav-section mobile-nav-section--menu" role="group" th:aria-label="#{home.heroNavAria}">
-              <div class="mobile-menu-links" th:if="${heroMenu != null and !#lists.isEmpty(heroMenu.menuItems)}">
-                <a th:each="item : ${heroMenu.menuItems}"
-                   th:if="${!#strings.isEmpty(item.status?.href ?: item.spec?.href)}"
-                   class="mobile-nav-link mobile-nav-link--menu"
-                   th:href="@{${item.status?.href ?: item.spec?.href}}"
-                   th:text="${item.status?.displayName ?: item.spec?.displayName}"
-                   th:target="${item.spec?.target?.value}"></a>
-              </div>
-              <div class="mobile-menu-links" th:if="${heroMenu == null or #lists.isEmpty(heroMenu.menuItems)}">
-                <a th:each="item : ${theme.config.home_hero?.nav_items}"
-                   th:if="${item.label != null and !#strings.isEmpty(item.label) and item.url != null and !#strings.isEmpty(item.url)}"
-                   class="mobile-nav-link mobile-nav-link--menu"
-                   th:classappend="${item.active == true} ? ' is-active' : ''"
-                   th:href="@{${item.url}}"
-                   th:text="${item.label}"></a>
-              </div>
-            </div>
-          </th:block>
-        </th:block>
-        <th:block th:if="${!(_templateId == 'index' and theme.config.home_hero?.enabled != false) and theme.config.navigation?.header_menu != null and !#strings.isEmpty(theme.config.navigation?.header_menu)}"
+        <th:block th:if="${theme.config.navigation?.header_menu != null and !#strings.isEmpty(theme.config.navigation?.header_menu)}"
                   th:with="menu = ${menuFinder.getByName(theme.config.navigation?.header_menu)}">
           <th:block th:if="${menu != null and !#lists.isEmpty(menu.menuItems)}">
             <div class="mobile-nav-section mobile-nav-section--menu" role="group" aria-label="菜单导航" th:aria-label="#{nav.menuAria}">
@@ -511,7 +502,7 @@
                  页头菜单是站点自己的「站点」栏目，大多数站点只维护这一份菜单，
                  页脚直接复用它，比凭空渲染一组内置链接更符合预期。 -->
             <th:block th:unless="${footerColumns != null and !#lists.isEmpty(footerColumns)}"
-                      th:with="footerMenuName = ${theme.config.navigation?.header_menu ?: ''}">
+                      th:with="footerMenuName = ${#strings.defaultString(theme.config.navigation?.header_menu, '')}">
               <div class="footer-col"
                    th:if="${!#strings.isEmpty(footerMenuName)}"
                    th:with="menu = ${menuFinder.getByName(footerMenuName)}">
@@ -732,18 +723,18 @@ footer.site-footer .footer-links a:hover{color:var(--n-red)!important}
   var NAV=[ ["首页","/"], ["文章","/archives"], ["分类","/categories"], ["成员","/members"] ];
   var SITE_LOGO = /*[[${site.logo ?: '/upload/1783587678472.png'}]]*/ '/upload/1783587678472.png';
   var SITE_TITLE = /*[[${site.title ?: '全国高校自媒体联盟'}]]*/ '全国高校自媒体联盟';
-  var JOIN_URL = /*[[${theme.config.footer?.footer_join_url ?: ''}]]*/ '';
-  var JOIN_TEXT = /*[[${theme.config.footer?.footer_join_text ?: '加入我们'}]]*/ '加入我们';
-  var JOIN_STYLE = /*[[${theme.config.footer?.footer_join_style ?: 'solid'}]]*/ 'solid';
-  var JOIN_ICON = /*[[${theme.config.footer?.footer_join_icon ?: 'arrow'}]]*/ 'arrow';
-  var JOIN_IMAGE = /*[[${theme.config.footer?.footer_join_image ?: ''}]]*/ '';
+  var JOIN_URL = /*[[${#strings.defaultString(theme.config.footer?.footer_join_url, '')}]]*/ '';
+  var JOIN_TEXT = /*[[${#strings.defaultString(theme.config.footer?.footer_join_text, '加入我们')}]]*/ '加入我们';
+  var JOIN_STYLE = /*[[${#strings.defaultString(theme.config.footer?.footer_join_style, 'solid')}]]*/ 'solid';
+  var JOIN_ICON = /*[[${#strings.defaultString(theme.config.footer?.footer_join_icon, 'arrow')}]]*/ 'arrow';
+  var JOIN_IMAGE = /*[[${#strings.defaultString(theme.config.footer?.footer_join_image, '')}]]*/ '';
   // 页脚文案全部来自站点与后台设置：之前版权兜底写死了 NUCMA 的品牌字串，
   // 非联盟站点照着这套页脚只能显示别人的名字。留空即不渲染，不再凭空编一句。
   var SITE_SUBTITLE = /*[[${site.subtitle ?: ''}]]*/ '';
   var SLOGAN_CFG = /*[[${theme.config.footer?.footer_slogan}]]*/ null;
   // 没配置过 → 站点副标题优先，其次是主题默认标语；明确清空（空串）则不显示。
   var SLOGAN_TEXT = SLOGAN_CFG == null ? (SITE_SUBTITLE || '互动宣教 · 多元交流') : SLOGAN_CFG;
-  var FOOTER_COPYRIGHT = /*[[${theme.config.footer?.copyright ?: ''}]]*/ '';
+  var FOOTER_COPYRIGHT = /*[[${#strings.defaultString(theme.config.footer?.copyright, '')}]]*/ '';
   var COPYRIGHT_TEXT = '\u00a9 ' + new Date().getFullYear() + ' ' + SITE_TITLE;
   var f=document.querySelector('footer.site-footer');
   if(!f||f.dataset.l) return; f.dataset.l='1';
@@ -969,16 +960,16 @@ footer.site-footer .footer-bottom{display:none!important}
 (function(){
   var SITE_LOGO = /*[[${site.logo ?: '/upload/1783587678472.png'}]]*/ '/upload/1783587678472.png';
   var SITE_TITLE = /*[[${site.title ?: '全国高校自媒体联盟'}]]*/ '全国高校自媒体联盟';
-  var JOIN_URL = /*[[${theme.config.footer?.footer_join_url ?: ''}]]*/ '';
-  var JOIN_TEXT = /*[[${theme.config.footer?.footer_join_text ?: '加入我们'}]]*/ '加入我们';
-  var JOIN_STYLE = /*[[${theme.config.footer?.footer_join_style ?: 'solid'}]]*/ 'solid';
-  var JOIN_ICON = /*[[${theme.config.footer?.footer_join_icon ?: 'arrow'}]]*/ 'arrow';
-  var JOIN_IMAGE = /*[[${theme.config.footer?.footer_join_image ?: ''}]]*/ '';
+  var JOIN_URL = /*[[${#strings.defaultString(theme.config.footer?.footer_join_url, '')}]]*/ '';
+  var JOIN_TEXT = /*[[${#strings.defaultString(theme.config.footer?.footer_join_text, '加入我们')}]]*/ '加入我们';
+  var JOIN_STYLE = /*[[${#strings.defaultString(theme.config.footer?.footer_join_style, 'solid')}]]*/ 'solid';
+  var JOIN_ICON = /*[[${#strings.defaultString(theme.config.footer?.footer_join_icon, 'arrow')}]]*/ 'arrow';
+  var JOIN_IMAGE = /*[[${#strings.defaultString(theme.config.footer?.footer_join_image, '')}]]*/ '';
   // 与 12 号页脚同一套兜底：标语、版权都取自站点与后台设置，不再写死品牌字串。
   var SITE_SUBTITLE = /*[[${site.subtitle ?: ''}]]*/ '';
   var SLOGAN_CFG = /*[[${theme.config.footer?.footer_slogan}]]*/ null;
   var SLOGAN_TEXT = SLOGAN_CFG == null ? (SITE_SUBTITLE || '互动宣教 · 多元交流') : SLOGAN_CFG;
-  var FOOTER_COPYRIGHT = /*[[${theme.config.footer?.copyright ?: ''}]]*/ '';
+  var FOOTER_COPYRIGHT = /*[[${#strings.defaultString(theme.config.footer?.copyright, '')}]]*/ '';
   var COPYRIGHT_TEXT = '\u00a9 ' + new Date().getFullYear() + ' ' + SITE_TITLE;
   var f=document.querySelector('footer.site-footer');
   if(!f||f.dataset.v) return; f.dataset.v='1';

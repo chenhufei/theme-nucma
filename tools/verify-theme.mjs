@@ -91,7 +91,7 @@ if (new Set(groupNames).size !== groupNames.length) {
 // 组的顺序即后台看到的分区顺序：先全站外观，再首页（首屏 → 旧版横幅），
 // 然后站点框架（页头、页脚）、内容页（文章、成员、关于、独立页面）、
 // 功能页（404、登录注册），最后 SEO。改动顺序要同步改这里，避免两份真相。
-const expectedGroups = ['appearance', 'home_hero', 'home', 'navigation', 'footer', 'sidebar', 'globe', 'about', 'pages', 'error_page', 'auth_page', 'seo'];
+const expectedGroups = ['appearance', 'home_hero', 'navigation', 'footer', 'sidebar', 'globe', 'about', 'pages', 'error_page', 'auth_page', 'seo'];
 if (JSON.stringify(groupNames) !== JSON.stringify(expectedGroups)) {
   fail(`设置分组顺序异常：${groupNames.join(', ')}`);
 }
@@ -128,7 +128,9 @@ for (const form of groups) {
   if (duplicates.length) fail(`${form.group} 设置存在重复字段：${[...new Set(duplicates)].join(', ')}`);
 }
 
-const homeForm = groups.find((form) => form.group === 'home');
+// 首页区块现在挂在 home_hero 组上（2026-11-03 起 home 组并入 home_hero）。
+// 注意：sidebar 组也有一个同名 section_blocks（文章页侧边栏），所以必须按组取，不能全局 find。
+const homeForm = groups.find((form) => form.group === 'home_hero');
 const homeSections = homeForm?.formSchema?.find((node) => node.name === 'section_blocks');
 const homeSectionDefaults = new Map((homeSections?.value || []).map((item) => [item.type, item]));
 const homeSectionChildren = new Map((homeSections?.children || []).map((item) => [item.name, item]));

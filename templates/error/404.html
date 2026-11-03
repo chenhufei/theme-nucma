@@ -283,15 +283,15 @@
     -->
     <script th:inline="javascript">
       window.__ERR404__ = {
-        strapColor: /*[[${ep?.error404_strap_color} ?: '#cf3538']]*/ '#cf3538',
-        animation: /*[[${ep?.error404_animation} ?: 'full']]*/ 'full',
+        strapColor: /*[[${#strings.defaultString(ep?.error404_strap_color, '#cf3538')}]]*/ '#cf3538',
+        animation: /*[[${#strings.defaultString(ep?.error404_animation, 'full')}]]*/ 'full',
         flipEnabled: /*[[${flipEnabled}]]*/ true,
         randomMember: /*[[${randomMember}]]*/ true,
-        memberName: /*[[${ep?.error404_badge_member} ?: '']]*/ '',
+        memberName: /*[[${#strings.defaultString(ep?.error404_badge_member, '')}]]*/ '',
         memberSource: /*[[${badgeSource}]]*/ 'plugin',
-        memberGroups: /*[[${ep?.error404_badge_groups} ?: '']]*/ '',
-        memberPick: /*[[${ep?.error404_badge_pick} ?: '']]*/ '',
-        members: /*[[${ep?.error404_badge_members} ?: '']]*/ ''
+        memberGroups: /*[[${#strings.defaultString(ep?.error404_badge_groups, '')}]]*/ '',
+        memberPick: /*[[${#strings.defaultString(ep?.error404_badge_pick, '')}]]*/ '',
+        members: /*[[${#strings.defaultString(ep?.error404_badge_members, '')}]]*/ ''
       };
     </script>
     <script th:src="@{/assets/err404/qrcode.js(v=${theme.spec.version})}"></script>
