@@ -12,7 +12,7 @@ spec:
   homepage: https://nucma.cn
   repo: https://github.com/chenhufei/theme-nucma
   issues: https://qm.qq.com/q/YEqkx4fa0M
-  version: "0.0.4"
+  version: "0.0.5"
   requires: ">=2.27.0"
   settingName: theme-nucma-setting
   configMapName: theme-nucma-config
@@ -25,7 +25,7 @@ spec:
         description: 站点介绍、统计与常见问题
         file: page_about.html
       - name: 认领页
-        description: 成员自助认领 QQ 链接（配合 plugin-members 0.0.2+）
+        description: 成员自助认领 QQ 链接（配合 plugin-members 0.0.4+）
         file: page_claim.html
     category:
       - name: 知识库列表

@@ -5,7 +5,7 @@ metadata:
 spec:
   forms:
     - group: appearance
-      label: 全局设置
+      label: 外观与版式
       formSchema:
         - $formkit: select
           name: visual_style
@@ -41,6 +41,7 @@ spec:
           name: date_format
           label: 日期格式
           value: YYYY-MM-DD
+          help: 完整日期（列表页、文章页、标签页、专题页）的显示格式；归档页的年份、列表里的「03-04」紧凑格式与含时间的日期不受影响。留空则按站点语言显示。
           options:
             - label: 2024-01-01
               value: YYYY-MM-DD
@@ -86,346 +87,8 @@ spec:
           placeholder: 直接输入 JavaScript 代码，无需 <script> 标签
           language: javascript
           height: 240px
-    - group: navigation
-      label: 页头设置（站点页头）
-      formSchema:
-        - $formkit: select
-          name: nav_align
-          label: 菜单对齐
-          value: center
-          help: header 内菜单与自定义链接的水平对齐；首页由「首屏 Hero」自带的页头接管，本组在首页不生效（登录、搜索、明暗切换入口也随之隐藏）
-          options:
-            - label: 居中对齐
-              value: center
-            - label: 左侧对齐
-              value: left
-            - label: 右侧对齐
-              value: right
-        - $formkit: checkbox
-          name: show_login_btn
-          label: 显示登录入口
-          value: true
-          help: 右上角显示登录按钮，已登录用户显示头像
-        - $formkit: menuSelect
-          name: header_menu
-          label: 顶部菜单
-          clearable: true
-          help: 选择 Header 顶部导航使用的菜单（从 Halo 后台已创建的菜单中选择），清空则不显示主菜单
-        - $formkit: checkbox
-          name: search_enabled
-          label: 显示搜索入口
-          value: true
-        - $formkit: checkbox
-          name: theme_toggle_enabled
-          label: 显示明暗切换按钮
-          value: true
-        - $formkit: number
-          name: carousel_interval
-          label: 链接轮播间隔（页头，毫秒）
-          value: 3500
-          min: 1500
-          max: 10000
-          step: 500
-          help: 页头「自定义链接」超过 1 个时会自动上下滚动轮播，此处设置每个链接的停留时间，默认 3500ms。只影响页头，首页横幅的轮播间隔在「首页横幅（旧版）」组里单独设置。
-        - $formkit: array
-          name: custom_links
-          label: 自定义链接
-          value: []
-          addLabel: 添加链接
-          emptyText: 暂无自定义链接
-          help: 在导航菜单右侧显示自定义链接，可选择图片或文字样式
-          itemLabels:
-            - type: text
-              label: $value.text
-            - type: image
-              label: $value.image
-            - type: text
-              label: $value.url
-          children:
-            - $formkit: text
-              name: text
-              label: 链接文字
-              value: ""
-              placeholder: 如：加入我们（不填则显示图片或URL）
-            - $formkit: text
-              name: url
-              label: 链接地址
-              value: ""
-              placeholder: https://
-              validation: required
-            - $formkit: attachment
-              name: image
-              label: 链接图片
-              value: ""
-              accepts: ["image/*"]
-              help: 从媒体库选择图片，设置后将显示为图片按钮
-            - $formkit: select
-              name: target
-              label: 打开方式
-              value: _blank
-              options:
-                - label: 新标签页
-                  value: _blank
-                - label: 当前页
-                  value: _self
-
-    - group: home
-      label: 首页横幅（旧版）
-      formSchema:
-        - $formkit: array
-          name: bg_carousel
-          label: 横幅背景
-          value: []
-          addLabel: 添加背景图
-          emptyText: 留空使用默认背景
-          help: 添加 1 张作为单图背景，添加多张自动轮播；建议图片尺寸一致（1920x600 以上）。本组只在「首屏 Hero → 启用新版首屏」关闭后生效，开启时首页首屏由上方的「首屏 Hero」组接管。
-          itemLabels:
-            - type: image
-              label: $value.url
-            - type: text
-              label: $value.caption
-          children:
-            - $formkit: attachment
-              name: url
-              label: 背景图片
-              value: ""
-              accepts: ["image/*"]
-              validation: required
-            - $formkit: text
-              name: caption
-              label: 图片说明（可选）
-              value: ""
-              placeholder: 如：春日校园
-        - $formkit: checkbox
-          name: show_hero
-          label: 显示横幅
-          value: true
-        - $formkit: number
-          name: carousel_interval
-          label: 横幅轮播间隔（旧版横幅，毫秒）
-          value: 5000
-          min: 2500
-          max: 15000
-          step: 500
-          help: 每张图停留显示的时间，单位毫秒，默认 5000ms。只影响旧版首页横幅，页头「自定义链接」的滚动间隔在「页头设置」组里单独设置。
-        - $formkit: select
-          name: bg_overlay
-          label: 背景遮罩
-          value: medium
-          help: 自定义背景图片的遮罩强度，影响文字可读性
-          options:
-            - label: 无遮罩
-              value: none
-            - label: 轻度
-              value: light
-            - label: 中度（推荐）
-              value: medium
-            - label: 重度
-              value: dark
-        - $formkit: checkbox
-          name: full_width
-          label: 铺满页面宽度
-          value: false
-          help: 开启后 Hero 区域顶到页面边缘和 header，不留容器边距
-        - $formkit: range
-          name: min_height
-          label: 横幅高度（像素）
-          value: 320
-          min: 200
-          max: 800
-          step: 10
-          help: 通过拖动条调节 Hero 区域最小高度（当前值会实时显示在右侧输入框中，默认 320px）
-        - $formkit: select
-          name: hero_style
-          label: 首屏样式
-          value: floaters
-          help: 浮标卡/杂志栏沿用页脚的白卡与浅色面板语言；填了自定义背景图时自动回到经典居中，保证文字可读。
-          options:
-            - label: 浮标卡（白卡骑在面板上沿）
-              value: floaters
-            - label: 杂志栏（左文右目录）
-              value: magazine
-            - label: 经典居中
-              value: classic
-        - $formkit: text
-          name: hero_eyebrow
-          label: 首屏眉标
-          value: 全国高校自媒体联盟 · CAMPUS MEDIA
-          help: 标题上方那行小字，留空使用默认文案。
-        - $formkit: text
-          name: hero_lead
-          label: 首屏副标题
-          value: ""
-          placeholder: 留空使用站点副标题
-          help: 站点副标题为空时使用主题默认文案；只在浮标卡/杂志栏样式下显示。
-
-        - $formkit: array
-          name: section_blocks
-          label: 首页区块排序
-          addLabel: 添加首页区块
-          emptyText: 暂无首页区块
-          value:
-            - type: news
-              title: 文章内容
-              news_limit: 8
-              category_blocks: []
-            - type: members
-              title: 成员公示
-              member_limit: 6
-              member_pinned: []
-            - type: links
-              title: 友情链接
-              link_limit: 8
-              link_pinned: []
-          help: 拖动调整首页区块顺序；点击区块可设置其显示数量和内容排序。每种区块建议只添加一次
-          itemLabels:
-            - type: text
-              label: $value.title
-            - type: text
-              label: $value.type
-          children:
-            - $formkit: select
-              name: type
-              label: 区块类型
-              value: news
-              validation: required
-              options:
-                - label: 文章内容
-                  value: news
-                - label: 成员公示
-                  value: members
-                - label: 友情链接
-                  value: links
-            - $formkit: text
-              name: title
-              label: 列表显示名称
-              value: ""
-              validation: required
-              help: 仅用于后台识别排序项，不改变前台区块标题
-            - $formkit: number
-              key: home-news-limit
-              if: "$value.type === 'news'"
-              name: news_limit
-              label: 默认显示数量
-              value: 8
-              min: 1
-              max: 30
-            - $formkit: array
-              key: home-news-categories
-              if: "$value.type === 'news'"
-              name: category_blocks
-              label: 分类栏内容排序（留空显示全部文章）
-              value: []
-              max: 3
-              addLabel: 添加分类栏
-              emptyText: 暂无分类栏，将显示全部文章
-              help: 拖动调整分类栏顺序；添加 1-3 个分类栏，两项显示两栏，移动端自动改为单栏
-              itemLabels:
-                - type: text
-                  label: $value.block_title
-              children:
-                - $formkit: categorySelect
-                  name: category_name
-                  label: 选择分类
-                  value: ""
-                  autoSelect: false
-                  validation: required
-                  help: 选择要展示的分类
-                - $formkit: text
-                  name: block_title
-                  label: 区块显示标题
-                  value: ""
-                  validation: required
-                  help: 前台显示的区块标题，如“校园新闻”
-                - $formkit: number
-                  name: limit
-                  label: 显示数量
-                  value: 6
-                  min: 1
-                  max: 30
-            - $formkit: select
-              key: home-member-limit
-              if: "$value.type === 'members'"
-              name: member_limit
-              label: 显示数量
-              value: 6
-              options:
-                - label: 4 个
-                  value: 4
-                - label: 6 个
-                  value: 6
-                - label: 8 个
-                  value: 8
-                - label: 10 个
-                  value: 10
-                - label: 12 个
-                  value: 12
-            - $formkit: select
-              key: home-member-pinned
-              if: "$value.type === 'members'"
-              name: member_pinned
-              label: 成员内容排序
-              value: []
-              multiple: true
-              sortable: true
-              clearable: true
-              searchable: true
-              help: 选中项优先展示，可拖动调整顺序；需启用成员插件
-              action: /apis/member.plugin.halo.run/v1alpha1/members
-              requestOption:
-                method: GET
-                pageField: page
-                sizeField: size
-                totalField: total
-                itemsField: items
-                labelField: spec.displayName
-                valueField: metadata.name
-                iconField: spec.avatar
-                descriptionField: spec.school
-                fieldSelectorKey: metadata.name
-            - $formkit: select
-              key: home-link-limit
-              if: "$value.type === 'links'"
-              name: link_limit
-              label: 显示数量
-              value: 8
-              options:
-                - label: 4 个
-                  value: 4
-                - label: 6 个
-                  value: 6
-                - label: 8 个
-                  value: 8
-                - label: 10 个
-                  value: 10
-                - label: 12 个
-                  value: 12
-            - $formkit: select
-              key: home-link-pinned
-              if: "$value.type === 'links'"
-              name: link_pinned
-              label: 友链内容排序
-              value: []
-              multiple: true
-              sortable: true
-              clearable: true
-              searchable: true
-              help: 选中项优先展示，可拖动调整顺序；需启用官方链接插件
-              action: /apis/core.halo.run/v1alpha1/links
-              requestOption:
-                method: GET
-                pageField: page
-                sizeField: size
-                totalField: total
-                itemsField: items
-                labelField: spec.displayName
-                valueField: metadata.name
-                iconField: spec.logo
-                descriptionField: spec.url
-                fieldSelectorKey: metadata.name
-
     - group: home_hero
-      label: 首屏 Hero
+      label: 首页首屏
       formSchema:
         - $formkit: checkbox
           name: enabled
@@ -741,8 +404,516 @@ spec:
           value: 重庆 · 秘书处　|　nucma.cn
           help: 仅极简大字版式显示。
 
+    - group: home
+      label: 首页横幅（旧版）
+      formSchema:
+        - $formkit: array
+          name: bg_carousel
+          label: 横幅背景
+          value: []
+          addLabel: 添加背景图
+          emptyText: 留空使用默认背景
+          help: 添加 1 张作为单图背景，添加多张自动轮播；建议图片尺寸一致（1920x600 以上）。本组只在「首屏 Hero → 启用新版首屏」关闭后生效，开启时首页首屏由上方的「首屏 Hero」组接管。
+          itemLabels:
+            - type: image
+              label: $value.url
+            - type: text
+              label: $value.caption
+          children:
+            - $formkit: attachment
+              name: url
+              label: 背景图片
+              value: ""
+              accepts: ["image/*"]
+              validation: required
+            - $formkit: text
+              name: caption
+              label: 图片说明（可选）
+              value: ""
+              placeholder: 如：春日校园
+        - $formkit: checkbox
+          name: show_hero
+          label: 显示横幅
+          value: true
+        - $formkit: number
+          name: carousel_interval
+          label: 横幅轮播间隔（旧版横幅，毫秒）
+          value: 5000
+          min: 2500
+          max: 15000
+          step: 500
+          help: 每张图停留显示的时间，单位毫秒，默认 5000ms。只影响旧版首页横幅，页头「自定义链接」的滚动间隔在「页头设置」组里单独设置。
+        - $formkit: select
+          name: bg_overlay
+          label: 背景遮罩
+          value: medium
+          help: 自定义背景图片的遮罩强度，影响文字可读性
+          options:
+            - label: 无遮罩
+              value: none
+            - label: 轻度
+              value: light
+            - label: 中度（推荐）
+              value: medium
+            - label: 重度
+              value: dark
+        - $formkit: checkbox
+          name: full_width
+          label: 铺满页面宽度
+          value: false
+          help: 开启后 Hero 区域顶到页面边缘和 header，不留容器边距
+        - $formkit: range
+          name: min_height
+          label: 横幅高度（像素）
+          value: 320
+          min: 200
+          max: 800
+          step: 10
+          help: 通过拖动条调节 Hero 区域最小高度（当前值会实时显示在右侧输入框中，默认 320px）
+        - $formkit: select
+          name: hero_style
+          label: 首屏样式
+          value: floaters
+          help: 浮标卡/杂志栏沿用页脚的白卡与浅色面板语言；填了自定义背景图时自动回到经典居中，保证文字可读。
+          options:
+            - label: 浮标卡（白卡骑在面板上沿）
+              value: floaters
+            - label: 杂志栏（左文右目录）
+              value: magazine
+            - label: 经典居中
+              value: classic
+        - $formkit: text
+          name: hero_eyebrow
+          label: 首屏眉标
+          value: 全国高校自媒体联盟 · CAMPUS MEDIA
+          help: 标题上方那行小字，留空使用默认文案。
+        - $formkit: text
+          name: hero_lead
+          label: 首屏副标题
+          value: ""
+          placeholder: 留空使用站点副标题
+          help: 站点副标题为空时使用主题默认文案；只在浮标卡/杂志栏样式下显示。
+
+        - $formkit: array
+          name: section_blocks
+          label: 首页区块排序
+          addLabel: 添加首页区块
+          emptyText: 暂无首页区块
+          value:
+            - type: news
+              title: 文章内容
+              news_limit: 8
+              category_blocks: []
+            - type: members
+              title: 成员公示
+              member_limit: 6
+              member_pinned: []
+            - type: links
+              title: 友情链接
+              link_limit: 8
+              link_pinned: []
+          help: 拖动调整首页区块顺序；点击区块可设置其显示数量和内容排序。每种区块建议只添加一次
+          itemLabels:
+            - type: text
+              label: $value.title
+            - type: text
+              label: $value.type
+          children:
+            - $formkit: select
+              name: type
+              label: 区块类型
+              value: news
+              validation: required
+              options:
+                - label: 文章内容
+                  value: news
+                - label: 成员公示
+                  value: members
+                - label: 友情链接
+                  value: links
+            - $formkit: text
+              name: title
+              label: 列表显示名称
+              value: ""
+              validation: required
+              help: 仅用于后台识别排序项，不改变前台区块标题
+            - $formkit: number
+              key: home-news-limit
+              if: "$value.type === 'news'"
+              name: news_limit
+              label: 默认显示数量
+              value: 8
+              min: 1
+              max: 30
+            - $formkit: array
+              key: home-news-categories
+              if: "$value.type === 'news'"
+              name: category_blocks
+              label: 分类栏内容排序（留空显示全部文章）
+              value: []
+              max: 3
+              addLabel: 添加分类栏
+              emptyText: 暂无分类栏，将显示全部文章
+              help: 拖动调整分类栏顺序；添加 1-3 个分类栏，两项显示两栏，移动端自动改为单栏
+              itemLabels:
+                - type: text
+                  label: $value.block_title
+              children:
+                - $formkit: categorySelect
+                  name: category_name
+                  label: 选择分类
+                  value: ""
+                  autoSelect: false
+                  validation: required
+                  help: 选择要展示的分类
+                - $formkit: text
+                  name: block_title
+                  label: 区块显示标题
+                  value: ""
+                  validation: required
+                  help: 前台显示的区块标题，如“校园新闻”
+                - $formkit: number
+                  name: limit
+                  label: 显示数量
+                  value: 6
+                  min: 1
+                  max: 30
+            - $formkit: select
+              key: home-member-limit
+              if: "$value.type === 'members'"
+              name: member_limit
+              label: 显示数量
+              value: 6
+              options:
+                - label: 4 个
+                  value: 4
+                - label: 6 个
+                  value: 6
+                - label: 8 个
+                  value: 8
+                - label: 10 个
+                  value: 10
+                - label: 12 个
+                  value: 12
+            - $formkit: select
+              key: home-member-pinned
+              if: "$value.type === 'members'"
+              name: member_pinned
+              label: 成员内容排序
+              value: []
+              multiple: true
+              sortable: true
+              clearable: true
+              searchable: true
+              help: 选中项优先展示，可拖动调整顺序；需启用成员插件
+              action: /apis/member.plugin.halo.run/v1alpha1/members
+              requestOption:
+                method: GET
+                pageField: page
+                sizeField: size
+                totalField: total
+                itemsField: items
+                labelField: spec.displayName
+                valueField: metadata.name
+                iconField: spec.avatar
+                descriptionField: spec.school
+                fieldSelectorKey: metadata.name
+            - $formkit: select
+              key: home-link-limit
+              if: "$value.type === 'links'"
+              name: link_limit
+              label: 显示数量
+              value: 8
+              options:
+                - label: 4 个
+                  value: 4
+                - label: 6 个
+                  value: 6
+                - label: 8 个
+                  value: 8
+                - label: 10 个
+                  value: 10
+                - label: 12 个
+                  value: 12
+            - $formkit: select
+              key: home-link-pinned
+              if: "$value.type === 'links'"
+              name: link_pinned
+              label: 友链内容排序
+              value: []
+              multiple: true
+              sortable: true
+              clearable: true
+              searchable: true
+              help: 选中项优先展示，可拖动调整顺序；需启用官方链接插件
+              action: /apis/core.halo.run/v1alpha1/links
+              requestOption:
+                method: GET
+                pageField: page
+                sizeField: size
+                totalField: total
+                itemsField: items
+                labelField: spec.displayName
+                valueField: metadata.name
+                iconField: spec.logo
+                descriptionField: spec.url
+                fieldSelectorKey: metadata.name
+
+    - group: navigation
+      label: 页头
+      formSchema:
+        - $formkit: select
+          name: nav_align
+          label: 菜单对齐
+          value: center
+          help: header 内菜单与自定义链接的水平对齐；首页由「首屏 Hero」自带的页头接管，本组在首页不生效（登录、搜索、明暗切换入口也随之隐藏）
+          options:
+            - label: 居中对齐
+              value: center
+            - label: 左侧对齐
+              value: left
+            - label: 右侧对齐
+              value: right
+        - $formkit: checkbox
+          name: show_login_btn
+          label: 显示登录入口
+          value: true
+          help: 右上角显示登录按钮，已登录用户显示头像
+        - $formkit: menuSelect
+          name: header_menu
+          label: 顶部菜单
+          clearable: true
+          help: 选择 Header 顶部导航使用的菜单（从 Halo 后台已创建的菜单中选择），清空则不显示主菜单
+        - $formkit: checkbox
+          name: search_enabled
+          label: 显示搜索入口
+          value: true
+        - $formkit: checkbox
+          name: theme_toggle_enabled
+          label: 显示明暗切换按钮
+          value: true
+        - $formkit: number
+          name: carousel_interval
+          label: 链接轮播间隔（页头，毫秒）
+          value: 3500
+          min: 1500
+          max: 10000
+          step: 500
+          help: 页头「自定义链接」超过 1 个时会自动上下滚动轮播，此处设置每个链接的停留时间，默认 3500ms。只影响页头，首页横幅的轮播间隔在「首页横幅（旧版）」组里单独设置。
+        - $formkit: array
+          name: custom_links
+          label: 自定义链接
+          value: []
+          addLabel: 添加链接
+          emptyText: 暂无自定义链接
+          help: 在导航菜单右侧显示自定义链接，可选择图片或文字样式
+          itemLabels:
+            - type: text
+              label: $value.text
+            - type: image
+              label: $value.image
+            - type: text
+              label: $value.url
+          children:
+            - $formkit: text
+              name: text
+              label: 链接文字
+              value: ""
+              placeholder: 如：加入我们（不填则显示图片或URL）
+            - $formkit: text
+              name: url
+              label: 链接地址
+              value: ""
+              placeholder: https://
+              validation: required
+            - $formkit: attachment
+              name: image
+              label: 链接图片
+              value: ""
+              accepts: ["image/*"]
+              help: 从媒体库选择图片，设置后将显示为图片按钮
+            - $formkit: select
+              name: target
+              label: 打开方式
+              value: _blank
+              options:
+                - label: 新标签页
+                  value: _blank
+                - label: 当前页
+                  value: _self
+
+    - group: footer
+      label: 页脚
+      formSchema:
+        - $formkit: select
+          name: footer_style
+          label: 页脚样式
+          value: default
+          help: 选择页脚视觉风格；默认沿用主题原有页脚，另提供 12 号（品牌水印）与 33 号（卡片漂浮）两套可选样式。
+          options:
+            - label: 默认（主题原页脚）
+              value: default
+            - label: 12 号 · 品牌水印
+              value: style12
+            - label: 33 号 · 卡片漂浮
+              value: style33
+        - $formkit: text
+          name: footer_join_url
+          label: 「加入我们」链接
+          placeholder: 留空则不显示按钮（如 /claim 或 https://xxx）
+          help: 12 号与 33 号页脚共用；留空时 12 号回退为指向首页、33 号不显示按钮。
+        - $formkit: text
+          name: footer_join_text
+          label: 「加入我们」文字
+          value: 加入我们
+          help: 按钮文案，默认「加入我们」。
+        - $formkit: select
+          name: footer_join_style
+          label: 「加入我们」样式
+          value: solid
+          options:
+            - label: 实心渐变（默认）
+              value: solid
+            - label: 描边
+              value: outline
+            - label: 文字链接
+              value: ghost
+            - label: 深色实心
+              value: dark
+          help: 仅影响页脚 CTA 按钮，不改变页脚其他元素。
+        - $formkit: select
+          name: footer_join_icon
+          label: 「加入我们」图标
+          value: arrow
+          options:
+            - label: 箭头（默认）
+              value: arrow
+            - label: 加号
+              value: plus
+            - label: 邀请用户
+              value: user-plus
+            - label: 对话气泡
+              value: chat
+            - label: 邮件
+              value: mail
+            - label: 外链
+              value: external
+            - label: 无图标
+              value: none
+          help: 内置开源矢量图标，跟随按钮文字颜色；选「无图标」只保留文字。
+        - $formkit: attachment
+          name: footer_join_image
+          label: 「加入我们」自定义图标
+          value: ""
+          accepts: ["image/*"]
+          help: 可选。上传后会替换上面的内置图标，建议使用透明背景的方形图片（16–24px 显示）。
+        - $formkit: array
+          name: footer_menus
+          label: 页脚菜单栏目
+          value: []
+          addLabel: 添加菜单栏目
+          emptyText: 暂无菜单栏目
+          help: 可添加多个带标题的 Halo 菜单栏目；每个栏目对应一个菜单。留空时回退到「页头设置」里选择的顶部菜单，顶部菜单也没有配置才使用内置的首页/文章/分类/成员四项。
+          itemLabels:
+            - type: text
+              label: $value.title
+            - type: text
+              label: $value.menu
+          children:
+            - $formkit: text
+              name: title
+              label: 栏目标题
+              value: ""
+              validation: required
+            - $formkit: select
+              name: menu
+              label: 菜单
+              clearable: true
+              validation: required
+              searchable: true
+              action: /api/v1alpha1/menus
+              requestOption:
+                method: GET
+                pageField: page
+                sizeField: size
+                totalField: total
+                itemsField: items
+                labelField: spec.displayName
+                valueField: metadata.name
+                fieldSelectorKey: metadata.name
+        - $formkit: text
+          name: footer_slogan
+          label: 页脚标语
+          value: 互动宣教 · 多元交流
+          placeholder: 留空则用站点副标题
+          help: 12 号（品牌水印）与 33 号（卡片漂浮）页脚品牌卡上的那行小字；留空时用站点副标题，两者都没有则不显示这一行。
+        - $formkit: textarea
+          name: copyright
+          label: 版权信息
+          placeholder: 留空使用默认格式（© 年份 站点名称）
+          rows: 2
+        - $formkit: text
+          name: custom_column_title
+          label: 自定义栏目标题
+          placeholder: 如：关注我们、联系方式
+          help: 留空时默认显示"关注我们"
+        - $formkit: array
+          name: custom_column_items
+          label: 自定义栏目内容
+          value: []
+          addLabel: 添加项目
+          emptyText: 暂无内容
+          help: 添加图片或文字链接，支持简单的可视化排版
+          itemLabels:
+            - type: text
+              label: $value.title
+            - type: text
+              label: $value.url
+          children:
+            - $formkit: text
+              name: title
+              label: 标题/文字
+              value: ""
+              placeholder: 如：微信公众号
+              validation: required
+            - $formkit: attachment
+              name: image
+              label: 图片
+              value: ""
+              accepts: ["image/*"]
+              help: 从媒体库选择图片，如二维码、Logo 等；不需要图就留空，只显示标题文字
+            - $formkit: text
+              name: url
+              label: 链接地址
+              value: ""
+              placeholder: https://（可选，留空则不可点击）
+            - $formkit: select
+              name: target
+              label: 打开方式
+              value: _blank
+              options:
+                - label: 新标签页
+                  value: _blank
+                - label: 当前页
+                  value: _self
+        - $formkit: text
+          name: icp_number
+          label: ICP 备案号
+          placeholder: 京ICP备XXXXXXXX号
+        - $formkit: text
+          name: icp_link
+          label: ICP 备案链接
+          value: https://beian.miit.gov.cn/
+        - $formkit: text
+          name: police_number
+          label: 公安备案号
+          placeholder: 京公网安备XXXXXXXXXXXXXX号
+        - $formkit: text
+          name: police_record_code
+          label: 公安备案验证码
+
     - group: sidebar
-      label: 文章页面
+      label: 文章页
       formSchema:
         - $formkit: menuSelect
           name: sidebar_menu
@@ -816,8 +987,44 @@ spec:
               value: ""
               validation: required
               help: 仅用于后台识别排序项，不改变前台侧栏标题
+    - group: globe
+      label: 成员页与关系网
+      formSchema:
+        - $formkit: select
+          name: globe_default_view
+          label: 默认显示方式
+          value: grid
+          options:
+            - label: 网格
+              value: grid
+            - label: 关系网
+              value: network
+          help: 访客首次打开成员页时使用的视图；访客手动切换后会记住自己的选择，不再跟随此处设置。
+        - $formkit: checkbox
+          name: globe_affinity_enabled
+          label: 显示学校关联连线
+          value: true
+          help: 需与插件「学校关联分析」的开关同时打开；任一处关闭都不会发起 AI 分析请求。
+        - $formkit: select
+          name: globe_affinity_min_strength
+          label: 连线显示阈值
+          value: "0.35"
+          options:
+            - label: 全部（可能较密）
+              value: "0"
+            - label: 中等以上（推荐）
+              value: "0.35"
+            - label: 仅强关联
+              value: "0.7"
+          help: 只显示关联强度不低于该值的连线；阈值越高连线越少，画面更干净。线宽与透明度按当前最强关联等比归一，强关联永远最粗。
+        - $formkit: checkbox
+          name: globe_affinity_show_reason
+          label: 显示分析依据
+          value: true
+          help: 在关系网下方展示参与分析的学校数、分析维度与每条关联的判断理由；鼠标移到连线上也会即时显示该条的判断理由。
+
     - group: about
-      label: 关于页面
+      label: 关于页
       formSchema:
         - $formkit: array
           name: about_blocks
@@ -1110,31 +1317,17 @@ spec:
           name: members_comment_enabled
           label: 成员页评论区
           value: false
-          help: 开启后成员页底部显示评论区
+          help: 开启后成员页底部显示评论区；成员页的默认视图与关系网连线见「成员页与关系网」组
         - $formkit: checkbox
           name: members_overview_enabled
           label: 成员页概览
           value: true
-          help: 开启后成员页分组上方显示统计概览、地区分布与省份地图；关闭仅保留分组与成员列表
+          help: 开启后成员页分组上方显示统计概览、地区分布与省份地图；关闭仅保留分组与成员列表。默认视图与关系网连线见「成员页与关系网」组
         - $formkit: text
           name: members_map_review_number
           label: 地图审图号
           value: ""
           help: 境内公开发布含中国地图的页面需标注审图号，格式如「GS(2024)1234号」。留空则不显示；未取得审图号前建议关闭成员页概览，或改用自然资源部标准地图底图。
-
-    - group: seo
-      label: SEO
-      formSchema:
-        - $formkit: checkbox
-          name: enable_metadata
-          label: 输出 canonical 与社交分享标签
-          value: true
-          help: 关闭后不再输出 canonical、Open Graph 与 Twitter Card；若已由插件提供这些标签，可在此关闭以免重复。
-        - $formkit: checkbox
-          name: enable_structured_data
-          label: 输出页面结构化数据
-          value: true
-          help: 关闭后不再输出 JSON-LD（schema.org）。站点 title、description、favicon 与 noindex 由 Halo 统一注入，不受此处影响。
 
     - group: error_page
       label: 404 页面
@@ -1410,208 +1603,16 @@ spec:
           label: 跟随站点明暗模式
           value: true
           help: 读取访客在主题里保存的明暗偏好，自动切换认证页配色；关闭则始终使用浅色。
-    - group: globe
-      label: 成员关系网（成员页）
+    - group: seo
+      label: SEO
       formSchema:
-        - $formkit: select
-          name: globe_default_view
-          label: 默认显示方式
-          value: grid
-          options:
-            - label: 网格
-              value: grid
-            - label: 关系网
-              value: network
-          help: 访客首次打开成员页时使用的视图；访客手动切换后会记住自己的选择，不再跟随此处设置。
         - $formkit: checkbox
-          name: globe_affinity_enabled
-          label: 显示学校关联连线
+          name: enable_metadata
+          label: 输出 canonical 与社交分享标签
           value: true
-          help: 需与插件「学校关联分析」的开关同时打开；任一处关闭都不会发起 AI 分析请求。
-        - $formkit: select
-          name: globe_affinity_min_strength
-          label: 连线显示阈值
-          value: "0.35"
-          options:
-            - label: 全部（可能较密）
-              value: "0"
-            - label: 中等以上（推荐）
-              value: "0.35"
-            - label: 仅强关联
-              value: "0.7"
-          help: 只显示关联强度不低于该值的连线；阈值越高连线越少，画面更干净。线宽与透明度按当前最强关联等比归一，强关联永远最粗。
+          help: 关闭后不再输出 canonical、Open Graph 与 Twitter Card；若已由插件提供这些标签，可在此关闭以免重复。
         - $formkit: checkbox
-          name: globe_affinity_show_reason
-          label: 显示分析依据
+          name: enable_structured_data
+          label: 输出页面结构化数据
           value: true
-          help: 在关系网下方展示参与分析的学校数、分析维度与每条关联的判断理由；鼠标移到连线上也会即时显示该条的判断理由。
-
-    - group: footer
-      label: 页脚设置
-      formSchema:
-        - $formkit: select
-          name: footer_style
-          label: 页脚样式
-          value: default
-          help: 选择页脚视觉风格；默认沿用主题原有页脚，另提供 12 号（品牌水印）与 33 号（卡片漂浮）两套可选样式。
-          options:
-            - label: 默认（主题原页脚）
-              value: default
-            - label: 12 号 · 品牌水印
-              value: style12
-            - label: 33 号 · 卡片漂浮
-              value: style33
-        - $formkit: text
-          name: footer_join_url
-          label: 「加入我们」链接
-          placeholder: 留空则不显示按钮（如 /claim 或 https://xxx）
-          help: 12 号与 33 号页脚共用；留空时 12 号回退为指向首页、33 号不显示按钮。
-        - $formkit: text
-          name: footer_join_text
-          label: 「加入我们」文字
-          value: 加入我们
-          help: 按钮文案，默认「加入我们」。
-        - $formkit: select
-          name: footer_join_style
-          label: 「加入我们」样式
-          value: solid
-          options:
-            - label: 实心渐变（默认）
-              value: solid
-            - label: 描边
-              value: outline
-            - label: 文字链接
-              value: ghost
-            - label: 深色实心
-              value: dark
-          help: 仅影响页脚 CTA 按钮，不改变页脚其他元素。
-        - $formkit: select
-          name: footer_join_icon
-          label: 「加入我们」图标
-          value: arrow
-          options:
-            - label: 箭头（默认）
-              value: arrow
-            - label: 加号
-              value: plus
-            - label: 邀请用户
-              value: user-plus
-            - label: 对话气泡
-              value: chat
-            - label: 邮件
-              value: mail
-            - label: 外链
-              value: external
-            - label: 无图标
-              value: none
-          help: 内置开源矢量图标，跟随按钮文字颜色；选「无图标」只保留文字。
-        - $formkit: attachment
-          name: footer_join_image
-          label: 「加入我们」自定义图标
-          value: ""
-          accepts: ["image/*"]
-          help: 可选。上传后会替换上面的内置图标，建议使用透明背景的方形图片（16–24px 显示）。
-        - $formkit: array
-          name: footer_menus
-          label: 页脚菜单栏目
-          value: []
-          addLabel: 添加菜单栏目
-          emptyText: 暂无菜单栏目
-          help: 可添加多个带标题的 Halo 菜单栏目；每个栏目对应一个菜单。留空时回退到「页头设置」里选择的顶部菜单，顶部菜单也没有配置才使用内置的首页/文章/分类/成员四项。
-          itemLabels:
-            - type: text
-              label: $value.title
-            - type: text
-              label: $value.menu
-          children:
-            - $formkit: text
-              name: title
-              label: 栏目标题
-              value: ""
-              validation: required
-            - $formkit: select
-              name: menu
-              label: 菜单
-              clearable: true
-              validation: required
-              searchable: true
-              action: /api/v1alpha1/menus
-              requestOption:
-                method: GET
-                pageField: page
-                sizeField: size
-                totalField: total
-                itemsField: items
-                labelField: spec.displayName
-                valueField: metadata.name
-                fieldSelectorKey: metadata.name
-        - $formkit: text
-          name: footer_slogan
-          label: 页脚标语
-          value: 互动宣教 · 多元交流
-          placeholder: 留空则用站点副标题
-          help: 12 号（品牌水印）与 33 号（卡片漂浮）页脚品牌卡上的那行小字；留空时用站点副标题，两者都没有则不显示这一行。
-        - $formkit: textarea
-          name: copyright
-          label: 版权信息
-          placeholder: 留空使用默认格式（© 年份 站点名称）
-          rows: 2
-        - $formkit: text
-          name: custom_column_title
-          label: 自定义栏目标题
-          placeholder: 如：关注我们、联系方式
-          help: 留空时默认显示"关注我们"
-        - $formkit: array
-          name: custom_column_items
-          label: 自定义栏目内容
-          value: []
-          addLabel: 添加项目
-          emptyText: 暂无内容
-          help: 添加图片或文字链接，支持简单的可视化排版
-          itemLabels:
-            - type: text
-              label: $value.title
-            - type: text
-              label: $value.url
-          children:
-            - $formkit: text
-              name: title
-              label: 标题/文字
-              value: ""
-              placeholder: 如：微信公众号
-              validation: required
-            - $formkit: attachment
-              name: image
-              label: 图片
-              value: ""
-              accepts: ["image/*"]
-              help: 从媒体库选择图片，如二维码、Logo 等；不需要图就留空，只显示标题文字
-            - $formkit: text
-              name: url
-              label: 链接地址
-              value: ""
-              placeholder: https://（可选，留空则不可点击）
-            - $formkit: select
-              name: target
-              label: 打开方式
-              value: _blank
-              options:
-                - label: 新标签页
-                  value: _blank
-                - label: 当前页
-                  value: _self
-        - $formkit: text
-          name: icp_number
-          label: ICP 备案号
-          placeholder: 京ICP备XXXXXXXX号
-        - $formkit: text
-          name: icp_link
-          label: ICP 备案链接
-          value: https://beian.miit.gov.cn/
-        - $formkit: text
-          name: police_number
-          label: 公安备案号
-          placeholder: 京公网安备XXXXXXXXXXXXXX号
-        - $formkit: text
-          name: police_record_code
-          label: 公安备案验证码
+          help: 关闭后不再输出 JSON-LD（schema.org）。站点 title、description、favicon 与 noindex 由 Halo 统一注入，不受此处影响。

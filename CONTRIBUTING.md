@@ -75,6 +75,23 @@ git clone https://gitee.com/xiui-cc/theme-nucma.git
 
 （若维护者把工作区打包给你，注意 `scripts/env.ps1` 顶部写死了本机 Node 与 JDK 路径，需自行改为本机路径。）
 
+### 2.6 从 3.21.0 ~ 拆组前的老站点升级：先跑迁移脚本
+
+`content` 是 3.21.0（2026-07-30）引入的老分组，字段后来拆进 appearance / navigation / sidebar / pages / about / footer 各组。**Halo 升级不会清理 ConfigMap 里已删除的分组**，所以老站点的 `theme-nucma-config` 里可能还留着这组数据，以及十几个更早版本留下的僵尸分组。
+
+主题模板曾用 `theme.config.content?.<旧字段>` 回落兜底（映射表见 `tools/legacy-settings-map.mjs`）。**生产站已于 2026-11-03 完成迁移，模板里的回落全部撤掉**（自检断言改成「出现 `theme.config.content` 即失败」）。因此：
+
+- **新站点**：直接用当前版本即可，没有任何历史包袱。
+- **老站点**：升级前先跑一次迁移，把老数据搬进新组、并清掉僵尸分组：
+
+```bash
+node scripts/migrate-theme-settings.mjs --base-url https://你的站点 --user 管理员账号 --pass 密码
+# 确认计划无误后加 --apply 真正写入
+# 想连模板早已不读的僵尸分组一起清理，再加 --prune-unknown-groups
+```
+
+规则：新组已有该字段时**不覆盖**（站长在新界面改过的值优先）；写入前自动备份到 `.local-halo/`；脚本幂等，没有老分组时直接退出。
+
 ---
 
 ## 3. 标准流程（六步）
@@ -299,7 +316,7 @@ node tools/zip-digest.mjs /tmp/dl-theme.zip             # 线上
 |---|---|
 | **0.0.2** | 中/小级 → 0.0.3，大级 → 0.1.0 |
 
-覆盖安装：主题在「主题 → 安装主题」上传 zip，重复上传即为覆盖，设置与内容保留。版本比较细节见 [docs/versioning.md](docs/versioning.md) 第四节。
+覆盖安装：主题在「主题 → 安装主题」上传 zip，重复上传即为覆盖，设置与内容保留。版本比较细节见工作区根 `docs/versioning.md` 第四节。
 
 ---
 
@@ -362,7 +379,7 @@ README / CHANGELOG / docs 是否需要同批更新（需要则已在本 PR 内�
 |---|---|
 | `README.md` | 新增页面能力、设置分组、插件依赖、环境要求、仓库地址变化 |
 | `CHANGELOG.md` | 每次发版追加一条，版本号与 tag 一致 |
-| `docs/versioning.md` | 版本分级规则变化、发版操作调整 |
+| 工作区根 `docs/versioning.md` | 版本分级规则变化、发版操作调整 |
 | `docs/release-checklist.md` | 验收手段变化（新增契约检查、浏览器项、发布步骤） |
 | `docs/plugin-compatibility.md` | 插件版本升级、契约字段变化、验证状态变化 |
 | `COLLABORATION.md` | 分支模型、发版流程、远端与权限变化 |
@@ -436,7 +453,7 @@ git push gitee HEAD                 # 推分支，然后提 PR
 | **CONTRIBUTING.md（本文）** | 协同流程、硬约束、发版规则——**对外唯一入口** |
 | `COLLABORATION.md` | 仓库边界、分支模型、协作者接入细节 |
 | `CHANGELOG.md` | 逐版本变更（0.0.1 起） |
-| `docs/versioning.md` | 版本分级规则与发版操作 |
+| 工作区根 `docs/versioning.md` | 版本分级规则与发版操作 |
 | `docs/release-checklist.md` | 发布前逐项验收 |
 | `docs/plugin-compatibility.md` | 插件版本适配矩阵与降级行为 |
 | `README.md` | 安装、配置、能力概览 |

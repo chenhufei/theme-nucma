@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import * as yaml from 'js-yaml';
 import { collectKeys, render, DICT_PATH } from './gen-i18n-dict.mjs';
+import { LEGACY_GROUP, LEGACY_FIELD_MAP } from './legacy-settings-map.mjs';
 
 const root = process.cwd();
 const failures = [];
@@ -87,7 +88,10 @@ const groupNames = groups.map((form) => form.group);
 if (new Set(groupNames).size !== groupNames.length) {
   fail('settings.yaml 存在重复设置分组');
 }
-const expectedGroups = ['appearance', 'navigation', 'home', 'home_hero', 'sidebar', 'about', 'pages', 'seo', 'error_page', 'auth_page', 'globe', 'footer'];
+// 组的顺序即后台看到的分区顺序：先全站外观，再首页（首屏 → 旧版横幅），
+// 然后站点框架（页头、页脚）、内容页（文章、成员、关于、独立页面）、
+// 功能页（404、登录注册），最后 SEO。改动顺序要同步改这里，避免两份真相。
+const expectedGroups = ['appearance', 'home_hero', 'home', 'navigation', 'footer', 'sidebar', 'globe', 'about', 'pages', 'error_page', 'auth_page', 'seo'];
 if (JSON.stringify(groupNames) !== JSON.stringify(expectedGroups)) {
   fail(`设置分组顺序异常：${groupNames.join(', ')}`);
 }
@@ -218,6 +222,29 @@ for (const path of templates) {
 }
 
 const allTemplates = templates.map(read).join('\n');
+
+// 设置项必须真的被消费：后台能填、模板与脚本都不读的字段就是「死设置」，
+// 用户改完不会有任何效果（date_format 就是这么被发现的：声明了四年没人用）。
+// 判定语料 = 全部模板 + src 下的脚本与样式（构建前的源码）。
+// 匹配形态要求是**属性访问**（`.name` / `?.name`），避免子串误判
+// （例如把 date_format 改成 date_formatX 仍然「包含」date_format）。
+const sourceCorpus = walk('src', '.js').concat(walk('src', '.ts')).concat(walk('src', '.css'));
+const consumptionCorpus = allTemplates + sourceCorpus.map(read).join('\n');
+const unconsumedSettings = [];
+for (const form of groups) {
+  walkSchema(form.formSchema, (node) => {
+    const name = node.name;
+    if (!name || typeof name !== 'string') return;
+    const pattern = new RegExp('[.?]\\s*' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
+    if (!pattern.test(consumptionCorpus)) {
+      unconsumedSettings.push(`${form.group}.${name}`);
+    }
+  });
+}
+for (const item of unconsumedSettings) {
+  fail(`设置项声明后没有任何模板或脚本消费（死设置）：${item}`);
+}
+
 // 资源版本参数只有一种写法：(v=${theme.spec.version})。打包时靠它注入内容指纹，
 // 写成别的形式（硬编码版本、省略参数）就等于那条资源永远吃旧缓存。
 for (const path of templates) {
@@ -253,17 +280,23 @@ for (const staleKey of [
   if (allTemplates.includes(staleKey)) fail(`模板仍引用旧设置字段：${staleKey}`);
 }
 
-for (const compatibilityMarker of [
-  // content 组是 3.34.x 的老配置组，升级上来的站点可能还留着自定义 CSS/JS
-  // 与评论开关，这里保留读取，避免静默丢配置。
-  'theme.config.content?.auto_toc',
-  'theme.config.content?.post_comment_enabled',
-  'theme.config.content?.custom_css',
-  'theme.config.content?.custom_js',
-]) {
-  if (!allTemplates.includes(compatibilityMarker)) {
-    fail(`模板缺少旧配置回退：${compatibilityMarker}`);
+// 老配置组 content：已于 2026-11-03 完成迁移（生产站 configmap 已清空该组），
+// 模板里的回落表达式全部撤掉，这里改成「出现即失败」，防止老组死灰复燃。
+// 映射表仍保留：它是 scripts/migrate-theme-settings.mjs 搬数据的依据，
+// 也记录了「老字段 → 现分组字段」的对应关系，供未迁移的站点使用。
+const declaredFields = new Set();
+for (const form of groups) {
+  walkSchema(form.formSchema, (node) => {
+    if (node.name && typeof node.name === 'string') declaredFields.add(node.name);
+  });
+}
+for (const [legacyField, target] of Object.entries(LEGACY_FIELD_MAP)) {
+  if (!declaredFields.has(target.field)) {
+    fail(`老配置映射表指向了不存在的设置字段：${target.group}.${target.field}（来自 content.${legacyField}）`);
   }
+}
+if (allTemplates.includes(`theme.config.${LEGACY_GROUP}`)) {
+  fail(`模板仍引用已迁移的老配置组 ${LEGACY_GROUP}：迁移完成后必须撤掉回落表达式`);
 }
 
 // 已从 settings.yaml 移除的组与字段：继续回退只会读到永久空值，等于死分支。

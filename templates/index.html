@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
       th:replace="~{modules/layout :: html(title=${site.title}, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=${site.seo?.description ?: site.subtitle}, canonical=${site.url}, image=${site.logo}, pageType='website', robots=null)}">
-<th:block th:fragment="content">
+<th:block th:fragment="content" th:with="dateFmt=${theme.config.appearance?.date_format == null or #strings.isEmpty(theme.config.appearance?.date_format) ? #messages.msg('format.date') : #strings.replace(#strings.replace(theme.config.appearance.date_format, 'YYYY', 'yyyy'), 'DD', 'dd')}">
   <!-- 新版首屏：11 套版式，内容全部来自后台「首屏 Hero」设置组 -->
   <th:block th:if="${theme.config.home_hero?.enabled != false}">
     <th:block th:replace="~{modules/home-hero :: hero}"></th:block>
@@ -115,7 +115,7 @@
              th:href="@{${latestPost.status?.permalink}}">
             <span class="hero-card-k" th:text="#{home.heroLatest}">最新发布</span>
             <strong class="hero-card-t" th:text="${latestPost.spec?.title}">最新一篇文章</strong>
-            <span class="hero-card-m" th:text="${#temporals.format(latestPost.spec?.publishTime, 'yyyy-MM-dd')}">2026-01-01</span>
+            <span class="hero-card-m" th:text="${#temporals.format(latestPost.spec?.publishTime, dateFmt)}">2026-01-01</span>
             <span class="hero-card-go"><span th:text="#{home.heroReadMore}">阅读全文</span> <i aria-hidden="true">→</i></span>
           </a>
           <a class="hero-card hero-card-members" th:if="${memberList != null and memberList.items != null and !#lists.isEmpty(memberList.items)}"

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org">
-<th:block th:fragment="special(style, eyebrow, kicker)">
+<th:block th:fragment="special(style, eyebrow, kicker)" th:with="dateFmt=${theme.config.appearance?.date_format == null or #strings.isEmpty(theme.config.appearance?.date_format) ? #messages.msg('format.date') : #strings.replace(#strings.replace(theme.config.appearance.date_format, 'YYYY', 'yyyy'), 'DD', 'dd')}">
   <section th:class="'special-category special-category--' + ${style}">
     <header class="special-category__header">
       <div class="special-category__motif" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -50,7 +50,7 @@
               <th:block th:case="'festival'" th:text="#{template.category.youth.title}">青春现场</th:block>
               <th:block th:case="*" th:text="#{special.campaign.a1}">重点报道</th:block>
             </span>
-            <time th:text="${#temporals.format(post.spec?.publishTime, 'yyyy-MM-dd')}"></time>
+            <time th:text="${#temporals.format(post.spec?.publishTime, dateFmt)}"></time>
             <h2 th:text="${post.spec?.title}"></h2>
             <p th:if="${post.spec?.excerpt?.raw != null}" th:text="${post.spec.excerpt.raw}"></p>
             <span class="special-category__read" th:text="#{friends.readMore}">阅读全文</span>

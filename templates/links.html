@@ -255,7 +255,7 @@
     </div>
 
     <!-- 评论区 -->
-    <section th:if="${haloCommentEnabled and (theme.config.pages?.links_comment_enabled != null ? theme.config.pages.links_comment_enabled : theme.config.content?.links_comment_enabled) != false}" class="post-comments">
+    <section th:if="${haloCommentEnabled and theme.config.pages?.links_comment_enabled != false}" class="post-comments">
       <halo:comment group="plugin.halo.run" kind="Plugin" th:attr="name=${pluginName}" />
     </section>
 

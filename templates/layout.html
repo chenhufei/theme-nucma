@@ -44,7 +44,7 @@
       }
     })();
   </script>
-  <th:block th:with="customCss=${theme.config.appearance?.custom_css != null ? theme.config.appearance.custom_css : theme.config.content?.custom_css}"
+  <th:block th:with="customCss=${theme.config.appearance?.custom_css}"
             th:if="${customCss != null and !#strings.isEmpty(customCss)}">
     <style th:utext="${customCss}"></style>
   </th:block>
@@ -62,12 +62,12 @@
   <halo:footer />
   <script th:inline="javascript">
     window.NUCMA_RUNTIME = {
-      debug: /*[[${theme.config.appearance?.developer_mode != null ? theme.config.appearance.developer_mode : theme.config.content?.developer_mode == true}]]*/ false,
+      debug: /*[[${theme.config.appearance?.developer_mode == true}]]*/ false,
       version: /*[[${theme.spec.version}]]*/ "development"
     };
   </script>
   <script defer th:src="@{/assets/js/main.js(v=${theme.spec.version})}"></script>
-  <th:block th:with="customJs=${theme.config.appearance?.custom_js != null ? theme.config.appearance.custom_js : theme.config.content?.custom_js}"
+  <th:block th:with="customJs=${theme.config.appearance?.custom_js}"
             th:if="${customJs != null and !#strings.isEmpty(customJs)}">
     <script th:utext="${customJs}"></script>
   </th:block>

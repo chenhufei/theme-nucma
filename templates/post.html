@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
       th:replace="~{modules/layout :: html(title=|${post?.spec?.title} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=${post?.spec?.excerpt?.raw}, canonical=${post?.status?.permalink}, image=${post?.spec?.cover}, pageType='article', robots=null)}">
-<th:block th:fragment="content">
+<th:block th:fragment="content" th:with="dateFmt=${theme.config.appearance?.date_format == null or #strings.isEmpty(theme.config.appearance?.date_format) ? #messages.msg('format.date') : #strings.replace(#strings.replace(theme.config.appearance.date_format, 'YYYY', 'yyyy'), 'DD', 'dd')}">
   <div class="post-layout">
     <!-- 左侧：文章内容 -->
     <article class="post-main" th:attr="data-article-title=${post?.spec?.title}">
@@ -10,7 +10,7 @@
         <div class="post-meta">
           <span class="badge badge-primary badge-soft badge-sm post-category" th:each="cat : ${post.categories}"
                 th:text="${cat.spec?.displayName}"></span>
-          <time th:text="${#temporals.format(post.spec?.publishTime, #messages.msg('format.date'))}"></time>
+          <time th:text="${#temporals.format(post.spec?.publishTime, dateFmt)}"></time>
           <span th:if="${theme.config.sidebar?.show_views != false and post.stats?.visit != null}"
                 th:text="${#messages.msg('post.viewsSuffix', post.stats?.visit)}"></span>
         </div>
@@ -51,7 +51,7 @@
       </div>
 
       <!-- 评论区 -->
-      <section th:if="${haloCommentEnabled and (theme.config.sidebar?.post_comment_enabled != null ? theme.config.sidebar.post_comment_enabled : theme.config.content?.post_comment_enabled) != false}" class="post-comments">
+      <section th:if="${haloCommentEnabled and theme.config.sidebar?.post_comment_enabled != false}" class="post-comments">
         <halo:comment group="content.halo.run" kind="Post" th:attr="name=${post.metadata.name}" />
       </section>
     </article>
@@ -82,7 +82,7 @@
         <div class="sidebar-info">
           <div class="info-item">
             <span class="info-label" th:text="#{post.publishedAt}">发布于</span>
-            <span th:text="${#temporals.format(post.spec?.publishTime, 'yyyy-MM-dd')}"></span>
+            <span th:text="${#temporals.format(post.spec?.publishTime, dateFmt)}"></span>
           </div>
           <div class="info-item" th:if="${post.stats?.visit != null}">
             <span class="info-label" th:text="#{post.viewsLabel}">阅读量</span>
@@ -140,7 +140,7 @@
       <!-- 目录 -->
       <div class="card card-border sidebar-card toc-card" id="tocCard"
            data-sidebar-section="toc"
-           th:if="${(sidebarOrder == null or #lists.contains(sidebarOrder, 'toc')) and (theme.config.sidebar?.auto_toc != null ? theme.config.sidebar.auto_toc : theme.config.content?.auto_toc) != false}">
+           th:if="${(sidebarOrder == null or #lists.contains(sidebarOrder, 'toc')) and theme.config.sidebar?.auto_toc != false}">
         <h3 class="sidebar-title" th:text="#{common.toc}">目录</h3>
         <nav class="toc" id="toc"></nav>
       </div>

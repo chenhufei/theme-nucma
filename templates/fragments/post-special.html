@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org">
-<th:block th:fragment="special(style, eyebrow)">
+<th:block th:fragment="special(style, eyebrow)" th:with="dateFmt=${theme.config.appearance?.date_format == null or #strings.isEmpty(theme.config.appearance?.date_format) ? #messages.msg('format.date') : #strings.replace(#strings.replace(theme.config.appearance.date_format, 'YYYY', 'yyyy'), 'DD', 'dd')}">
   <article th:class="'special-post special-post--' + ${style}">
     <header class="special-post__header" th:classappend="${post.spec?.cover != null and !#strings.isEmpty(post.spec.cover)} ? ' special-post__header--cover' : ''">
       <img th:if="${post.spec?.cover != null and !#strings.isEmpty(post.spec.cover)}" th:src="${post.spec.cover}"
@@ -11,7 +11,7 @@
         <h1 th:text="${post.spec?.title}"></h1>
         <p th:if="${post.spec?.excerpt?.raw != null}" th:text="${post.spec.excerpt.raw}"></p>
         <div class="special-post__meta">
-          <time th:text="${#temporals.format(post.spec?.publishTime, #messages.msg('format.date'))}"></time>
+          <time th:text="${#temporals.format(post.spec?.publishTime, dateFmt)}"></time>
           <span th:if="${post.owner != null}" th:text="${post.owner?.displayName}"></span>
           <span th:if="${post.stats?.visit != null}" th:text="${#messages.msg('post.viewsSuffix', post.stats.visit)}"></span>
         </div>
@@ -34,7 +34,7 @@
         </a>
       </div>
 
-      <section th:if="${haloCommentEnabled and (theme.config.sidebar?.post_comment_enabled != null ? theme.config.sidebar.post_comment_enabled : theme.config.content?.post_comment_enabled) != false}" class="post-comments">
+      <section th:if="${haloCommentEnabled and theme.config.sidebar?.post_comment_enabled != false}" class="post-comments">
         <halo:comment group="content.halo.run" kind="Post" th:attr="name=${post.metadata.name}" />
       </section>
     </div>

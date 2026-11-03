@@ -92,7 +92,7 @@
     })();
   </script>
   <!-- th:with 的优先级高于 th:if：变量定义必须提到父级，否则 th:if 先求值拿到 null，自定义代码注入永远不生效 -->
-  <th:block th:with="customCss=${theme.config.appearance?.custom_css != null ? theme.config.appearance.custom_css : theme.config.content?.custom_css}">
+  <th:block th:with="customCss=${theme.config.appearance?.custom_css}">
     <style th:if="${customCss != null and !#strings.isEmpty(customCss)}" th:utext="${customCss}"></style>
   </th:block>
   <!-- 页面级 head 追加：调用方传 headExtra=~{::片段名}，不传则整段不渲染。
@@ -198,7 +198,7 @@
           </th:block>
         </nav>
         <div class="header-actions">
-          <th:block th:if="${(theme.config.navigation?.search_enabled != null ? theme.config.navigation.search_enabled : theme.config.content?.search_enabled) != false}">
+          <th:block th:if="${theme.config.navigation?.search_enabled != false}">
             <button th:if="${pluginFinder.available('PluginSearchWidget')}"
                     type="button"
                     data-widget-open="SearchWidget"
@@ -209,7 +209,7 @@
               </svg>
             </button>
           </th:block>
-          <button th:if="${(theme.config.navigation?.theme_toggle_enabled != null ? theme.config.navigation.theme_toggle_enabled : theme.config.content?.theme_toggle_enabled) != false}"
+          <button th:if="${theme.config.navigation?.theme_toggle_enabled != false}"
                   id="themeToggle" class="btn btn-ghost btn-circle btn-sm icon-btn theme-toggle-btn"
                   aria-label="切换主题" th:aria-label="#{theme.switchTheme}" aria-pressed="false">
             <!-- 两个图标叠在同一个旋转容器里：切主题时容器整体转半圈，太阳/月亮各自缩放淡入淡出 -->
@@ -355,7 +355,7 @@
 
   <th:block th:if="${seoPageType == 'article'}">
     <div id="articleMobileActions" class="article-mobile-actions" aria-label="文章工具" th:aria-label="#{post.tools}">
-      <button th:if="${(theme.config.sidebar?.auto_toc != null ? theme.config.sidebar.auto_toc : theme.config.content?.auto_toc) != false}"
+      <button th:if="${theme.config.sidebar?.auto_toc != false}"
               id="mobileTocToggle"
               class="mobile-toc-toggle article-mobile-action"
               type="button"
@@ -392,7 +392,7 @@
       <span id="articleActionStatus" class="sr-only" role="status" aria-live="polite"></span>
     </div>
 
-    <th:block th:if="${(theme.config.sidebar?.auto_toc != null ? theme.config.sidebar.auto_toc : theme.config.content?.auto_toc) != false}">
+    <th:block th:if="${theme.config.sidebar?.auto_toc != false}">
       <dialog id="mobileTocDrawer" class="mobile-toc-drawer" aria-labelledby="mobileTocTitle" hidden>
       <div class="mobile-toc-drawer__panel">
         <header class="mobile-toc-drawer__header">
@@ -468,7 +468,8 @@
   </dialog>
 
   <!-- 页脚 -->
-  <footer class="site-footer" th:fragment="siteFooter">
+  <footer class="site-footer" th:fragment="siteFooter"
+          th:with="footerCopyright=${theme.config.footer?.copyright}">
     <div class="container">
       <div class="footer-inner">
         <!-- 站点信息 -->
@@ -477,8 +478,8 @@
           <div class="footer-info">
             <p th:if="${site.subtitle != null and !#strings.isEmpty(site.subtitle)}"
                th:text="${site.subtitle}"></p>
-            <p th:if="${theme.config.footer?.copyright != null and !#strings.isEmpty(theme.config.footer.copyright)}"
-               th:text="${theme.config.footer.copyright}"></p>
+            <p th:if="${footerCopyright != null and !#strings.isEmpty(footerCopyright)}"
+               th:text="${footerCopyright}"></p>
           </div>
         </div>
 
@@ -529,53 +530,61 @@
         </th:block>
 
         <!-- 自定义内容 -->
-        <div class="footer-col" th:if="${theme.config.footer?.custom_column_items != null and !#lists.isEmpty(theme.config.footer.custom_column_items)}">
-          <div class="footer-col-title" th:text="${theme.config.footer?.custom_column_title ?: #messages.msg('footer.followUs')}">关注我们</div>
-          <div class="footer-custom-items">
-            <th:block th:each="item : ${theme.config.footer.custom_column_items}">
-              <a th:if="${item.url != null and !#strings.isEmpty(item.url)}"
-                 th:href="${item.url}"
-                 th:target="${item.target ?: '_blank'}"
-                 class="footer-custom-item"
-                 th:aria-label="${item.title != null and !#strings.isEmpty(item.title) ? item.title : item.url}">
-                <img th:if="${item.image != null and !#strings.isEmpty(item.image)}"
-                     th:src="${item.image}" th:alt="${item.title}" class="footer-custom-img" width="80" height="80" loading="lazy" decoding="async" />
-                <span th:text="${item.title}" class="footer-custom-text"></span>
-              </a>
-              <div th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="footer-custom-item footer-custom-static">
-                <img th:if="${item.image != null and !#strings.isEmpty(item.image)}"
-                     th:src="${item.image}" th:alt="${item.title}" class="footer-custom-img" width="80" height="80" loading="lazy" decoding="async" />
-                <span th:text="${item.title}" class="footer-custom-text"></span>
-              </div>
-            </th:block>
+        <th:block th:with="customColumnItems=${theme.config.footer?.custom_column_items},
+                         customColumnTitle=${theme.config.footer?.custom_column_title}">
+          <div class="footer-col" th:if="${customColumnItems != null and !#lists.isEmpty(customColumnItems)}">
+            <div class="footer-col-title" th:text="${customColumnTitle ?: #messages.msg('footer.followUs')}">关注我们</div>
+            <div class="footer-custom-items">
+              <th:block th:each="item : ${customColumnItems}">
+                <a th:if="${item.url != null and !#strings.isEmpty(item.url)}"
+                   th:href="${item.url}"
+                   th:target="${item.target ?: '_blank'}"
+                   class="footer-custom-item"
+                   th:aria-label="${item.title != null and !#strings.isEmpty(item.title) ? item.title : item.url}">
+                  <img th:if="${item.image != null and !#strings.isEmpty(item.image)}"
+                       th:src="${item.image}" th:alt="${item.title}" class="footer-custom-img" width="80" height="80" loading="lazy" decoding="async" />
+                  <span th:text="${item.title}" class="footer-custom-text"></span>
+                </a>
+                <div th:unless="${item.url != null and !#strings.isEmpty(item.url)}" class="footer-custom-item footer-custom-static">
+                  <img th:if="${item.image != null and !#strings.isEmpty(item.image)}"
+                       th:src="${item.image}" th:alt="${item.title}" class="footer-custom-img" width="80" height="80" loading="lazy" decoding="async" />
+                  <span th:text="${item.title}" class="footer-custom-text"></span>
+                </div>
+              </th:block>
+            </div>
           </div>
-        </div>
+        </th:block>
       </div>
 
       <!-- 底部版权 -->
       <div class="footer-bottom">
         <div class="footer-copyright">
-          <span th:if="${theme.config.footer?.copyright == null or #strings.isEmpty(theme.config.footer?.copyright)}">
+          <span th:if="${footerCopyright == null or #strings.isEmpty(footerCopyright)}">
             &copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}"></span>
             <th:block th:text="${site.title}"></th:block>
           </span>
         </div>
         <div class="footer-links">
-          <span th:if="${theme.config.footer?.icp_number != null and !#strings.isEmpty(theme.config.footer.icp_number)}">
-            <a th:href="${theme.config.footer?.icp_link ?: 'https://beian.miit.gov.cn/'}"
-               target="_blank" rel="noopener noreferrer"
-               th:text="${theme.config.footer.icp_number}"></a>
-          </span>
-          <span th:if="${theme.config.footer?.police_number != null and !#strings.isEmpty(theme.config.footer.police_number)}">
-            <a th:if="${theme.config.footer?.police_record_code != null and !#strings.isEmpty(theme.config.footer.police_record_code)}"
-               th:href="|https://beian.mps.gov.cn/#/query/webSearch?code=${theme.config.footer.police_record_code}|"
-               target="_blank" rel="noopener noreferrer"
-               th:text="${theme.config.footer.police_number}"></a>
-            <a th:unless="${theme.config.footer?.police_record_code != null and !#strings.isEmpty(theme.config.footer.police_record_code)}"
-               href="https://beian.mps.gov.cn/"
-               target="_blank" rel="noopener noreferrer"
-               th:text="${theme.config.footer.police_number}"></a>
-          </span>
+          <th:block th:with="icpNumber=${theme.config.footer?.icp_number},
+                           icpLink=${theme.config.footer?.icp_link},
+                           policeNumber=${theme.config.footer?.police_number},
+                           policeRecordCode=${theme.config.footer?.police_record_code}">
+            <span th:if="${icpNumber != null and !#strings.isEmpty(icpNumber)}">
+              <a th:href="${icpLink ?: 'https://beian.miit.gov.cn/'}"
+                 target="_blank" rel="noopener noreferrer"
+                 th:text="${icpNumber}"></a>
+            </span>
+            <span th:if="${policeNumber != null and !#strings.isEmpty(policeNumber)}">
+              <a th:if="${policeRecordCode != null and !#strings.isEmpty(policeRecordCode)}"
+                 th:href="|https://beian.mps.gov.cn/#/query/webSearch?code=${policeRecordCode}|"
+                 target="_blank" rel="noopener noreferrer"
+                 th:text="${policeNumber}"></a>
+              <a th:unless="${policeRecordCode != null and !#strings.isEmpty(policeRecordCode)}"
+                 href="https://beian.mps.gov.cn/"
+                 target="_blank" rel="noopener noreferrer"
+                 th:text="${policeNumber}"></a>
+            </span>
+          </th:block>
         </div>
       </div>
     </div>
@@ -1109,12 +1118,12 @@ footer.site-footer .footer-bottom{display:none!important}
   <th:block th:replace="~{modules/i18n-dict :: dict}"></th:block>
   <script th:inline="javascript">
     window.NUCMA_RUNTIME = {
-      debug: /*[[${theme.config.appearance?.developer_mode != null ? theme.config.appearance.developer_mode : theme.config.content?.developer_mode == true}]]*/ false,
+      debug: /*[[${theme.config.appearance?.developer_mode == true}]]*/ false,
       version: /*[[${theme.spec.version}]]*/ "development"
     };
   </script>
   <script defer th:src="@{/assets/js/main.js(v=${theme.spec.version})}"></script>
-  <th:block th:with="customJs=${theme.config.appearance?.custom_js != null ? theme.config.appearance.custom_js : theme.config.content?.custom_js}">
+  <th:block th:with="customJs=${theme.config.appearance?.custom_js}">
     <script th:if="${customJs != null and !#strings.isEmpty(customJs)}" th:utext="${customJs}"></script>
   </th:block>
 </body>

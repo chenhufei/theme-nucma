@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
       th:replace="~{modules/layout :: html(title=|${category?.spec?.displayName} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=${category?.spec?.description}, canonical=${category?.status?.permalink}, image=${category?.spec?.cover}, pageType='website', robots=null)}">
-<th:block th:fragment="content">
+<th:block th:fragment="content" th:with="dateFmt=${theme.config.appearance?.date_format == null or #strings.isEmpty(theme.config.appearance?.date_format) ? #messages.msg('format.date') : #strings.replace(#strings.replace(theme.config.appearance.date_format, 'YYYY', 'yyyy'), 'DD', 'dd')}">
   <div class="page-header" style="text-align: left; padding: var(--space-2xl) 0; border-bottom: 2px solid var(--primary); margin-bottom: var(--space-2xl); position: relative;">
     <h1 class="page-title" th:text="${category?.spec?.displayName}" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; letter-spacing: 0.05em; color: var(--primary);"></h1>
     <p class="page-desc" th:text="${category?.status?.postCount ?: 0} + ' ARTICLES'" style="font-size: 1rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.1em; margin: 0;"></p>
@@ -17,7 +17,7 @@
       </div>
       <h3 th:text="${post.spec?.title}"></h3>
       <p th:if="${post.spec?.excerpt != null and post.spec?.excerpt.raw != null}" th:text="${post.spec?.excerpt.raw}" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"></p>
-      <div style="margin-top: var(--space-sm); font-size: 0.8rem; color: var(--text-tertiary);" th:text="${#temporals.format(post.spec?.publishTime, 'yyyy-MM-dd')}"></div>
+      <div style="margin-top: var(--space-sm); font-size: 0.8rem; color: var(--text-tertiary);" th:text="${#temporals.format(post.spec?.publishTime, dateFmt)}"></div>
     </a>
   </div>
 

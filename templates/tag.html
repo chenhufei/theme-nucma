@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
       th:replace="~{modules/layout :: html(title=|${tag?.spec?.displayName} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=|浏览标签“${tag?.spec?.displayName}”下的内容|, canonical=${tag?.status?.permalink}, image=${site.logo}, pageType='website', robots=null)}">
-<th:block th:fragment="content">
+<th:block th:fragment="content" th:with="dateFmt=${theme.config.appearance?.date_format == null or #strings.isEmpty(theme.config.appearance?.date_format) ? #messages.msg('format.date') : #strings.replace(#strings.replace(theme.config.appearance.date_format, 'YYYY', 'yyyy'), 'DD', 'dd')}">
   <div class="page-header">
     <h1 class="page-title" th:text="'#' + ${tag?.spec?.displayName}"></h1>
     <p class="page-desc" th:text="${#messages.msg('categories.postCountLabel', tag?.status?.postCount ?: 0)}"></p>
@@ -15,7 +15,7 @@
                sizes="(max-width: 640px) 92vw, (max-width: 1024px) 44vw, 320px" width="320" height="180" />
         </div>
         <div class="post-info">
-          <time th:text="${#temporals.format(post.spec?.publishTime, 'yyyy-MM-dd')}"></time>
+          <time th:text="${#temporals.format(post.spec?.publishTime, dateFmt)}"></time>
           <h3 class="post-title" th:text="${post.spec?.title}"></h3>
         </div>
       </a>
