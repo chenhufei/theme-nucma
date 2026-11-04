@@ -382,6 +382,11 @@ spec:
             - type: news
               title: 文章内容
               news_limit: 8
+              news_rows: 0
+              display_style: grid
+              card_style: editorial
+              title_lines: "0"
+              columns: 3
               category_blocks: []
             - type: members
               title: 成员公示
@@ -424,6 +429,73 @@ spec:
               value: 8
               min: 1
               max: 30
+            - $formkit: number
+              key: home-news-rows
+              if: "$value.type === 'news'"
+              name: news_rows
+              label: 显示行数
+              value: 0
+              min: 0
+              max: 6
+              help: 填几就铺几横排，实际条数 = 行数 × 每行列数（例如 3 行 × 3 列 = 9 篇），填了就覆盖上面的「默认显示数量」；填 0 表示不按行数控制
+            - $formkit: select
+              key: home-news-style
+              if: "$value.type === 'news'"
+              name: display_style
+              label: 文章显示样式
+              value: grid
+              options:
+                - label: 卡片网格（封面 + 标题 + 摘要）
+                  value: grid
+                - label: 紧凑列表（日期 + 标题）
+                  value: list
+              help: 添加分类栏后统一使用「首条带图 + 其余列表」，此项只影响未添加分类栏时的全部文章
+            - $formkit: select
+              key: home-news-card-style
+              if: "$value.type === 'news'"
+              name: card_style
+              label: 卡片样式
+              value: editorial
+              options:
+                - label: 编辑部卡片（盒式 + 分类标签 + 圆形箭头）
+                  value: editorial
+                - label: 大图叠字（4:3 沉浸封面压白字）
+                  value: immersive
+                - label: 剪贴簿（纸片卡 + 微斜拍立得 + 红胶带）
+                  value: scrap
+                - label: 便当格（等格铺满 + 底部叠字，无封面用浅色水印格）
+                  value: bento
+              help: 仅「卡片网格」生效；紧凑列表不受影响
+            - $formkit: select
+              key: home-news-title-lines
+              if: "$value.type === 'news'"
+              name: title_lines
+              label: 标题最多行数
+              value: "0"
+              options:
+                - label: 不限（写满一行再换行）
+                  value: "0"
+                - label: 1 行
+                  value: "1"
+                - label: 2 行
+                  value: "2"
+                - label: 3 行
+                  value: "3"
+              help: 仅「卡片网格」生效；选具体行数后超出部分裁掉并以省略号结尾，选「不限」则标题完整换行显示
+            - $formkit: select
+              key: home-news-columns
+              if: "$value.type === 'news'"
+              name: columns
+              label: 每行列数
+              value: 3
+              options:
+                - label: 2 列
+                  value: 2
+                - label: 3 列
+                  value: 3
+                - label: 4 列
+                  value: 4
+              help: 卡片网格与分类栏共用；分类栏少于列数时按实际数量铺满，平板自动降为 2 列、手机单列
             - $formkit: array
               key: home-news-categories
               if: "$value.type === 'news'"

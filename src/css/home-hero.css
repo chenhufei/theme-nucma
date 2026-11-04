@@ -48,6 +48,29 @@
 .nh-nav { display: flex; align-items: center; }
 .nh-nav a { text-decoration: none; color: inherit; cursor: pointer; }
 .nh-cta { text-decoration: none; white-space: nowrap; }
+
+/* 明暗切换：首页没有站点头部，入口就在首屏页头里，外观跟随各版式的页头深浅 */
+.nh-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid rgba(20, 20, 22, .14);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color .2s, background-color .2s, color .2s;
+}
+.nh-toggle:hover { border-color: rgba(20, 20, 22, .34); background: rgba(20, 20, 22, .05); }
+.nh-toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 209, 62, 67), .22); }
+.nh-toggle .theme-toggle-icons { width: 17px; height: 17px; }
+.nh-toggle .theme-toggle-icons > svg { width: 17px; height: 17px; }
 .nh-hm {
   display: none;
   width: 34px;
@@ -344,10 +367,18 @@
 .nh--cover .nh-nav a { padding: 6px 12px; border-radius: 999px; font-size: 13px; color: rgba(34, 26, 28, .62); transition: .24s; }
 .nh--cover .nh-nav a:hover { color: #2a1418; }
 .nh--cover .nh-nav a.on {
-  color: #2a1418;
-  background: rgba(255, 255, 255, .42);
-  box-shadow: 0 4px 12px -6px rgba(60, 26, 40, .4), inset 0 1px 0 rgba(255, 255, 255, .95);
+  color: #1d1416;
+  background: rgba(255, 255, 255, .78);
+  box-shadow: 0 4px 12px -6px rgba(60, 26, 40, .45), inset 0 1px 0 rgba(255, 255, 255, .95);
 }
+/* 玻璃页头里的切换按钮跟着胶囊走：白底半透明，别用默认的细描边 */
+.nh--cover .nh-toggle {
+  color: #2a1418;
+  background: rgba(255, 255, 255, .5);
+  border-color: rgba(255, 255, 255, .72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+.nh--cover .nh-toggle:hover { background: rgba(255, 255, 255, .78); border-color: rgba(255, 255, 255, .9); }
 .nh--cover .nh-cta {
   padding: 8px 15px;
   border-radius: 999px;
@@ -562,6 +593,12 @@
 .nhmin-side a u { text-decoration: none; font-size: 10px; letter-spacing: .1em; color: #c3beb3; }
 .nhmin-side a.on { color: var(--nh-red); }
 .nhmin-side a.on u { color: rgba(209, 62, 67, .55); }
+/* 右侧菜单已经承担导航，桌面端把叠在上面的页头撤掉；移动端右侧菜单隐藏，页头留着当导航 */
+@media (min-width: 720px) {
+  .nh--nohd .nh-hd { display: none; }
+  .nh--nohd .nhmin { padding-top: 0; }
+}
+.nhmin-tg { align-self: flex-end; margin-top: 6px; }
 .nhmin-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
   padding: 18px var(--nh-gx) 22px;
@@ -1235,3 +1272,13 @@
 [data-theme="dark"] .nhorb-labels s { background: #ddd; }
 [data-theme="dark"] .nhline-tag { color: #7f7f84; }
 [data-theme="dark"] .nhline-svg { opacity: .8; }
+[data-theme="dark"] .nh-toggle { border-color: rgba(255, 255, 255, .18); }
+[data-theme="dark"] .nh-toggle:hover { border-color: rgba(255, 255, 255, .38); background: rgba(255, 255, 255, .08); }
+[data-theme="dark"] .nh--cover .nh-toggle { color: #f6eef0; background: rgba(24, 18, 20, .46); border-color: rgba(255, 255, 255, .3); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
+[data-theme="dark"] .nh--cover .nh-toggle:hover { background: rgba(24, 18, 20, .7); }
+[data-theme="dark"] .nh--cover .nh-hd { background: linear-gradient(180deg, rgba(28, 22, 24, .62), rgba(20, 16, 18, .42)); border-color: rgba(255, 255, 255, .18); color: #f2eef0; box-shadow: 0 26px 56px -28px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .16); }
+[data-theme="dark"] .nh--cover .nh-brand u { color: rgba(255, 255, 255, .5); }
+[data-theme="dark"] .nh--cover .nh-nav a { color: rgba(255, 255, 255, .62); }
+[data-theme="dark"] .nh--cover .nh-nav a:hover { color: #fff; }
+[data-theme="dark"] .nh--cover .nh-nav a.on { color: #fff; background: rgba(255, 255, 255, .16); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22); }
+[data-theme="dark"] .nh--cover .nh-cta { color: #fff; background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }

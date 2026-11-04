@@ -720,7 +720,7 @@ footer.site-footer .footer-links a:hover{color:var(--n-red)!important}
 (function(){
   function boot(){
 (function(){
-  var NAV=[ ["首页","/"], ["文章","/archives"], ["分类","/categories"], ["成员","/members"] ];
+  var NAV=[ ["首页","/"], ["文章", /*[[${#strings.defaultString(site.routes?.archivesUri, '/archives')}]]*/ '/archives'], ["分类", /*[[${#strings.defaultString(site.routes?.categoriesUri, '/categories')}]]*/ '/categories'], ["成员","/members"] ];
   var SITE_LOGO = /*[[${site.logo ?: '/upload/1783587678472.png'}]]*/ '/upload/1783587678472.png';
   var SITE_TITLE = /*[[${site.title ?: '全国高校自媒体联盟'}]]*/ '全国高校自媒体联盟';
   var JOIN_URL = /*[[${#strings.defaultString(theme.config.footer?.footer_join_url, '')}]]*/ '';
@@ -974,7 +974,7 @@ footer.site-footer .footer-bottom{display:none!important}
   var f=document.querySelector('footer.site-footer');
   if(!f||f.dataset.v) return; f.dataset.v='1';
   var inner=f.querySelector('.footer-inner');
-  var NAV=[ ["首页","/"], ["文章","/archives"], ["分类","/categories"], ["成员","/members"] ];
+  var NAV=[ ["首页","/"], ["文章", /*[[${#strings.defaultString(site.routes?.archivesUri, '/archives')}]]*/ '/archives'], ["分类", /*[[${#strings.defaultString(site.routes?.categoriesUri, '/categories')}]]*/ '/categories'], ["成员","/members"] ];
   function el(tag,cls,txt){ var e=document.createElement(tag);
     if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
   function lnk(txt,href){ var a=el('a','n-a',txt); a.setAttribute('href',href||'#');

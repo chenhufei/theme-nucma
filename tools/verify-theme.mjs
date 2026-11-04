@@ -471,7 +471,7 @@ for (const [path, markers] of [
     if (!template.includes(marker)) fail(`${path} 缺少 DaisyUI 组件 ${marker}`);
   }
 }
-if (!layout.includes('th:data-visual-style="${theme.config.appearance?.visual_style ?: \'portal\'}"')) {
+if (!layout.includes('th:data-visual-style="${#strings.defaultString(theme.config.appearance?.visual_style, \'portal\')}"')) {
   fail('layout 缺少全站视觉风格数据属性');
 }
 if (!layout.includes("setProperty('--primary-rgb'")) {
@@ -541,7 +541,6 @@ if (!read('templates/index.html').includes('category-cols--count-')) {
   fail('首页分类栏缺少确定性列数标记');
 }
 for (const [path, markers] of [
-  ['templates/index.html', ['class="join pagination"', 'join-item page-btn', 'join-item page-info']],
   ['templates/archives.html', ['class="join pagination"', 'join-item page-btn']],
   ['templates/category-grid.html', ['class="join pagination"', 'join-item page-btn']],
 ]) {
@@ -549,6 +548,10 @@ for (const [path, markers] of [
   for (const marker of markers) {
     if (!template.includes(marker)) fail(`${path} 分页缺少 DaisyUI 语义：${marker}`);
   }
+}
+// 首页已改为卡片网格（便当格/门户条目流等），不再输出列表分页；反向守住，防止回退成旧分页按钮
+if (read('templates/index.html').includes('join-item page-btn')) {
+  fail('首页不应再输出列表分页（已改为卡片网格）');
 }
 if (!mainScript.includes('initWidgetOpeners')) {
   fail('插件 Widget 入口缺少统一事件适配');

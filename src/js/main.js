@@ -211,33 +211,46 @@ import { initDiagnostics } from './modules/diagnostics.js';
   };
 
   function initThemeToggle() {
-    var toggle = document.getElementById('themeToggle');
-    if (!toggle) return;
+    // 首页首屏自带一套页头（不渲染站点头部），切换入口也跟着搬进去；
+    // 所以这里按「一组按钮」绑定，任何一个都能代表当前主题状态。
+    var toggles = Array.prototype.slice.call(
+      document.querySelectorAll('#themeToggle, [data-theme-toggle]')
+    );
+    if (!toggles.length) return;
 
-    toggle.setAttribute('aria-pressed', String(document.documentElement.getAttribute('data-theme') === 'dark'));
+    function syncPressed() {
+      var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      toggles.forEach(function(t) { t.setAttribute('aria-pressed', String(isDark)); });
+    }
 
-    toggle.addEventListener('click', function() {
-      var current = document.documentElement.getAttribute('data-theme');
-      var next = current === 'dark' ? 'light' : 'dark';
+    syncPressed();
 
-      // 按钮自身的反馈不依赖页面过渡：连点也能重新触发，避免动画被吃掉
-      if (!prefersReduced) {
-        toggle.classList.remove('is-switching');
-        void toggle.offsetWidth;
-        toggle.classList.add('is-switching');
-        window.clearTimeout(themeToggleTimer);
-        themeToggleTimer = window.setTimeout(function() {
+    toggles.forEach(function(toggle) {
+      toggle.addEventListener('click', function() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+
+        // 按钮自身的反馈不依赖页面过渡：连点也能重新触发，避免动画被吃掉
+        if (!prefersReduced) {
           toggle.classList.remove('is-switching');
-        }, 680);
-      }
+          void toggle.offsetWidth;
+          toggle.classList.add('is-switching');
+          window.clearTimeout(themeToggleTimer);
+          themeToggleTimer = window.setTimeout(function() {
+            toggle.classList.remove('is-switching');
+          }, 680);
+        }
 
-      applyTheme(next, true, toggle);
-      toggle.setAttribute('aria-pressed', String(next === 'dark'));
+        applyTheme(next, true, toggle);
+        // 视图过渡是异步提交 data-theme，这里直接按目标值回写，避免 aria-pressed 落后
+        toggles.forEach(function(t) { t.setAttribute('aria-pressed', String(next === 'dark')); });
+      });
     });
 
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
       var saved = storage.get('theme-mode');
       if (saved === 'system' || !saved) applyTheme('system', true);
+      syncPressed();
     });
   }
 
