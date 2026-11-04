@@ -134,7 +134,8 @@ for (const file of walk(join(stage, 'templates'))) {
   const source = readFileSync(file, 'utf8');
   const count = source.split(TOKEN).length - 1;
   if (!count) continue;
-  writeFileSync(file, source.split(TOKEN).join(`(v=${assetVersion})`), 'utf8');
+  // 版本值必须带引号：裸写 0.0.8-96594138 会被 Thymeleaf 解析成减法（数字指纹时必炸）
+  writeFileSync(file, source.split(TOKEN).join(`(v='${assetVersion}')`), 'utf8');
   stamped += count;
   untouched.push(relative(stage, file).replaceAll('\\', '/'));
 }

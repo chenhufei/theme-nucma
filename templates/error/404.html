@@ -13,12 +13,12 @@
 -->
 <th:block th:fragment="err404Head">
   <link rel="stylesheet"
-        th:if="${theme.config.error_page?.error404_style != 'classic'}"
+        th:if="${theme.config.system_pages?.error404_style != 'classic'}"
         th:href="@{/assets/err404/err404.css(v=${theme.spec.version})}" />
 </th:block>
 
 <th:block th:fragment="content"
-          th:with="ep=${theme.config.error_page},
+          th:with="ep=${theme.config.system_pages},
                    epClassic=${ep?.error404_style == 'classic'},
                    showBadge=${ep?.error404_show_badge != false},
                    showArt=${ep?.error404_show_art != false},

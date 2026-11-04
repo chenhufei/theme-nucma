@@ -72,6 +72,25 @@ export function legacyFallbackExpression(legacyField) {
 }
 
 /**
+ * 跨组字段搬家：组还在，只是某个字段换了位置（2026-11-04）。
+ *
+ * 背景：`section_blocks`（首页区块）原本塞在 `home_hero` 里，导致「首屏」这一组
+ * 既要管版式又要管首屏之下的区块，一屏滚不完。现在拆出独立的 `home_sections`。
+ * 老站点的数据还在 `home_hero.section_blocks`，不搬就会静默丢配置。
+ *
+ * 规则：目标组同名字段为空时才搬；搬完删掉源字段，但**不删源组**。
+ */
+export const FIELD_MOVES = [
+  {
+    from: 'home_hero',
+    field: 'section_blocks',
+    to: 'home_sections',
+    toField: 'section_blocks',
+    preferSource: true,
+  },
+];
+
+/**
  * 被并入其它组的分组（2026-11-03：`home`「首页横幅（旧版）」并入 `home_hero`「首页首屏」）。
  *
  * 背景：老版把「首页横幅」单列一个组，于是同一件事有两套字段：
@@ -80,8 +99,18 @@ export function legacyFallbackExpression(legacyField) {
  *   - 关掉首屏：`home_hero.enabled=false` vs `home.show_hero=false`
  * 合并后只有一个 `layout` 取值决定首屏长什么样（含旧版横幅的三种样式）。
  *
+ * 2026-11-04 又并了两处，都是「同一类页面被拆成两组」：
+ *   - `globe`（成员页与关系网）→ `pages`（成员页与独立页面）：成员页的开关全在一起；
+ *   - `error_page` + `auth_page` → `system_pages`（系统页面）：404 与登录注册同属系统级页面。
+ * 这两处字段名一个没改，`moveAll: true` 表示整组同名搬过去。
+ *
+ * `preferSource: true` 的含义：目标组是这一版**新加**的，里面的值只可能是 Halo 按
+ * settings.yaml 写进去的默认值（主题一激活就会落库），不可能是站长手改的。
+ * 所以这种情况必须用源值覆盖，不能按「目标已有值就不覆盖」跳过 ——
+ * 否则升级后 404、登录页、首页区块的设置会安静地退回默认值。
+ *
  * 迁移规则：
- *   1. `move` 里的字段同名搬到 `to` 组（目标已有值则不覆盖）；
+ *   1. `move` / `moveAll` 的字段同名搬到 `to` 组（目标已有值则不覆盖）；
  *   2. `alias` 里的字段改名搬到 `to` 组（只补空位）；
  *   3. `layoutFrom` 用旧开关推出新 `layout`：先看 `enabled`，再看 `show_hero`；
  *   4. `drop` 里的字段直接丢弃（已被 layout 取代）。
@@ -102,5 +131,8 @@ export const MERGED_GROUPS = [
     },
     drop: ['show_hero', 'hero_style', 'enabled'],
   },
+  { from: 'globe', to: 'pages', moveAll: true, preferSource: true },
+  { from: 'error_page', to: 'system_pages', moveAll: true, preferSource: true },
+  { from: 'auth_page', to: 'system_pages', moveAll: true, preferSource: true },
 ];
 

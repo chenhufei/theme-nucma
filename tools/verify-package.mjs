@@ -76,7 +76,7 @@ if (!existsSync(zipPath)) {
   for (const entry of entries) {
     if (entry.isDirectory || !entry.entryName.endsWith('.html')) continue;
     const text = entry.getData().toString('utf8');
-    for (const match of text.matchAll(/\(v=([^)\s"']+)\)/g)) {
+    for (const match of text.matchAll(/\(v=['"]?([^)\s"']+)['"]?\)/g)) {
       versions.add(match[1]);
       if (match[1].includes('${')) {
         failures.push(`${normalize(entry.entryName)} 资源版本参数未注入指纹：${match[0]}`);

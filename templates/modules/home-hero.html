@@ -2,13 +2,19 @@
 <html xmlns:th="https://www.thymeleaf.org">
 <body>
 <!--
-  首页首屏：5 套版式（1/2/3/8/10）共用一套后台设置。
-  文案、按钮、数字、三块内容、成员名单来自 theme.config.home_hero；页头（Logo/站名/导航/按钮）来自 theme.config.navigation，与内页页头同源，
-  版式只决定排布，不写死任何展示内容。
+  首页首屏：11 套版式共用一套后台设置。
+  文案、按钮、数字、三块内容、成员名单来自 theme.config.home_hero；页头（Logo/站名/导航/按钮）来自 theme.config.navigation，
+  与内页页头同源。版式只决定排布，不写死任何展示内容。
+  哪个版式读哪些字段，与 settings.yaml 里对应字段的 if 条件必须一致：
+  改一处就要改另一处，否则后台会露出用不上的选项（或藏掉正在用的）。
+
+  「三块内容」的跳转优先级是唯一一条要跨版式复用的规则：关联文章 → 关联分类（专栏）→ 手填链接。
+  Thymeleaf 没有 map，无法把规则提前算成一个列表，所以 1 / 8 / 11 号版式里各自写一条同样的一行表达式
+  （`nhHref`）；改优先级时按 `nhHref` 全局搜，一处漏改就会出现「有的版式点得动、有的点不动」。
 -->
 <section th:fragment="hero"
          class="nh"
-         th:classappend="${heroLayout == 'p42' ? ' nh--p42r' : ' nh--' + heroLayout}"
+         th:classappend="${(heroLayout == 'p42' ? ' nh--p42r' : ' nh--' + heroLayout) + (heroLayout == 'minimal' and (useMenu or hasNavItems) ? ' nh--nohd' : '')}"
          th:with="hero=${theme.config.home_hero},
                   heroLayout=${#strings.defaultString(hero?.layout, 'p42r')},
                   nav=${theme.config.navigation},
@@ -29,7 +35,7 @@
                   lead=${hero?.lead},
                   eyebrow=${hero?.eyebrow},
                   primaryText=${hero?.primary_text},
-                  primaryUrl=${#strings.defaultString(hero?.primary_url, '/archives')},
+                  primaryUrl=${#strings.defaultString(hero?.primary_url, #strings.defaultString(site.routes?.archivesUri, '/archives'))},
                   secondaryText=${hero?.secondary_text},
                   secondaryUrl=${#strings.defaultString(hero?.secondary_url, '/members')},
                   stats=${hero?.stats},
@@ -50,37 +56,7 @@
                   memberGroups=${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null},
                   useMembers=${memberGroups != null and memberGroups.items != null and !#lists.isEmpty(memberGroups.items)}">
 
-  <header class="nh-hd">
-    <a class="nh-brand" th:href="@{/}">
-      <img th:if="${hasLogoImage}" class="nh-logo-img" th:src="${logoImage}" th:alt="${brandName}" width="28" height="28" decoding="async" />
-      <s th:if="${showMark}" class="nh-mark" th:text="${logoChar}">N</s>
-      <b th:text="${brandName}">全国高校自媒体联盟</b>
-      <u th:if="${!#strings.isEmpty(brandEn)}" th:text="${brandEn}">NUCMA</u>
-    </a>
-    <nav class="nh-nav" th:aria-label="#{home.heroNavAria}">
-      <th:block th:if="${useMenu}">
-        <a th:each="item : ${navMenu.menuItems}"
-           th:if="${!#strings.isEmpty(item.status?.href ?: item.spec?.href)}"
-           th:href="@{${item.status?.href ?: item.spec?.href}}"
-           th:text="${item.status?.displayName ?: item.spec?.displayName}"
-           th:target="${item.spec?.target?.value}"></a>
-      </th:block>
-      <th:block th:unless="${useMenu}">
-        <th:block th:if="${hasNavItems}">
-          <a th:each="item : ${navItems}"
-             th:if="${item.text != null and !#strings.isEmpty(item.text) and item.url != null and !#strings.isEmpty(item.url)}"
-             th:href="@{${item.url}}"
-             th:text="${item.text}"></a>
-        </th:block>
-      </th:block>
-    </nav>
-    <a class="nh-cta" th:if="${ctaText != null and !#strings.isEmpty(ctaText)}"
-       th:href="@{${ctaUrl}}" th:text="${ctaText}">加入联盟</a>
-    <button class="nh-hm" id="mobileMenuToggle" type="button"
-            aria-controls="mobileMenu" aria-expanded="false" th:aria-label="#{home.heroMenuAria}">
-      <i></i><i></i><i></i>
-    </button>
-  </header>
+  <!-- 页头已独立为站点头部（modules/layout.html :: siteHeader），首屏不再内置页头 -->
 
   <!-- 1 / 7 · 图文并置 -->
   <div class="nh42" th:if="${heroLayout == 'p42r' or heroLayout == 'p42'}">
@@ -107,7 +83,8 @@
     <div class="nh42-ph" th:if="${hasBlocks}">
       <a class="nh42-t" th:each="b, st : ${blocks}" th:if="${st.index < 3}"
          th:classappend="${' nh42-t' + st.count}"
-         th:attr="href=${b.url != null and !#strings.isEmpty(b.url) ? b.url : null}"
+         th:with="nhHref=${b.post != null and !#strings.isEmpty(b.post) ? b.post : (b.category != null and !#strings.isEmpty(b.category) ? b.category : (b.url != null and !#strings.isEmpty(b.url) ? b.url : null))}"
+         th:attr="href=${nhHref}"
          th:style="${'--b:' + (b.color != null and !#strings.isEmpty(b.color) ? b.color : '#f4c09c') + (b.image != null and !#strings.isEmpty(b.image) ? ';background-image:url(' + b.image + ')' : '')}">
         <span class="nh42-idx" th:if="${!#strings.isEmpty(b.meta)}" th:text="${b.meta}"></span>
         <span class="nh42-tag"><s></s><span th:text="${b.title}"></span></span>
@@ -203,9 +180,11 @@
       </div>
     </div>
     <div class="nhcards-stk" th:if="${hasBlocks}">
-      <div class="nhcard" th:each="b, st : ${blocks}" th:if="${st.index < 3}"
-           th:classappend="${' nhcard-' + st.count}"
-           th:style="${'--b:' + (b.color != null and !#strings.isEmpty(b.color) ? b.color : '#f4c09c')}">
+      <a class="nhcard" th:each="b, st : ${blocks}" th:if="${st.index < 3}"
+         th:classappend="${' nhcard-' + st.count}"
+         th:with="nhHref=${b.post != null and !#strings.isEmpty(b.post) ? b.post : (b.category != null and !#strings.isEmpty(b.category) ? b.category : (b.url != null and !#strings.isEmpty(b.url) ? b.url : null))}"
+         th:attr="href=${nhHref}"
+         th:style="${'--b:' + (b.color != null and !#strings.isEmpty(b.color) ? b.color : '#f4c09c')}">
         <div class="nhcard-tb"><i></i><i></i><i></i><span th:text="${b.meta}"></span></div>
         <div class="nhcard-bd">
           <div class="nhcard-r"><b th:text="${b.title}"></b><s class="nhcard-dot" aria-hidden="true"></s></div>
@@ -214,7 +193,7 @@
           </div>
           <div class="nhcard-prog" aria-hidden="true"><s th:each="k : ${ {1,2,3,4,5} }" th:classappend="${k == st.count ? ' hi' : ''}"></s></div>
         </div>
-      </div>
+      </a>
     </div>
   </div>
 
@@ -250,6 +229,20 @@
           <u th:if="${item.badge != null and !#strings.isEmpty(item.badge)}" th:text="${item.badge}"></u>
         </a>
       </th:block>
+      <!-- 极简大字撤掉顶部页头后，切换入口放在右侧菜单底部 -->
+      <button th:if="${theme.config.navigation?.theme_toggle_enabled != false}"
+              class="nh-toggle theme-toggle-btn nhmin-tg" type="button" data-theme-toggle
+              aria-label="切换主题" th:aria-label="#{theme.switchTheme}" aria-pressed="false">
+        <span class="theme-toggle-icons" aria-hidden="true">
+          <svg class="sun-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 5.64l1.42-1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 18.36l1.42 1.42"></path>
+          </svg>
+          <svg class="moon-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </span>
+      </button>
     </aside>
     <div class="nhmin-foot" th:if="${!#strings.isEmpty(footnote)}">
       <span th:text="${footnote}"></span>
@@ -391,9 +384,21 @@
       <circle cx="1190" cy="232" r="4" fill="currentColor"></circle>
     </svg>
     <th:block th:if="${hasBlocks}">
-      <span class="nhline-tag n1" th:if="${blocks[0] != null}"><b th:text="${blocks[0].title}"></b><i th:text="#{home.heroOrbitStart}">起点</i></span>
-      <span class="nhline-tag n2" th:if="${#lists.size(blocks) > 1 and blocks[1] != null}"><b th:text="${blocks[1].title}"></b><i th:text="#{home.heroOrbitMid}">中途</i></span>
-      <span class="nhline-tag n3" th:if="${#lists.size(blocks) > 2 and blocks[2] != null}"><b th:text="${blocks[2].title}"></b><i th:text="#{home.heroOrbitNow}">现在</i></span>
+      <a class="nhline-tag n1" th:if="${blocks[0] != null}"
+         th:with="b=${blocks[0]}, nhHref=${b.post != null and !#strings.isEmpty(b.post) ? b.post : (b.category != null and !#strings.isEmpty(b.category) ? b.category : (b.url != null and !#strings.isEmpty(b.url) ? b.url : null))}"
+         th:attr="href=${nhHref}">
+        <b th:text="${blocks[0].title}"></b><i th:text="#{home.heroOrbitStart}">起点</i>
+      </a>
+      <a class="nhline-tag n2" th:if="${#lists.size(blocks) > 1 and blocks[1] != null}"
+         th:with="b=${blocks[1]}, nhHref=${b.post != null and !#strings.isEmpty(b.post) ? b.post : (b.category != null and !#strings.isEmpty(b.category) ? b.category : (b.url != null and !#strings.isEmpty(b.url) ? b.url : null))}"
+         th:attr="href=${nhHref}">
+        <b th:text="${blocks[1].title}"></b><i th:text="#{home.heroOrbitMid}">中途</i>
+      </a>
+      <a class="nhline-tag n3" th:if="${#lists.size(blocks) > 2 and blocks[2] != null}"
+         th:with="b=${blocks[2]}, nhHref=${b.post != null and !#strings.isEmpty(b.post) ? b.post : (b.category != null and !#strings.isEmpty(b.category) ? b.category : (b.url != null and !#strings.isEmpty(b.url) ? b.url : null))}"
+         th:attr="href=${nhHref}">
+        <b th:text="${blocks[2].title}"></b><i th:text="#{home.heroOrbitNow}">现在</i>
+      </a>
     </th:block>
     <div class="nhline-h">
       <h1 class="nh-title nhline-title">

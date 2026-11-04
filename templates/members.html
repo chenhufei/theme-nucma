@@ -173,10 +173,10 @@
     </section>
 
     <section class="member-network" data-member-network hidden aria-label="成员关系网视图" th:aria-label="#{members.networkViewAria}"
-             th:attr="data-affinity-enabled=${theme.config.globe?.globe_affinity_enabled != false},
-                      data-affinity-min-strength=${#strings.defaultString(theme.config.globe?.globe_affinity_min_strength, '0.35')},
-                      data-affinity-show-reason=${theme.config.globe?.globe_affinity_show_reason != false},
-                      data-default-view=${#strings.defaultString(theme.config.globe?.globe_default_view, 'grid')}">
+             th:attr="data-affinity-enabled=${theme.config.pages?.globe_affinity_enabled != false},
+                      data-affinity-min-strength=${#strings.defaultString(theme.config.pages?.globe_affinity_min_strength, '0.35')},
+                      data-affinity-show-reason=${theme.config.pages?.globe_affinity_show_reason != false},
+                      data-default-view=${#strings.defaultString(theme.config.pages?.globe_default_view, 'grid')}">
       <canvas data-member-network-canvas tabindex="0" role="application"
               aria-roledescription="可拖动的成员关系网" th:aria-roledescription="#{members.networkRoleDesc}"
               aria-label="成员关系网，拖动可平移整张网，鼠标移到关联线上可查看判断依据" th:aria-label="#{members.networkAria}"></canvas>
@@ -643,8 +643,8 @@
 
   <script th:inline="javascript">
     window.__ERR404__ = {
-      strapColor: /*[[${#strings.defaultString(theme.config.error_page?.error404_strap_color, '#cf3538')}]]*/ '#cf3538',
-      animation: /*[[${#strings.defaultString(theme.config.error_page?.error404_animation, 'full')}]]*/ 'full',
+      strapColor: /*[[${#strings.defaultString(theme.config.system_pages?.error404_strap_color, '#cf3538')}]]*/ '#cf3538',
+      animation: /*[[${#strings.defaultString(theme.config.system_pages?.error404_animation, 'full')}]]*/ 'full',
       flipEnabled: true,
       /* 弹层模式：只有卡片 / 吊带 / 卡扣可拖，空白处交给“点击关闭” */
       overlay: true,

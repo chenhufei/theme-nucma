@@ -1,6 +1,8 @@
 /* ==========================================================================
-   首页首屏 Hero（5 套版式：1 图文并置 / 2 品牌墙 / 3 校墙封面 / 8 层叠卡片 / 10 极简）
-   全部样式只作用于 .nh，内容与数字来自后台「首屏 Hero」设置组。
+   首页首屏 Hero（11 套版式：图文并置 / 品牌墙 / 校墙封面 / 光斑 / 柔光渐层 / 双色分栏 /
+   层叠卡片 / 环形轨道 / 极简大字 / 红线穿过）
+   全部样式只作用于 .nh，内容与数字来自后台「首页首屏」设置组；
+   版式靠 .nh--<layout> 这一层类名切换，新增版式时补一份 .nh--<layout> 规则即可。
    ========================================================================== */
 
 .nh {
@@ -14,11 +16,21 @@
   --nh-site-paper: var(--site-paper, #f8f6f1);
   --nh-sans: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif);
   --nh-kk: var(--font-display, "KuaiKanShiJieTi"), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  /* 与站点 .section-container 同栏：1200px 居中 + 24px 内边距（窄屏回落 clamp） */
-  --nh-gx: max(calc((100% - 1200px) / 2 + clamp(1rem, 3vw, var(--space-lg, 24px))), clamp(1rem, 3vw, var(--space-lg, 24px)));
+  /* 与站点 .section-container 同栏：版心 + 内边距都取自全局版心基线（见 main.css 的 --content-*），
+     首屏正文与下方区块的文字落在同一条边线上 */
+  --nh-gx: max(
+    calc((100% - var(--content-max, 1200px)) / 2 + var(--content-gutter, clamp(1rem, 3vw, 24px))),
+    var(--content-gutter, clamp(1rem, 3vw, 24px))
+  );
+  /* 首屏页头贴的是「画框」线（--frame-*），与站点头部、页脚同一条外框线；
+     它比首屏大字（--nh-gx）更靠外，这一层差距是刻意的，不要合并成同一个值 */
+  --nh-hx: max(
+    calc((100% - var(--frame-max, 1440px)) / 2 + var(--frame-gutter, clamp(1rem, 3vw, 40px))),
+    var(--frame-gutter, clamp(1rem, 3vw, 40px))
+  );
   position: relative;
   isolation: isolate;
-  min-height: 100svh;
+  min-height: calc(100svh - var(--header-h, 70px));
   overflow: hidden;
   font-family: var(--nh-sans);
   color: var(--nh-ink);
@@ -48,6 +60,40 @@
 .nh-nav { display: flex; align-items: center; }
 .nh-nav a { text-decoration: none; color: inherit; cursor: pointer; }
 .nh-cta { text-decoration: none; white-space: nowrap; }
+
+/* 明暗切换与移动端菜单同属「临时控件」，统一收进右端工具区：
+   间距由工具区自己控制，不受各版式 .nh-hd 的 gap 影响，位置在 11 套版式里保持一致。 */
+.nh-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin-left: 10px;
+}
+.nh-tools .nh-hm { margin-left: 0; }
+
+/* 明暗切换：首页没有站点头部，入口就在首屏页头里，外观跟随各版式的页头深浅 */
+.nh-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid rgba(20, 20, 22, .14);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color .2s, background-color .2s, color .2s;
+}
+.nh-toggle:hover { border-color: rgba(20, 20, 22, .34); background: rgba(20, 20, 22, .05); }
+.nh-toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 209, 62, 67), .22); }
+.nh-toggle .theme-toggle-icons { width: 17px; height: 17px; }
+.nh-toggle .theme-toggle-icons > svg { width: 17px; height: 17px; }
 .nh-hm {
   display: none;
   width: 34px;
@@ -65,7 +111,7 @@
 .nh-hm i { display: block; width: 17px; height: 1.5px; background: currentColor; opacity: .72; }
 
 /* ---------- 1 · 图文并置 ---------- */
-.nh--p42r .nh-hd { height: 64px; top: 16px; padding: 0 var(--nh-gx); gap: 22px; }
+.nh--p42r .nh-hd { height: 64px; top: 16px; padding: 0 var(--nh-hx); gap: 22px; }
 .nh--p42r .nh-mark {
   width: 26px; height: 26px;
   background: var(--nh-red);
@@ -115,7 +161,7 @@
   grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr);
   gap: clamp(30px, 4.6vw, 68px);
   align-items: center;
-  min-height: 100svh;
+  min-height: calc(100svh - var(--header-h, 70px));
   padding: 96px var(--nh-gx) clamp(36px, 7vh, 66px);
 }
 .nh42-l { max-width: 560px; }
@@ -187,7 +233,7 @@
 /* ---------- 2 · 品牌墙 ---------- */
 .nh--wall .nh-hd {
   height: 78px;
-  padding: 0 var(--nh-gx);
+  padding: 0 var(--nh-hx);
   gap: 24px;
   border-bottom: 1px solid rgba(27, 27, 32, .13);
 }
@@ -235,7 +281,7 @@
   position: relative;
   display: grid;
   grid-template-rows: 1fr auto;
-  min-height: 100svh;
+  min-height: calc(100svh - var(--header-h, 70px));
   padding-top: 78px;
 }
 .nhwall-fog {
@@ -344,10 +390,18 @@
 .nh--cover .nh-nav a { padding: 6px 12px; border-radius: 999px; font-size: 13px; color: rgba(34, 26, 28, .62); transition: .24s; }
 .nh--cover .nh-nav a:hover { color: #2a1418; }
 .nh--cover .nh-nav a.on {
-  color: #2a1418;
-  background: rgba(255, 255, 255, .42);
-  box-shadow: 0 4px 12px -6px rgba(60, 26, 40, .4), inset 0 1px 0 rgba(255, 255, 255, .95);
+  color: #1d1416;
+  background: rgba(255, 255, 255, .78);
+  box-shadow: 0 4px 12px -6px rgba(60, 26, 40, .45), inset 0 1px 0 rgba(255, 255, 255, .95);
 }
+/* 玻璃页头里的切换按钮跟着胶囊走：白底半透明，别用默认的细描边 */
+.nh--cover .nh-toggle {
+  color: #2a1418;
+  background: rgba(255, 255, 255, .5);
+  border-color: rgba(255, 255, 255, .72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+.nh--cover .nh-toggle:hover { background: rgba(255, 255, 255, .78); border-color: rgba(255, 255, 255, .9); }
 .nh--cover .nh-cta {
   padding: 8px 15px;
   border-radius: 999px;
@@ -357,7 +411,7 @@
   box-shadow: 0 8px 20px -12px rgba(60, 26, 40, .5), inset 0 1px 0 rgba(255, 255, 255, .95);
 }
 
-.nh--cover { background: #f2ece6; min-height: 100svh; }
+.nh--cover { background: #f2ece6; min-height: calc(100svh - var(--header-h, 70px)); }
 .nhcover {
   position: absolute; inset: 0; z-index: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -408,7 +462,9 @@
 .nhcover-cell > span { display: block; margin-top: 6px; font-size: 11.5px; letter-spacing: .14em; color: #8a6a6c; }
 
 /* ---------- 8 · 层叠卡片 ---------- */
-.nh--cards .nh-hd { height: 76px; padding: 0 var(--nh-gx); gap: 0; }
+/* 品牌与导航都是绝对定位，工具区（明暗切换 / 汉堡）若不回到流里会掉到行首、压在品牌下面。
+   把 CTA 拉回文档流 + 整行右对齐，页头右端顺序就是「CTA → 工具区」 */
+.nh--cards .nh-hd { height: 76px; padding: 0 var(--nh-hx); gap: 0; justify-content: flex-end; }
 .nh--cards .nh-hd::after {
   content: "";
   position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
@@ -420,7 +476,7 @@
   background: var(--nh-red);
   z-index: 2;
 }
-.nh--cards .nh-brand { position: absolute; left: var(--nh-gx); top: 50%; transform: translateY(-50%); gap: 9px; }
+.nh--cards .nh-brand { position: absolute; left: var(--nh-hx); top: 50%; transform: translateY(-50%); gap: 9px; }
 .nh--cards .nh-mark {
   width: 20px; height: 20px; border-radius: 2px;
   background: #2a2723; color: #fff;
@@ -451,7 +507,7 @@
   background: var(--nh-red);
 }
 .nh--cards .nh-cta {
-  position: absolute; right: var(--nh-gx); top: 50%; transform: translateY(-50%);
+  position: static; transform: none;
   padding: 8px 14px;
   font-size: 12px; letter-spacing: .08em;
   color: #fff; background: var(--nh-red);
@@ -462,7 +518,7 @@
 .nh--cards .nh-cta:hover { background: var(--nh-red-deep); }
 
 .nh--cards { background: linear-gradient(180deg, #f7f6f3 0%, #f2f1ee 62%, #eeece7 92%, var(--nh-site-paper) 100%); }
-.nhcards { display: flex; flex-direction: column; min-height: 100svh; padding-top: 76px; }
+.nhcards { display: flex; flex-direction: column; min-height: calc(100svh - var(--header-h, 70px)); padding-top: 76px; }
 .nhcards-h {
   display: flex; flex-direction: column; align-items: center;
   text-align: center;
@@ -477,6 +533,9 @@
   padding: clamp(18px, 3vh, 30px) 0 clamp(26px, 4.4vh, 44px);
 }
 .nhcard {
+  display: block;
+  color: inherit;
+  text-decoration: none;
   width: clamp(270px, 23.5vw, 340px);
   background: #fff;
   border: 1px solid #e4e0d7;
@@ -484,6 +543,11 @@
   overflow: hidden;
   box-shadow: 0 46px 80px -50px rgba(50, 44, 36, .6);
 }
+/* 没配链接的卡片保持「静态实物」的手感：不显示指针 */
+.nhcard:not([href]) { cursor: default; }
+.nhcard[href] { transition: box-shadow .3s; }
+.nhcard[href]:hover,
+.nhcard[href]:focus-visible { box-shadow: 0 50px 88px -46px rgba(50, 44, 36, .72); }
 .nhcard-1 { transform: rotate(-9deg) translate(-75px, 44px) scale(.94); z-index: 1; }
 .nhcard-2 { transform: translateY(-8px); z-index: 2; }
 .nhcard-3 { transform: rotate(9deg) translate(75px, 44px) scale(.94); z-index: 1; }
@@ -516,7 +580,7 @@
 .nhcard-prog s.hi { background: linear-gradient(180deg, #ef6b63, var(--nh-red)); }
 
 /* ---------- 10 · 极简大字 ---------- */
-.nh--minimal .nh-hd { height: 70px; padding: 0 var(--nh-gx); gap: 24px; }
+.nh--minimal .nh-hd { height: 70px; padding: 0 var(--nh-hx); gap: 24px; }
 .nh--minimal .nh-brand { gap: 11px; }
 .nh--minimal .nh-mark { width: 8px; height: 8px; background: var(--nh-red); align-self: center; color: transparent; font-size: 0; }
 .nh--minimal .nh-brand b { font-size: 17px; letter-spacing: .05em; color: #141416; }
@@ -539,7 +603,7 @@
 .nh--minimal .nh-cta::after { content: "↗"; margin-left: 5px; font-size: 10px; }
 
 .nh--minimal { background: linear-gradient(180deg, #fff 0%, #fff 90%, var(--nh-site-paper) 100%); }
-.nhmin { display: flex; flex-direction: column; min-height: 100svh; padding-top: 70px; }
+.nhmin { display: flex; flex-direction: column; min-height: calc(100svh - var(--header-h, 70px)); padding-top: 70px; }
 .nhmin-body {
   flex: 1;
   display: flex; flex-direction: column; justify-content: center;
@@ -562,6 +626,12 @@
 .nhmin-side a u { text-decoration: none; font-size: 10px; letter-spacing: .1em; color: #c3beb3; }
 .nhmin-side a.on { color: var(--nh-red); }
 .nhmin-side a.on u { color: rgba(209, 62, 67, .55); }
+/* 右侧菜单已经承担导航，桌面端把叠在上面的页头撤掉；移动端右侧菜单隐藏，页头留着当导航 */
+@media (min-width: 720px) {
+  .nh--nohd .nh-hd { display: none; }
+  .nh--nohd .nhmin { padding-top: 0; }
+}
+.nhmin-tg { align-self: flex-end; margin-top: 6px; }
 .nhmin-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
   padding: 18px var(--nh-gx) 22px;
@@ -574,7 +644,7 @@
 .nh--p41 .nh-hd,
 .nh--p46 .nh-hd,
 .nh--p82 .nh-hd,
-.nh--p83 .nh-hd { height: 72px; padding: 0 var(--nh-gx); gap: 24px; }
+.nh--p83 .nh-hd { height: 72px; padding: 0 var(--nh-hx); gap: 24px; }
 .nh--aurora .nh-mark,
 .nh--p41 .nh-mark,
 .nh--p46 .nh-mark,
@@ -643,7 +713,7 @@
 .nhaur {
   position: relative;
   display: grid; place-items: center;
-  min-height: 100svh;
+  min-height: calc(100svh - var(--header-h, 70px));
   padding: 104px 24px 56px;
   overflow: hidden;
 }
@@ -710,7 +780,7 @@
 .nhmesh {
   position: relative;
   display: flex; flex-direction: column; justify-content: flex-end;
-  min-height: 100svh;
+  min-height: calc(100svh - var(--header-h, 70px));
   overflow: hidden;
 }
 .nhmesh-field {
@@ -763,7 +833,7 @@
 .nhsplit {
   position: relative;
   display: flex; align-items: center;
-  min-height: 100svh;
+  min-height: calc(100svh - var(--header-h, 70px));
   padding: 104px 0 40px;
   overflow: hidden;
 }
@@ -805,15 +875,18 @@
 }
 .nhsplit .nh-eb { margin-bottom: 22px; }
 .nh--p46 .nh-hd { gap: 0; padding: 0; }
-.nh--p46 .nh-brand { padding-left: var(--nh-gx); }
+.nh--p46 .nh-brand { padding-left: var(--nh-hx); }
 .nh--p46 .nh-nav { padding-right: clamp(20px, 2.4vw, 40px); }
 .nh--p46 .nh-cta {
   flex: 0 0 clamp(280px, 33vw, 450px);
   display: flex; align-items: center; justify-content: flex-end;
   margin-left: 0;
-  padding-right: var(--nh-gx);
+  padding-right: var(--nh-hx);
   border-left: 1px solid rgba(150, 90, 60, .22);
+  /* 右侧那一条杏色竖面永远是页头最右端，工具区排在它左边 */
+  order: 1;
 }
+.nh--p46 .nh-tools { order: 0; margin-left: 0; margin-right: 14px; }
 .nhsplit-title { font-size: clamp(38px, 4.3vw, 60px); line-height: 1.17; }
 .nhsplit-p { margin: 24px 0 0; max-width: 400px; font-size: 13px; line-height: 1.95; color: #6c6860; }
 .nhsplit-btns { margin-top: 32px; }
@@ -826,7 +899,7 @@
 
 /* ---------- 9 · 环形轨道 ---------- */
 .nh--p82 { background: linear-gradient(180deg, #fbf9f4 0%, #fbf9f4 88%, var(--nh-site-paper) 100%); }
-.nhorb { display: flex; flex-direction: column; min-height: 100svh; padding-top: 72px; overflow: hidden; }
+.nhorb { display: flex; flex-direction: column; min-height: calc(100svh - var(--header-h, 70px)); padding-top: 72px; overflow: hidden; }
 .nhorb-stage { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
 .nhorb-svg {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -864,7 +937,7 @@
 .nhline {
   position: relative;
   display: flex; flex-direction: column; justify-content: center;
-  min-height: 100svh;
+  min-height: calc(100svh - var(--header-h, 70px));
   padding: 120px var(--nh-gx) 96px;
   overflow: hidden;
 }
@@ -877,7 +950,12 @@
   position: absolute; z-index: 3;
   display: inline-flex; align-items: baseline; gap: 8px;
   font-size: 9.5px; letter-spacing: .2em; color: #a8a39a;
+  text-decoration: none;
+  transition: color .24s;
 }
+.nhline-tag[href]:hover,
+.nhline-tag[href]:focus-visible { color: var(--nh-red-deep); }
+.nhline-tag:not([href]) { cursor: default; }
 .nhline-tag b { font-weight: 400; }
 .nhline-tag i { font-style: normal; color: rgba(209, 62, 67, .8); }
 .nhline-tag.n1 { left: 21%; top: 76%; }
@@ -965,7 +1043,9 @@
   .nh--p82 .nh-cta,
   .nh--p83 .nh-cta { margin-left: auto; }
   .nh--cards .nh-cta { display: none; }
-  .nh--cards .nh-hm { position: absolute; right: var(--nh-gx); top: 50%; transform: translateY(-50%); }
+  .nh--cards .nh-hm { position: absolute; right: var(--nh-hx); top: 50%; transform: translateY(-50%); }
+  /* CTA 已隐藏，右端只剩汉堡（绝对定位）；工具区让出汉堡宽度，切换按钮才不会压在它身上 */
+  .nh--cards .nh-tools { margin-right: 42px; }
   .nh--cover .nh-cta { margin-left: auto; }
   .nh42 { grid-template-columns: minmax(0, 1fr); gap: 26px; align-items: start; padding-bottom: 5vh; }
   .nh42-l { max-width: none; }
@@ -974,11 +1054,11 @@
 }
 @media (max-width: 719px) {
   .nh { min-height: 0; }
-  .nh--cover { min-height: 100svh; }
+  .nh--cover { min-height: calc(100svh - var(--header-h, 70px)); }
   .nh-title { letter-spacing: 0; }
   .nh-btn { height: 44px; padding: 0 20px; font-size: 12.5px; }
 
-  .nh--p42r .nh-hd { top: 12px; padding: 0 var(--nh-gx); gap: 12px; }
+  .nh--p42r .nh-hd { top: 12px; padding: 0 var(--nh-hx); gap: 12px; }
   .nh--p42r .nh-brand b { font-size: 14px; }
   .nh--p42r .nh-mark { width: 22px; height: 22px; font-size: 11px; }
   .nh42 { min-height: 0; padding: 84px var(--nh-gx) 40px; gap: 22px; }
@@ -990,7 +1070,7 @@
   .nh42-tag { font-size: 9px; padding: 6px 9px; }
   .nh42-idx { font-size: 8.5px; padding: 4px 8px; }
 
-  .nh--wall .nh-hd { height: 64px; padding: 0 var(--nh-gx); gap: 8px; }
+  .nh--wall .nh-hd { height: 64px; padding: 0 var(--nh-hx); gap: 8px; }
   .nh--wall .nh-brand b { font-size: 14px; }
   .nh--wall .nh-brand u { display: none; }
   .nh--wall .nh-cta { padding: 8px 12px; font-size: 12px; }
@@ -1021,8 +1101,8 @@
   .nhcover-cell b { font-size: 19px; }
   .nhcover-cell > span { font-size: 10px; letter-spacing: .08em; }
 
-  .nh--cards .nh-hd { height: 60px; padding: 0 var(--nh-gx); }
-  .nh--cards .nh-brand { left: var(--nh-gx); }
+  .nh--cards .nh-hd { height: 60px; padding: 0 var(--nh-hx); }
+  .nh--cards .nh-brand { left: var(--nh-hx); }
   .nh--cards .nh-brand b { font-size: 13.5px; }
   .nh--cards .nh-brand u { display: none; }
   .nhcards { min-height: 0; padding-top: 60px; }
@@ -1035,7 +1115,7 @@
   .nhcard-3 { transform: translate(-50%, -50%) rotate(9deg) translate(44px, 10px) scale(.94); }
   .nhcard-2 { transform: translate(-50%, -50%) translateY(-6px) scale(.98); }
 
-  .nh--minimal .nh-hd { height: 60px; padding: 0 var(--nh-gx); gap: 12px; }
+  .nh--minimal .nh-hd { height: 60px; padding: 0 var(--nh-hx); gap: 12px; }
   .nh--minimal .nh-brand b { font-size: 14px; }
   .nhmin { min-height: 0; padding-top: 60px; }
   .nhmin-body { padding: 34px var(--nh-gx) 30px; }
@@ -1048,7 +1128,7 @@
   .nh--p41 .nh-hd,
   .nh--p46 .nh-hd,
   .nh--p82 .nh-hd,
-  .nh--p83 .nh-hd { height: 60px; padding: 0 var(--nh-gx); gap: 12px; }
+  .nh--p83 .nh-hd { height: 60px; padding: 0 var(--nh-hx); gap: 12px; }
   .nh--aurora .nh-brand b,
   .nh--p41 .nh-brand b,
   .nh--p46 .nh-brand b,
@@ -1077,7 +1157,7 @@
   .nhmesh-line b { line-height: 1.9; }
   .nhmesh-orb { display: none; }
 
-  .nh--p46 .nh-hd { gap: 12px; padding: 0 var(--nh-gx); }
+  .nh--p46 .nh-hd { gap: 12px; padding: 0 var(--nh-hx); }
   .nh--p46 .nh-brand { padding-left: 0; }
   .nh--p46 .nh-nav { padding-right: 0; }
   .nh--p46 .nh-cta { flex: 0 0 auto; padding-right: 0; border-left: 0; margin-left: auto; }
@@ -1235,3 +1315,65 @@
 [data-theme="dark"] .nhorb-labels s { background: #ddd; }
 [data-theme="dark"] .nhline-tag { color: #7f7f84; }
 [data-theme="dark"] .nhline-svg { opacity: .8; }
+[data-theme="dark"] .nh-toggle { border-color: rgba(255, 255, 255, .18); }
+[data-theme="dark"] .nh-toggle:hover { border-color: rgba(255, 255, 255, .38); background: rgba(255, 255, 255, .08); }
+[data-theme="dark"] .nh--cover .nh-toggle { color: #f6eef0; background: rgba(24, 18, 20, .46); border-color: rgba(255, 255, 255, .3); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
+[data-theme="dark"] .nh--cover .nh-toggle:hover { background: rgba(24, 18, 20, .7); }
+[data-theme="dark"] .nh--cover .nh-hd { background: linear-gradient(180deg, rgba(28, 22, 24, .62), rgba(20, 16, 18, .42)); border-color: rgba(255, 255, 255, .18); color: #f2eef0; box-shadow: 0 26px 56px -28px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .16); }
+[data-theme="dark"] .nh--cover .nh-brand u { color: rgba(255, 255, 255, .5); }
+[data-theme="dark"] .nh--cover .nh-nav a { color: rgba(255, 255, 255, .62); }
+[data-theme="dark"] .nh--cover .nh-nav a:hover { color: #fff; }
+[data-theme="dark"] .nh--cover .nh-nav a.on { color: #fff; background: rgba(255, 255, 255, .16); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22); }
+[data-theme="dark"] .nh--cover .nh-cta { color: #fff; background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }
+
+/* ==========================================================================
+   首屏 → 正文的交接
+   首屏是满屏（100svh），正文紧接着开始。两段同色时，画面上只剩「内容突然换掉」
+   这一条线索，看起来像被裁断的。这里补三件事，把硬切变成有意的收口：
+     ① 首屏下沿一层柔和压边影，让它读起来像一张纸压在正文上（不是一条硬线）；
+     ② 正文顶部一片暖色承接层，从首屏下沿向下渐隐，把颜色连续地带过来；
+     ③ 一条短而淡的细线，但下移进第一区块的上留白里，不与首屏下沿重合 ——
+        旧写法把线放在 top:0 且几乎全宽，正好压在两段背景的交界上，实测反而
+        制造出一条「全宽硬分界」，这是本次定向审查要去掉的东西。
+     ④ 正文第一段多留一档上边距，给首屏和内容之间留呼吸。
+   深色模式只换阴影、线与承接层的透明度，结构不变；结构改动请同步 site-bg.css 的纹理渐入区间。
+   ========================================================================== */
+.nh { box-shadow: 0 18px 44px -32px rgba(21, 19, 17, .26); }
+[data-theme="dark"] .nh { box-shadow: 0 18px 44px -32px rgba(0, 0, 0, .55); }
+
+.nh + .home-sections { position: relative; }
+/* 细线落在第一区块的上留白内（首段 padding-top ≥ 52px），不再标记首屏与正文的边界 */
+.nh + .home-sections::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: clamp(26px, 3vw, 44px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(var(--content-max, 1200px), 100%);
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0,
+    var(--nh-line, #e7e4dc) 28%,
+    var(--nh-line, #e7e4dc) 72%,
+    transparent 100%);
+  opacity: .5;
+  pointer-events: none;
+}
+/* 颜色承接层压在内容下面（z-index:-1），只在卡片之间的留白里透出来 */
+.nh + .home-sections::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: clamp(140px, 20vh, 240px);
+  background: radial-gradient(58% 100% at 50% 0%, rgba(var(--primary-rgb, 209, 62, 67), .07), transparent 72%);
+  pointer-events: none;
+}
+[data-theme="dark"] .nh + .home-sections::before { opacity: .35; }
+[data-theme="dark"] .nh + .home-sections::after {
+  background: radial-gradient(58% 100% at 50% 0%, rgba(240, 144, 144, .075), transparent 72%);
+}
+.nh + .home-sections > .section:first-child { padding-top: clamp(52px, 7vw, 92px); }

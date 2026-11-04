@@ -88,20 +88,20 @@ const groupNames = groups.map((form) => form.group);
 if (new Set(groupNames).size !== groupNames.length) {
   fail('settings.yaml 存在重复设置分组');
 }
-// 组的顺序即后台看到的分区顺序：先全站外观，再首页（首屏 → 旧版横幅），
-// 然后站点框架（页头、页脚）、内容页（文章、成员、关于、独立页面）、
-// 功能页（404、登录注册），最后 SEO。改动顺序要同步改这里，避免两份真相。
-const expectedGroups = ['appearance', 'home_hero', 'navigation', 'footer', 'sidebar', 'globe', 'about', 'pages', 'error_page', 'auth_page', 'seo'];
+// 组的顺序即后台看到的分区顺序（2026-11-04 重分类）：
+//   全站外观（末尾是高级自定义代码）→ 首页（首屏 / 区块）→ 站点框架（页头、页脚）
+//   → 内容页（文章、关于、成员与独立页面）→ 系统页面（404、登录注册）→ SEO。
+// 一条线从上到下走完「先看长相，再看首页，再看每类页面，最后才碰代码」。
+// 改动顺序要同步改这里，避免两份真相。
+const expectedGroups = ['appearance', 'home_hero', 'home_sections', 'navigation', 'footer', 'sidebar', 'about', 'pages', 'system_pages', 'seo'];
 if (JSON.stringify(groupNames) !== JSON.stringify(expectedGroups)) {
   fail(`设置分组顺序异常：${groupNames.join(', ')}`);
 }
 
 const appearanceForm = groups.find((form) => form.group === 'appearance');
 const navigationForm = groups.find((form) => form.group === 'navigation');
-const visualStyle = appearanceForm?.formSchema?.find((node) => node.name === 'visual_style');
-const visualStyleValues = visualStyle?.options?.map((option) => option.value) || [];
-if (JSON.stringify(visualStyleValues) !== JSON.stringify(['portal', 'youth', 'civic', 'editorial'])) {
-  fail(`全站视觉风格选项异常：${visualStyleValues.join(', ')}`);
+if (appearanceForm?.formSchema?.some((node) => node.name === 'visual_style')) {
+  fail('全站视觉风格开关已下线，外观组不应再包含 visual_style 字段');
 }
 
 function walkSchema(nodes, visitor) {
@@ -128,24 +128,42 @@ for (const form of groups) {
   if (duplicates.length) fail(`${form.group} 设置存在重复字段：${[...new Set(duplicates)].join(', ')}`);
 }
 
-// 首页区块现在挂在 home_hero 组上（2026-11-03 起 home 组并入 home_hero）。
+// 首页区块现在独立成 home_sections 组（2026-11-04 从 home_hero 拆出）。
 // 注意：sidebar 组也有一个同名 section_blocks（文章页侧边栏），所以必须按组取，不能全局 find。
-const homeForm = groups.find((form) => form.group === 'home_hero');
-const homeSections = homeForm?.formSchema?.find((node) => node.name === 'section_blocks');
+const homeSectionsForm = groups.find((form) => form.group === 'home_sections');
+const homeSections = homeSectionsForm?.formSchema?.find((node) => node.name === 'section_blocks');
+if (!homeSections) fail('首页区块组缺少 section_blocks');
 const homeSectionDefaults = new Map((homeSections?.value || []).map((item) => [item.type, item]));
 const homeSectionChildren = new Map((homeSections?.children || []).map((item) => [item.name, item]));
 for (const type of ['news', 'members', 'links']) {
   if (!homeSectionDefaults.has(type)) fail(`首页区块默认值缺少 ${type}`);
 }
-for (const [name, type] of [
-  ['news_limit', 'news'], ['category_blocks', 'news'],
-  ['member_limit', 'members'], ['member_pinned', 'members'],
-  ['link_limit', 'links'], ['link_pinned', 'links'],
+for (const [name, expr] of [
+  ['news_limit', "$value.type === 'news' && $value.display_style !== 'columns'"],
+  ['category_blocks', "$value.display_style === 'columns'"],
+  ['member_limit', "$value.type === 'members'"], ['member_pinned', "$value.type === 'members'"],
+  ['link_limit', "$value.type === 'links'"], ['link_pinned', "$value.type === 'links'"],
 ]) {
   const child = homeSectionChildren.get(name);
   if (!child) fail(`首页区块子表单缺少 ${name}`);
-  if (child?.if !== `$value.type === '${type}'`) fail(`首页区块子表单 ${name} 条件异常`);
+  if ((child?.if || '').replace(/\s+/g, ' ') !== expr) fail(`首页区块子表单 ${name} 条件异常：${child?.if}`);
   if (!child?.key) fail(`首页区块子表单 ${name} 缺少唯一 key`);
+}
+// 文章显示样式的三个选项是「卡片网格 / 紧凑列表 / 分类分栏」，
+// 卡片细分项（卡片样式、标题行数、行数）只在 grid 下出现，分类栏只在 columns 下出现。
+const displayStyle = homeSectionChildren.get('display_style');
+const displayStyleValues = displayStyle?.options?.map((option) => option.value) || [];
+if (JSON.stringify(displayStyleValues) !== JSON.stringify(['grid', 'list', 'columns'])) {
+  fail(`文章显示样式选项异常：${displayStyleValues.join(', ')}`);
+}
+for (const [name, expr] of [
+  ['card_style', "$value.display_style === 'grid'"],
+  ['title_lines', "$value.display_style === 'grid'"],
+  ['news_rows', "$value.type === 'news' && $value.display_style === 'grid'"],
+]) {
+  const child = homeSectionChildren.get(name);
+  if ((child?.if || '').replace(/\s+/g, ' ') !== expr) fail(`文章显示样式细分项 ${name} 条件异常：${child?.if}`);
+  if (!child?.key) fail(`文章显示样式细分项 ${name} 缺少唯一 key`);
 }
 if (homeSectionChildren.get('category_blocks')?.$formkit !== 'array') {
   fail('首页文章分类栏必须使用内层 array');
@@ -155,6 +173,41 @@ for (const name of ['member_pinned', 'link_pinned']) {
   if (field?.multiple !== true || field?.sortable !== true) {
     fail(`首页内容排序 ${name} 必须支持多选和拖动`);
   }
+}
+
+// 首屏：每种版式只露出自己会读的字段，别把 11 套版式的设置全平铺在一屏里。
+// 这张表是「版式 → 字段」的唯一真相，改模板里某个字段的显示条件时同步改这里。
+const homeForm = groups.find((form) => form.group === 'home_hero');
+if (homeForm?.formSchema?.some((node) => node.name === 'section_blocks')) {
+  fail('首页区块应归属 home_sections 组，不能留在 home_hero');
+}
+const heroFields = new Map((homeForm?.formSchema || []).map((node) => [node.name, node]));
+const heroPickers = new Map((heroFields.get('blocks')?.children || []).map((node) => [node.name, node]));
+for (const [name, label] of [['post', '关联文章（可选）'], ['category', '关联分类 / 专栏（可选）']]) {
+  const picker = heroPickers.get(name);
+  if (!picker) fail(`首屏三块内容缺少选取器 ${name}`);
+  if (picker?.label !== label) fail(`首屏三块内容 ${name} 的标签异常：${picker?.label}`);
+  if (!picker?.action) fail(`首屏三块内容 ${name} 缺少远程数据源 action`);
+  if (picker?.requestOption?.valueField !== 'status.permalink') {
+    fail(`首屏三块内容 ${name} 应直接存永久链接（valueField: status.permalink）`);
+  }
+}
+const HERO_SCOPED = ['eyebrow', 'stats', 'blocks', 'cover_image', 'member_limit', 'member_pinned', 'member_names', 'footnote', 'bg_carousel', 'carousel_interval', 'bg_overlay', 'full_width', 'min_height'];
+for (const name of HERO_SCOPED) {
+  const field = heroFields.get(name);
+  if (!field) fail(`首屏设置缺少字段：${name}`);
+  if (!field?.if) fail(`首屏设置 ${name} 必须按版式条件显示（if）`);
+  if (!field?.key) fail(`首屏设置 ${name} 的条件缺少唯一 key`);
+}
+for (const name of ['title_line1', 'title_accent', 'lead', 'primary_text', 'primary_url', 'secondary_text', 'secondary_url']) {
+  if (!heroFields.has(name)) fail(`首屏设置缺少通用字段：${name}`);
+}
+// 三块内容的跳转规则在 1 / 8 / 11 号版式里各写一条（Thymeleaf 没有 map），
+// 5 处都必须以 nhHref 变量出现，漏一处就会出现「有的版式点不动」
+const heroTpl = read('templates/modules/home-hero.html');
+const nhHrefCount = (heroTpl.match(/nhHref=/g) || []).length;
+if (nhHrefCount !== 5) {
+  fail(`首屏三块内容的跳转规则应共用 5 处 nhHref（1/8 号各 1 处、11 号 3 处），实际 ${nhHrefCount} 处`);
 }
 
 const aboutForm = groups.find((form) => form.group === 'about');
@@ -319,6 +372,8 @@ for (const removedFallback of [
   'theme.config.home?.link_limit',
   'theme.config.home?.link_pinned',
   'theme.config.sidebar?.section_order',
+  // sidebar_menu 只属于 sidebar 组；navigation 组从未声明它，回落永远是空串
+  'theme.config.navigation?.sidebar_menu',
 ]) {
   if (hasRemovedFallback(removedFallback)) {
     fail(`模板仍在回退已删除的设置项：${removedFallback}`);
@@ -396,6 +451,39 @@ const mainCss = read('src/css/main.css');
 if (/transition:\s*all\b/i.test(mainCss)) {
   fail('样式不得使用 transition: all');
 }
+// 竖向基线：画框（页头页脚）必须比版心（正文）宽，两者不得合一
+const heroCss = read('src/css/home-hero.css');
+const cssPx = (name, css) => {
+  const m = css.match(new RegExp(`${name}\\s*:\\s*([0-9.]+)px`));
+  return m ? Number(m[1]) : null;
+};
+const contentMax = cssPx('--content-max', mainCss);
+const frameMax = cssPx('--frame-max', mainCss);
+if (contentMax == null || frameMax == null) {
+  fail('缺少竖向基线变量：--content-max / --frame-max 必须显式声明像素值');
+} else if (frameMax <= contentMax) {
+  fail(`画框必须比版心宽：--frame-max(${frameMax}) 应大于 --content-max(${contentMax})`);
+}
+for (const [selector, css] of [
+  ['.site-header .container', mainCss],
+  ['.site-footer .container', mainCss],
+]) {
+  const rule = css.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{[^}]*\\}`, 's'))?.[0] || '';
+  if (!rule.includes('max-width: var(--frame-max)')) {
+    fail(`${selector} 必须走画框宽度（var(--frame-max)），不得退回版心`);
+  }
+}
+for (const marker of ['--nh-hx:', '.nh--p42r .nh-hd { height: 64px; top: 16px; padding: 0 var(--nh-hx)']) {
+  if (!heroCss.includes(marker)) fail(`首屏页头必须贴在画框线上，缺少：${marker}`);
+}
+// 8 号版式的品牌与导航都是绝对定位，工具区必须在流里右对齐，否则会掉到行首压在品牌下面
+const cardsHeadRule = heroCss.match(/\.nh--cards \.nh-hd \{[^}]*\}/s)?.[0] || '';
+if (!cardsHeadRule.includes('justify-content: flex-end')) {
+  fail('8 号版式页头必须 justify-content: flex-end（否则明暗切换按钮压在品牌下面）');
+}
+if (!heroCss.includes('.nh--cards .nh-tools { margin-right: 42px; }')) {
+  fail('8 号版式窄屏必须给工具区让出汉堡宽度（.nh--cards .nh-tools { margin-right: 42px; }）');
+}
 if (allTemplates.includes('data-priority') || read('src/js/main.js').includes('initPrioritySort')) {
   fail('主题不得继续依赖已移除的成员 priority 排序字段');
 }
@@ -438,8 +526,10 @@ for (const marker of [
 ]) {
   if (!mainCss.includes(marker)) fail(`快看世界体源码声明缺少：${marker}`);
 }
-for (const marker of ['rel="preload"', 'assets/css/KuaiKanShiJieTi.woff2', 'as="font"', 'type="font/woff2"']) {
-  if (!pageLayout.includes(marker)) fail(`快看世界体预加载缺少：${marker}`);
+// 728KB 字体不做全站 preload：@font-face + font-display:swap 按需加载即可；
+// 全站预载会白耗带宽，并触发 Chrome「preloaded but not used」提示。
+if (pageLayout.includes('as="font"') || pageLayout.includes('assets/css/KuaiKanShiJieTi.woff2')) {
+  fail('快看世界体不得做全站 preload（728KB 应交给 @font-face 按需加载）');
 }
 for (const marker of [
   '@import "tailwindcss" source(none)',
@@ -451,8 +541,6 @@ for (const marker of [
   if (!mainCss.includes(marker)) fail(`DaisyUI 设计系统缺少 ${marker}`);
 }
 for (const marker of [
-  '[data-theme="dark"][data-visual-style="youth"]',
-  '[data-theme="dark"][data-visual-style="editorial"]',
   '--shadow-low:',
   '--shadow-mid:',
   '--shadow-high:',
@@ -471,15 +559,18 @@ for (const [path, markers] of [
     if (!template.includes(marker)) fail(`${path} 缺少 DaisyUI 组件 ${marker}`);
   }
 }
-if (!layout.includes('th:data-visual-style="${theme.config.appearance?.visual_style ?: \'portal\'}"')) {
-  fail('layout 缺少全站视觉风格数据属性');
+if (!layout.includes('data-visual-style="portal"')) {
+  fail('layout 缺少固定的 data-visual-style="portal" 数据属性');
+}
+if (layout.includes('th:data-visual-style')) {
+  fail('layout 不应再动态读取 visual_style（该开关已下线）');
 }
 if (!layout.includes("setProperty('--primary-rgb'")) {
   fail('自定义主色未同步 primary-rgb');
 }
 for (const style of ['youth', 'civic', 'editorial']) {
-  if (!mainCss.includes(`[data-visual-style="${style}"]`)) {
-    fail(`主样式缺少视觉预设 ${style}`);
+  if (mainCss.includes(`[data-visual-style="${style}"]`)) {
+    fail(`主样式不应再包含已下线的视觉预设 ${style}`);
   }
 }
 for (const marker of ['rel="canonical"', 'property="og:title"', 'name="twitter:card"', 'application/ld+json']) {
@@ -532,7 +623,7 @@ for (const marker of [
   '.home-sections > .section[data-home-section="members"] .member-grid',
   'transition-property: color, background-color, border-color, outline-color, box-shadow, fill, stroke, opacity',
   // 明暗切换必须给整页颜色属性补过渡，且图标动画不能被这条通配规则吃掉
-  'html.theme-transitioning #themeToggle * {',
+  'html.theme-transitioning [data-theme-toggle] * {',
   '::view-transition-new(root)',
 ]) {
   if (!mainCss.includes(marker)) fail(`主题响应式或切换契约缺少：${marker}`);
@@ -541,7 +632,6 @@ if (!read('templates/index.html').includes('category-cols--count-')) {
   fail('首页分类栏缺少确定性列数标记');
 }
 for (const [path, markers] of [
-  ['templates/index.html', ['class="join pagination"', 'join-item page-btn', 'join-item page-info']],
   ['templates/archives.html', ['class="join pagination"', 'join-item page-btn']],
   ['templates/category-grid.html', ['class="join pagination"', 'join-item page-btn']],
 ]) {
@@ -549,6 +639,10 @@ for (const [path, markers] of [
   for (const marker of markers) {
     if (!template.includes(marker)) fail(`${path} 分页缺少 DaisyUI 语义：${marker}`);
   }
+}
+// 首页已改为卡片网格（便当格/门户条目流等），不再输出列表分页；反向守住，防止回退成旧分页按钮
+if (read('templates/index.html').includes('join-item page-btn')) {
+  fail('首页不应再输出列表分页（已改为卡片网格）');
 }
 if (!mainScript.includes('initWidgetOpeners')) {
   fail('插件 Widget 入口缺少统一事件适配');
@@ -561,13 +655,13 @@ const notFoundTemplate = read('templates/error/404.html');
 if (!notFoundTemplate.includes('th:href="@{/}"') || !notFoundTemplate.includes('data-history-back')) {
   fail('404 页面返回链接必须提供首页回退');
 }
-// 404 工牌版：资源只在该页加载，配置全部走 theme.config.error_page
+// 404 工牌版：资源只在该页加载，配置全部走 theme.config.system_pages（404 与登录注册合并成「系统页面」组）
 for (const marker of ['/assets/err404/err404.css', '/assets/err404/err404.js', '/assets/err404/qrcode.js', 'window.__ERR404__', 'error404_style']) {
   if (!notFoundTemplate.includes(marker)) fail(`404 模板缺少 ${marker}`);
 }
-const errorPageForm = groups.find((form) => form.group === 'error_page');
+const errorPageForm = groups.find((form) => form.group === 'system_pages');
 if (!errorPageForm) {
-  fail('设置缺少「404 页面」分组');
+  fail('设置缺少「系统页面」分组');
 } else {
   const errorFields = errorPageForm.formSchema.map((node) => node.name);
   for (const name of ['error404_style', 'error404_title', 'error404_title_accent', 'error404_subtitle', 'error404_show_badge', 'error404_badge_members', 'error404_badge_flip', 'error404_animation', 'error404_strap_color']) {
@@ -605,7 +699,7 @@ if (!existsSync(join(root, gatewayLayoutPath))) {
     'th:fragment="layout (title, head, body)"',
     'gateway_fragments/common::basicStaticResources',
     '/assets/auth/auth.css',
-    'theme.config.auth_page',
+    'theme.config.system_pages',
     'th:replace="${body}"',
   ]) {
     if (!gatewayLayout.includes(marker)) fail(`认证页布局缺少 ${marker}`);
@@ -626,42 +720,21 @@ if (!existsSync(join(root, gatewayLayoutPath))) {
     }
   }
 }
-const authPageForm = groups.find((form) => form.group === 'auth_page');
+const authPageForm = groups.find((form) => form.group === 'system_pages');
 if (!authPageForm) {
   fail('设置缺少「登录注册页」分组');
 } else {
   const authFields = authPageForm.formSchema.map((node) => node.name);
+  if (!authFields.includes('auth_polish')) fail('认证页设置缺少字段：auth_polish');
+  // 认证页已收敛为「只留美化开关，其余读取站点数据 / 默认文案」
   for (const name of [
-    'auth_polish',
-    'auth_layout',
-    'auth_primary_color',
-    'auth_radius',
-    'auth_story_show',
-    'auth_story_quote',
-    'auth_site_name',
-    'auth_logo',
-    'auth_foot_text',
-    'auth_show_back',
-    'auth_motion',
-    'auth_dark_follow',
-    'auth_title_login',
-    'auth_title_signup',
-    'auth_title_reset',
-    'auth_lead_login',
-    'auth_lead_signup',
-    'auth_lead_reset',
+    'auth_layout', 'auth_primary_color', 'auth_radius', 'auth_story_show', 'auth_story_quote',
+    'auth_story_note', 'auth_story_contact', 'auth_site_name', 'auth_brand_note', 'auth_logo',
+    'auth_foot_text', 'auth_show_back', 'auth_motion', 'auth_dark_follow', 'auth_show_switch',
+    'auth_title_login', 'auth_title_signup', 'auth_title_reset', 'auth_title_logout',
+    'auth_lead_login', 'auth_lead_signup', 'auth_lead_reset',
   ]) {
-    if (!authFields.includes(name)) fail(`认证页设置缺少字段：${name}`);
-  }
-  const authLayoutNode = authPageForm.formSchema.find((node) => node.name === 'auth_layout');
-  const authLayoutValues = authLayoutNode?.options?.map((option) => option.value) || [];
-  if (JSON.stringify(authLayoutValues) !== JSON.stringify(['split', 'centered'])) {
-    fail(`认证页版式选项异常：${authLayoutValues.join(', ')}`);
-  }
-  const authMotionNode = authPageForm.formSchema.find((node) => node.name === 'auth_motion');
-  const authMotionValues = authMotionNode?.options?.map((option) => option.value) || [];
-  if (JSON.stringify(authMotionValues) !== JSON.stringify(['full', 'lite', 'off'])) {
-    fail(`认证页入场动画选项异常：${authMotionValues.join(', ')}`);
+    if (authFields.includes(name)) fail(`认证页设置不应再包含 ${name}（已改为读取站点数据）`);
   }
 }
 const authCssPath = 'src/auth/auth.css';
@@ -694,7 +767,7 @@ if (mainScript.includes('initPostSidebarSizing') || mainScript.includes('--post-
 if (!mainCss.includes('[data-visual-style="portal"] .home-sections > .section') || !mainCss.includes('padding-block: var(--space-lg)')) {
   fail('标准门户首页必须使用紧凑区块间距');
 }
-for (const style of ['portal', 'youth', 'civic', 'editorial']) {
+for (const style of ['portal']) {
   for (const marker of ['.banner-content', '.news-item', '.member-card', '.page-header', '.intro-stat', '.link-group-title', '.pagination', '.site-footer']) {
     if (!mainCss.includes(`[data-visual-style="${style}"] ${marker}`)) {
       fail(`视觉风格 ${style} 缺少结构差异 ${marker}`);
@@ -1182,6 +1255,100 @@ for (const file of walk('templates', '.html')) {
       }
     }
   }
+}
+
+/* ==========================================================================
+   定向审查回归契约（2026-11-04）
+   只锁「已被后台单项/组合切换实测证伪」的链路，防止以后把无效配置、
+   死回落、固定列模板或与首屏下沿重合的分界线改回来。不扩大到无关模块。
+   ========================================================================== */
+const indexTpl = read('templates/index.html');
+
+// ① 标题最多行数：后台默认 '0'=不限，前台必须真的不裁（不写 --title-lines / 不挂 clamp）
+if (!indexTpl.includes("#lists.contains({'0', '1', '2', '3'}")) {
+  fail('标题最多行数的合法值必须包含 0（后台默认「不限」）');
+}
+if (indexTpl.includes(": '2'}")) {
+  fail('标题最多行数不得把 0 回退成 2 行截断');
+}
+if (!indexTpl.includes("newsTitleLines != '0' ? '--title-lines:' + newsTitleLines : null")) {
+  fail('前台必须只在 title_lines 非 0 时写 --title-lines');
+}
+if (!indexTpl.includes("newsTitleLines != '0' ? ' article-grid--clamp' : ''")) {
+  fail('前台必须只在 title_lines 非 0 时挂 article-grid--clamp');
+}
+
+// ② 每行列数只在卡片网格下可见：分类分栏的列数由 category_blocks 条目数决定，
+//    columns 在 columns 样式下读不到、也不该露出（否则是「可设但无效」）。
+const columnsChild = homeSectionChildren.get('columns');
+if ((columnsChild?.if || '').replace(/\s+/g, ' ') !== "$value.type === 'news' && $value.display_style === 'grid'") {
+  fail(`首页区块 columns 条件异常：分类分栏不读 columns，必须收窄到 grid`);
+}
+if (!columnsChild?.key) fail('首页区块子表单 columns 缺少唯一 key');
+
+// ③ 12 号页脚：兜底列数自适应，脚本按真实 .footer-col 数铺，不留 0px 空列
+if (layout.includes('1.75fr 1fr 1fr max-content')) {
+  fail('12 号页脚不得保留固定 4 列兜底模板（会产生 0px 空列与右侧空白）');
+}
+if (!layout.includes('if(n>=2){')) {
+  fail('12 号页脚必须按真实 .footer-col 数（n>=2）设置 --l-cols，不能只在 n>4 时覆盖');
+}
+
+// ④ hero → 正文：细线不能压在首屏下沿，否则形成一条全宽硬分界
+const heroSeamRule = heroCss.match(/\.nh \+ \.home-sections::before \{[^}]*\}/s)?.[0] || '';
+if (/top:\s*0\s*;/.test(heroSeamRule)) {
+  fail('首屏→正文的细线不得放在 top:0（与首屏下沿重合会变成全宽硬分界）');
+}
+
+// ⑤ 字体 728KB 不做全站 preload：@font-face + font-display:swap 按需加载即可。
+//    全站预载会白耗带宽，并触发 Chrome「preloaded using link preload but not used」提示。
+for (const tpl of ['templates/modules/layout.html', 'templates/layout.html', 'templates/gateway_fragments/layout.html']) {
+  if (read(tpl).includes('as="font"')) {
+    fail(`${tpl} 不得对 KuaiKanShiJieTi 做全站 preload（728KB 应交给 @font-face 按需加载）`);
+  }
+}
+
+// ⑥ 设置项的条件显示：`if` 必须真的能用。
+//    两个坑会让整组条件静默失效（所有带条件的项一律被隐藏）：
+//    ① `$get(layout)` 参数裸写——FormKit 取不到名字，返回 undefined；
+//    ② 被引用的字段没有显式 `id`——节点 id 是自动生成的，按 name 查不到。
+//    另外条件节点必须带唯一 `key`，否则切换时会复用组件实例、出现显示错乱。
+{
+  const settingsRaw = read('settings.yaml');
+  const badGet = [...settingsRaw.matchAll(/\$get\(\s*([A-Za-z_][\w]*)\s*\)/g)].map((m) => m[1]);
+  if (badGet.length) {
+    fail(`settings.yaml 的 $get 参数必须加引号（${[...new Set(badGet)].join(', ')}）`);
+  }
+  const conditionalNodes = [];
+  const allNodes = [];
+  for (const group of settings?.spec?.forms ?? []) {
+    const walk = (nodes) => {
+      for (const node of nodes ?? []) {
+        if (!node || typeof node !== 'object') continue;
+        if (node.name) allNodes.push(node);
+        if (node.if) conditionalNodes.push({ group: group.group, node });
+        if (Array.isArray(node.children)) walk(node.children);
+      }
+    };
+    walk(group.formSchema);
+  }
+  const ids = new Set(allNodes.filter((n) => n.id).map((n) => n.id));
+  const names = new Set(allNodes.filter((n) => n.name).map((n) => n.name));
+  const referenced = new Set();
+  for (const { node } of conditionalNodes) {
+    for (const m of String(node.if).matchAll(/\$get\(\s*['"]([^'"]+)['"]\s*\)/g)) referenced.add(m[1]);
+  }
+  for (const ref of referenced) {
+    if (!names.has(ref)) fail(`settings.yaml 的条件引用了不存在的字段：${ref}`);
+    else if (!ids.has(ref)) fail(`settings.yaml 的字段 ${ref} 被条件引用，必须加显式 id: ${ref}`);
+  }
+  const keyCount = new Map();
+  for (const { node } of conditionalNodes) {
+    const k = node.key ?? node.name;
+    keyCount.set(k, (keyCount.get(k) ?? 0) + 1);
+    if (!node.key) fail(`settings.yaml 条件节点 ${node.name} 缺少唯一 key`);
+  }
+  for (const [k, n] of keyCount) if (n > 1) fail(`settings.yaml 条件节点的 key 重复：${k}`);
 }
 
 if (failures.length) {

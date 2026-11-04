@@ -9,8 +9,7 @@
                seoPageType=${pageType ?: 'website'}"
       class="no-js"
       data-theme="light" data-color-scheme="auto"
-      data-visual-style="portal"
-      th:data-visual-style="${#strings.defaultString(theme.config.appearance?.visual_style, 'portal')}">
+      data-visual-style="portal">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -54,12 +53,9 @@
       }
     }
   </script>
-  <link rel="preload"
-        th:href="@{/assets/css/KuaiKanShiJieTi.woff2(v=${theme.spec.version})}"
-        href="/assets/css/KuaiKanShiJieTi.woff2"
-        as="font"
-        type="font/woff2"
-        crossorigin />
+  <!-- KuaiKanShiJieTi 单文件约 728KB，仅少数标题/画布用到：不做全站 preload。
+       全站预载会在多数页面白耗带宽，并触发 Chrome「preloaded using link preload but not used」提示；
+       字体已由 main.css 的 @font-face（font-display: swap）在真正用到时按需加载。 -->
   <link rel="stylesheet" th:href="@{/assets/css/main.css(v=${theme.spec.version})}" />
   <script th:inline="javascript">
     (function() {
@@ -138,9 +134,8 @@
     <span class="reading-progress__bar"></span>
   </div>
 
-  <!-- 顶部导航：首页启用新版首屏时由首屏自带的页头接管，这里不再重复渲染 -->
-  <header class="site-header" th:fragment="siteHeader"
-          th:if="${!(_templateId == 'index' and heroOn)}">
+  <!-- 顶部导航：所有页面（含首页）统一使用这一个页头，首屏不再内置页头 -->
+  <header class="site-header" th:fragment="siteHeader">
     <div class="container">
       <div class="header-inner"
            th:with="navAlign = ${#strings.defaultString(theme.config.navigation?.nav_align, 'center')}"
@@ -621,8 +616,9 @@ footer.site-footer{--n-red:#dd3333;--n-red2:#fb5151;--n-tint:#fff0ee;--n-tint2:#
 
 footer.site-footer{background:linear-gradient(180deg,#fff 55%,#fffaf9)!important;padding:0 0 22px!important;margin-top:76px!important;position:relative}
 footer.site-footer .container{border-top:1px dashed var(--n-dash)}
-footer.site-footer .footer-inner{display:grid!important;grid-template-columns:var(--l-cols,1.75fr 1fr 1fr max-content);
- gap:30px var(--l-gap,34px);padding:38px max(0px,calc((100% - 1152px)/2)) 26px!important;margin:0!important;align-items:start;position:relative;overflow:hidden}
+/* 兜底列数按真实栏目数自适应，不再写死 4 列；脚本会用 --l-cols 覆盖成精确的 n 列 */
+footer.site-footer .footer-inner{display:grid!important;grid-template-columns:var(--l-cols,repeat(auto-fit,minmax(min(100%,220px),1fr)));
+ gap:30px var(--l-gap,34px);padding:38px 0 26px!important;margin:0!important;align-items:start;position:relative;overflow:hidden}
 footer.site-footer .footer-col{width:auto!important;min-width:0!important}
 footer.site-footer .footer-col-title{margin:0 0 14px!important;padding:0!important;display:flex;align-items:center;gap:8px;
  font:600 12px/1 var(--n-k)!important;color:var(--n-t1)!important;letter-spacing:.04em!important;text-transform:none!important}
@@ -673,7 +669,7 @@ footer.site-footer .footer-bottom{display:flex!important;justify-content:space-b
 footer.site-footer .footer-copyright,footer.site-footer .footer-links,footer.site-footer .footer-links a{
  font-size:11.6px!important;color:#bdb3b2!important}
 footer.site-footer .footer-links a:hover{color:var(--n-red)!important}
-@media(max-width:980px){ footer.site-footer .footer-inner{grid-template-columns:var(--l-cols-t,1fr 1fr 1fr);gap:28px var(--l-gap-t,22px)}
+@media(max-width:980px){ footer.site-footer .footer-inner{grid-template-columns:var(--l-cols-t,repeat(auto-fit,minmax(min(100%,200px),1fr)));gap:28px var(--l-gap-t,22px)}
  footer.site-footer .f-brand{grid-column:1/-1} .l-wm{font-size:130px} }
 /* 手机：品牌区居中、按钮拉通，二维码横过来跟在标题下面 */
 @media(max-width:640px){
@@ -720,7 +716,7 @@ footer.site-footer .footer-links a:hover{color:var(--n-red)!important}
 (function(){
   function boot(){
 (function(){
-  var NAV=[ ["首页","/"], ["文章","/archives"], ["分类","/categories"], ["成员","/members"] ];
+  var NAV=[ ["首页","/"], ["文章", /*[[${#strings.defaultString(site.routes?.archivesUri, '/archives')}]]*/ '/archives'], ["分类", /*[[${#strings.defaultString(site.routes?.categoriesUri, '/categories')}]]*/ '/categories'], ["成员","/members"] ];
   var SITE_LOGO = /*[[${site.logo ?: '/upload/1783587678472.png'}]]*/ '/upload/1783587678472.png';
   var SITE_TITLE = /*[[${site.title ?: '全国高校自媒体联盟'}]]*/ '全国高校自媒体联盟';
   var JOIN_URL = /*[[${#strings.defaultString(theme.config.footer?.footer_join_url, '')}]]*/ '';
@@ -809,15 +805,20 @@ footer.site-footer .footer-links a:hover{color:var(--n-red)!important}
     if(/底部菜单/.test(t.textContent)) c.remove();
     else if(/关注/.test(t.textContent)) c.classList.add('l-qr'); });
   var wm=el('div','l-wm','NUCMA');
+  // 各栏等宽均分。原先桌面模板是「品牌 1.75fr + 其余 1fr」，首栏比别的栏宽出近一倍，
+  // 看上去像没对齐；现一律 1fr，n 栏平分整行。平板（≤980px）品牌仍独占首行，
+  // 第二行铺 n-1 栏，同样均分。
   var n=[].filter.call(inner.children,function(c){return c.classList&&c.classList.contains('footer-col')}).length;
-  if(n>4){
-    var desk='1.75fr ', tab='', i=0;
-    while(i!==n-2){ desk+='1fr '; i++; }
-    i=0; while(i!==n-2){ tab+='1fr '; i++; }
-    inner.style.setProperty('--l-cols',desk+'max-content');
-    inner.style.setProperty('--l-gap','28px');
-    inner.style.setProperty('--l-cols-t',tab+'max-content');
-    inner.style.setProperty('--l-gap-t','18px');
+  if(n>=2){
+    var desk='', tab='', i=0;
+    while(i<n){ desk+='1fr '; i++; }
+    i=0; while(i<n-1){ tab+='1fr '; i++; }
+    inner.style.setProperty('--l-cols',desk.trim());
+    inner.style.setProperty('--l-cols-t',tab.trim());
+    if(n>4){
+      inner.style.setProperty('--l-gap','28px');
+      inner.style.setProperty('--l-gap-t','18px');
+    }
   }
   inner.appendChild(wm);
 })();
@@ -974,7 +975,7 @@ footer.site-footer .footer-bottom{display:none!important}
   var f=document.querySelector('footer.site-footer');
   if(!f||f.dataset.v) return; f.dataset.v='1';
   var inner=f.querySelector('.footer-inner');
-  var NAV=[ ["首页","/"], ["文章","/archives"], ["分类","/categories"], ["成员","/members"] ];
+  var NAV=[ ["首页","/"], ["文章", /*[[${#strings.defaultString(site.routes?.archivesUri, '/archives')}]]*/ '/archives'], ["分类", /*[[${#strings.defaultString(site.routes?.categoriesUri, '/categories')}]]*/ '/categories'], ["成员","/members"] ];
   function el(tag,cls,txt){ var e=document.createElement(tag);
     if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
   function lnk(txt,href){ var a=el('a','n-a',txt); a.setAttribute('href',href||'#');

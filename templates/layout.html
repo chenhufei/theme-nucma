@@ -2,8 +2,7 @@
 <html lang="zh-CN" xmlns:th="https://www.thymeleaf.org" xmlns:halo="https://www.halo.run"
       th:fragment="html (head, content)"
       class="no-js"
-      data-theme="light" data-color-scheme="auto" data-visual-style="portal"
-      th:data-visual-style="${#strings.defaultString(theme.config.appearance?.visual_style, 'portal')}">
+      data-theme="light" data-color-scheme="auto" data-visual-style="portal">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,10 +10,7 @@
   <title th:if="${head == null}" th:text="${site.title}"></title>
   <th:block th:if="${head != null}" th:replace="${head}"></th:block>
   <!-- favicon 由 Halo 的 DefaultFaviconHeadProcessor 注入，此处不再重复输出 -->
-  <link rel="preload"
-        th:href="@{/assets/css/KuaiKanShiJieTi.woff2(v=${theme.spec.version})}"
-        href="/assets/css/KuaiKanShiJieTi.woff2"
-        as="font" type="font/woff2" crossorigin>
+  <!-- 同 modules/layout.html：字体 728KB，不做全站 preload，交给 @font-face 按需加载 -->
   <link rel="stylesheet" th:href="@{/assets/css/main.css(v=${theme.spec.version})}">
   <script th:inline="javascript">
     (function() {

@@ -1,31 +1,30 @@
 <!DOCTYPE html>
 <html th:lang="${#locale.toLanguageTag()}" xmlns:th="https://www.thymeleaf.org"
       th:fragment="layout (title, head, body)"
-      th:with="ap=${theme.config.auth_page},
+      th:with="ap=${theme.config.system_pages},
                authOn=${ap?.auth_polish != false},
-               layoutMode=${#strings.defaultString(ap?.auth_layout, 'split')},
-               showStory=${ap?.auth_story_show != false and layoutMode == 'split'},
-               motion=${#strings.defaultString(ap?.auth_motion, 'full')},
-               darkFollow=${ap?.auth_dark_follow != false},
-               showBack=${ap?.auth_show_back != false},
-               brandName=${#strings.isEmpty(ap?.auth_site_name) ? site.title : ap.auth_site_name},
-               brandNote=${#strings.isEmpty(ap?.auth_brand_note) ? 'NUCMA' : ap.auth_brand_note},
-               brandLogo=${!#strings.isEmpty(ap?.auth_logo) ? ap.auth_logo : site.logo},
-               storyQuote=${#strings.isEmpty(ap?.auth_story_quote) ? #messages.msg('auth.story.quote') : ap.auth_story_quote},
-               storyNote=${#strings.defaultString(ap?.auth_story_note, '')},
-               storyContact=${#strings.defaultString(ap?.auth_story_contact, 'support@nucma.cn')},
-               footText=${#strings.isEmpty(ap?.auth_foot_text) ? #messages.msg('auth.story.foot') : ap.auth_foot_text},
-               primaryColor=${#strings.isEmpty(ap?.auth_primary_color) ? (#strings.defaultString(theme.config.appearance?.primary_color, '#dd3333')) : ap.auth_primary_color},
-               authRadius=${ap?.auth_radius ?: 18},
+               layoutMode='split',
+               showStory=${layoutMode == 'split'},
+               motion='full',
+               darkFollow=true,
+               showBack=true,
+               brandName=${site.title},
+               brandNote='',
+               brandLogo=${site.logo},
+               storyQuote=${#messages.msg('auth.story.quote')},
+               storyContact='',
+               footText=${#messages.msg('auth.story.foot')},
+               primaryColor=${#strings.defaultString(theme.config.appearance?.primary_color, '#dd3333')},
+               authRadius=18,
                defaultMode=${#strings.defaultString(theme.config.appearance?.default_theme_mode, 'system')},
                isExit=${#strings.contains(title, '退出')},
                isSignup=${!isExit and (#strings.contains(title, '注册') or #strings.contains(title, '创建'))},
                isLogin=${!isExit and !isSignup and #strings.contains(title, '登录')},
                viewName=${isExit ? 'logout' : (isSignup ? 'signup' : (isLogin ? 'login' : 'password-reset'))},
-               viewTitle=${isExit ? (ap?.auth_title_logout ?: #messages.msg('auth.view.logout')) : (isSignup ? (ap?.auth_title_signup ?: #messages.msg('auth.view.signup')) : (isLogin ? (ap?.auth_title_login ?: #messages.msg('auth.view.login')) : (ap?.auth_title_reset ?: #messages.msg('auth.view.reset'))))},
+               viewTitle=${isExit ? #messages.msg('auth.view.logout') : (isSignup ? #messages.msg('auth.view.signup') : (isLogin ? #messages.msg('auth.view.login') : #messages.msg('auth.view.reset')))},
                docTitle=${authOn ? viewTitle + ' - ' + site.title : title},
-               leadText=${isSignup ? (ap?.auth_lead_signup ?: #messages.msg('auth.lead.signup')) : (isLogin ? (ap?.auth_lead_login ?: #messages.msg('auth.lead.login')) : (ap?.auth_lead_reset ?: #messages.msg('auth.lead.reset')))},
-               showSwitch=${ap?.auth_show_switch != false and (isLogin or isSignup)},
+               leadText=${isSignup ? #messages.msg('auth.lead.signup') : (isLogin ? #messages.msg('auth.lead.login') : #messages.msg('auth.lead.reset'))},
+               showSwitch=${isLogin or isSignup},
                switchUrl=${isSignup ? '/login' : '/signup'},
                switchText=${isSignup ? #messages.msg('auth.switch.hasAccount') : #messages.msg('auth.switch.noAccount')},
                switchAction=${isSignup ? #messages.msg('auth.switch.toLogin') : #messages.msg('auth.switch.toSignup')}">
@@ -65,11 +64,7 @@
   <th:block th:replace="~{gateway_fragments/common::basicStaticResources}"></th:block>
 
   <th:block th:if="${authOn}">
-    <link rel="preload"
-          th:href="@{/assets/css/KuaiKanShiJieTi.woff2(v=${theme.spec.version})}"
-          as="font"
-          type="font/woff2"
-          crossorigin />
+    <!-- 字体 728KB，交给 auth.css 的 @font-face（font-display: swap）按需加载，不做 preload -->
     <link rel="stylesheet" th:href="@{/assets/auth/auth.css(v=${theme.spec.version})}" />
     <style th:text="|#auth-ui{--auth-primary:${primaryColor};--auth-radius:${authRadius}px;}|"></style>
   </th:block>
@@ -118,17 +113,15 @@
             </div>
           </div>
           <div class="auth-spacer"></div>
-          <div class="nucma-story-mid" th:if="${!#strings.isEmpty(storyQuote) or !#strings.isEmpty(storyNote)}">
+          <!-- 只留一句大字标语：站点副标题常与标语同义，再排一行小字只会重复（线上实例即如此） -->
+          <div class="nucma-story-mid" th:if="${!#strings.isEmpty(storyQuote)}">
             <p class="nucma-quote" data-animate="rise" data-delay="80" th:text="${storyQuote}">互动宣教
 多元交流</p>
-            <p class="nucma-note" th:if="${!#strings.isEmpty(storyNote)}" th:text="${storyNote}"></p>
           </div>
+          <!-- 「返回首页」只保留右上角那一个胶囊，这里不再重复；本行仅用于联系方式 -->
           <div class="nucma-story-foot" data-animate="fade" data-delay="240"
-               th:if="${!#strings.isEmpty(storyContact) or showBack}">
-            <a th:if="${!#strings.isEmpty(storyContact)}"
-               th:href="|mailto:${storyContact}|" th:text="${storyContact}">support@nucma.cn</a>
-            <span th:if="${!#strings.isEmpty(storyContact) and showBack}">·</span>
-            <a th:if="${showBack}" th:href="@{/}" th:text="#{error.home}">返回首页</a>
+               th:if="${!#strings.isEmpty(storyContact)}">
+            <a th:href="|mailto:${storyContact}|" th:text="${storyContact}">support@nucma.cn</a>
           </div>
         </div>
       </aside>
@@ -153,11 +146,6 @@
         </div>
 
         <header class="auth-heading">
-          <a class="auth-brand" th:href="@{/}" th:aria-label="#{error.home}">
-            <img th:if="${!#strings.isEmpty(brandLogo)}" th:src="${brandLogo}"
-                 th:alt="${brandName}" width="34" height="34" />
-            <span th:text="${brandName}">全国高校自媒体联盟</span>
-          </a>
           <h1 id="auth-title" th:text="${viewTitle}">登录账号</h1>
           <p class="auth-lead" th:if="${!#strings.isEmpty(leadText)}" th:text="${leadText}">欢迎回来，登录后继续。</p>
         </header>
@@ -177,12 +165,6 @@
             <p class="nucma-motto" th:text="${footText}">互动宣教，多元交流</p>
           </div>
         </div>
-
-        <!-- 线上 DOM 里也有这个 footer（设计层把它 display:none 了，这里保持结构一致） -->
-        <footer class="auth-footer">
-          <a class="auth-home" th:href="@{/}" th:text="#{error.home}">返回首页</a>
-        </footer>
-
       </section>
     </div>
   </main>

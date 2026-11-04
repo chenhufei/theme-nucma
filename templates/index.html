@@ -142,7 +142,7 @@
   </section>
 
   <div class="home-sections"
-       th:with="homeBlocks=${theme.config.home_hero?.section_blocks},
+       th:with="homeBlocks=${theme.config.home_sections?.section_blocks},
                 homeOrder=${homeBlocks != null ? homeBlocks.![type] : null},
                 newsBlocks=${homeBlocks != null ? homeBlocks.?[type == 'news'] : null},
                 memberBlocks=${homeBlocks != null ? homeBlocks.?[type == 'members'] : null},
@@ -151,63 +151,107 @@
                 memberBlock=${memberBlocks != null and !#lists.isEmpty(memberBlocks) ? memberBlocks[0] : null},
                 linkBlock=${linkBlocks != null and !#lists.isEmpty(linkBlocks) ? linkBlocks[0] : null},
                 newsCategories=${newsBlock?.category_blocks},
-                newsLimit=${newsBlock?.news_limit ?: 8},
-                memberLimit=${memberBlock?.member_limit ?: 6},
+                newsCols=${newsBlock?.columns != null ? #conversions.convert(newsBlock.columns, 'java.lang.Integer') : 3},
+                newsRows=${newsBlock?.news_rows != null ? #conversions.convert(newsBlock.news_rows, 'java.lang.Integer') : 0},
+                newsLimit=${newsRows > 0 ? newsRows * newsCols : (newsBlock?.news_limit != null ? #conversions.convert(newsBlock.news_limit, 'java.lang.Integer') : 8)},
+                newsStyle=${newsBlock?.display_style != null ? newsBlock.display_style : 'grid'},
+                newsUseColumns=${newsBlock?.display_style == 'columns' and newsCategories != null and !#lists.isEmpty(newsCategories)},
+                newsCard=${#lists.contains({'editorial', 'immersive', 'scrap', 'bento'}, newsBlock?.card_style) ? newsBlock.card_style : 'editorial'},
+                newsTitleLines=${#lists.contains({'0', '1', '2', '3'}, newsBlock?.title_lines == null ? '' : #strings.toString(newsBlock.title_lines)) ? #strings.toString(newsBlock.title_lines) : '0'},
+                memberLimit=${memberBlock?.member_limit != null ? #conversions.convert(memberBlock.member_limit, 'java.lang.Integer') : 6},
                 memberPinned=${memberBlock?.member_pinned},
-                linkLimit=${linkBlock?.link_limit ?: 8},
+                linkLimit=${linkBlock?.link_limit != null ? #conversions.convert(linkBlock.link_limit, 'java.lang.Integer') : 8},
                 linkPinned=${linkBlock?.link_pinned}"
        th:data-section-order="${homeOrder != null ? #strings.listJoin(homeOrder, ',') : 'news,members,links'}">
 
-  <!-- 信息公告 -->
+  <!-- 信息公告：三种显示样式共用这一个区块，由 home_sections 里的「文章显示样式」决定
+       grid    卡片网格（默认）—— 卡片样式 / 每行列数 / 标题行数 只在 grid 下生效
+       list    紧凑列表 —— 日期 + 标题，密度最高
+       columns 分类分栏 —— 每个自选分类各起一栏，走 category_blocks；换回 grid 不会丢配置 -->
   <section class="section" data-home-section="news"
-           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and (newsCategories == null or #lists.isEmpty(newsCategories))}">
-    <!-- 条数按「默认显示数量」自己取数：首页分页只有一页（默认 10 条），
-         直接切 posts.items 会让 11–30 的设置静默失效。 -->
-    <th:block th:with="newsItems = ${postFinder.list({page: 1, size: newsLimit})?.items}">
-    <div class="section-container" th:if="${newsItems != null and !#lists.isEmpty(newsItems)}">
-      <div class="section-header-bar">
-        <h2 class="section-title-bar" th:text="#{home.announcements}">信息公告</h2>
-        <a th:href="@{${#strings.defaultString(site.routes?.archivesUri, '/archives')}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
-      </div>
-      <div class="news-list">
-        <a th:each="post : ${newsItems}"
-           th:href="@{${post.status?.permalink}}" target="_blank" rel="noopener noreferrer" class="news-item">
-          <span class="news-date" th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}"></span>
-          <span class="news-title" th:text="${post.spec?.title}"></span>
-        </a>
-      </div>
-    </div>
-    </th:block>
-  </section>
+           th:if="${homeOrder == null or #lists.contains(homeOrder, 'news')}">
 
-  <!-- 首页自选分类栏 -->
-  <section class="section" data-home-section="news"
-           th:if="${(homeOrder == null or #lists.contains(homeOrder, 'news')) and newsCategories != null and !#lists.isEmpty(newsCategories)}">
-    <div class="section-container">
+    <!-- ① 分类分栏 -->
+    <div class="section-container" th:if="${newsUseColumns}">
       <div class="category-cols-wrapper"
            th:classappend="${'category-cols--count-' + #lists.size(newsCategories)}">
         <th:block th:each="col : ${newsCategories}"
-                  th:with="catPostList = ${postFinder.list({page: 1, size: col.limit ?: 6, categoryName: col.category_name})},
+                  th:with="catPostList = ${postFinder.list({page: 1, size: col.limit != null ? #conversions.convert(col.limit, 'java.lang.Integer') : 6, categoryName: col.category_name})},
                            catInfo = ${categoryFinder.getByName(col.category_name)}">
           <div class="category-col">
             <div class="section-header-bar category-col-header">
-              <h2 class="section-title-bar" th:text="${col.block_title ?: (catInfo != null ? catInfo.spec?.displayName : #messages.msg('home.categoryPosts'))}"></h2>
+              <h2 class="section-title-bar" th:text="${col.block_title != null and !#strings.isEmpty(col.block_title) ? col.block_title : (catInfo != null ? catInfo.spec?.displayName : #messages.msg('home.categoryPosts'))}"></h2>
               <a th:if="${catInfo != null}" th:href="@{${catInfo.status?.permalink}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
             </div>
-            <div class="news-list" th:if="${catPostList != null and catPostList.items != null and !catPostList.items.isEmpty()}">
+            <div class="news-list" th:if="${catPostList != null and catPostList.items != null and !#lists.isEmpty(catPostList.items)}">
               <a th:each="post : ${catPostList.items}"
                  th:href="@{${post.status?.permalink}}" target="_blank" rel="noopener noreferrer" class="news-item">
                 <span class="news-date" th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}"></span>
                 <span class="news-title" th:text="${post.spec?.title}"></span>
               </a>
             </div>
-            <div class="alert alert-soft alert-vertical empty-state category-col-empty" th:if="${catPostList == null or catPostList.items == null or catPostList.items.isEmpty()}">
+            <div class="alert alert-soft alert-vertical empty-state category-col-empty" th:if="${catPostList == null or catPostList.items == null or #lists.isEmpty(catPostList.items)}">
               <span th:text="#{common.noPosts}">暂无文章</span>
             </div>
           </div>
         </th:block>
       </div>
     </div>
+
+    <!-- ② 卡片网格 / ③ 紧凑列表
+         条数按「默认显示数量」自己取数：首页分页只有一页（默认 10 条），
+         直接切 posts.items 会让 11–30 的设置静默失效。 -->
+    <th:block th:unless="${newsUseColumns}">
+      <th:block th:with="newsItems = ${postFinder.list({page: 1, size: newsLimit})?.items}">
+        <div class="section-container" th:if="${newsItems != null and !#lists.isEmpty(newsItems)}">
+          <div class="section-header-bar">
+            <h2 class="section-title-bar" th:text="#{home.announcements}">信息公告</h2>
+            <a th:href="@{${#strings.defaultString(site.routes?.archivesUri, '/archives')}}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
+          </div>
+
+          <div class="news-list" th:if="${newsStyle == 'list'}">
+            <a th:each="post : ${newsItems}"
+               th:href="@{${post.status?.permalink}}" target="_blank" rel="noopener noreferrer" class="news-item">
+              <span class="news-date" th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}"></span>
+              <span class="news-title" th:text="${post.spec?.title}"></span>
+            </a>
+          </div>
+
+          <!-- title_lines='0'（后台默认「不限」）必须真的不裁：既不能写 --title-lines，也不能挂 clamp。
+               旧写法只认 1/2/3，把 0 回退成 2，导致后台选「不限」前台仍截断，状态不一致。 -->
+          <div class="article-grid" th:unless="${newsStyle == 'list'}"
+               th:style="${newsTitleLines != '0' ? '--title-lines:' + newsTitleLines : null}"
+               th:classappend="${'article-grid--' + newsCard + (newsTitleLines != '0' ? ' article-grid--clamp' : '') + ' article-grid--c' + (newsItems == null or #lists.size(newsItems) >= newsCols ? newsCols : (#lists.size(newsItems) < 2 ? 1 : #lists.size(newsItems)))}">
+            <article class="article-card" th:each="post : ${newsItems}"
+                     th:with="cardAuthor=${post.metadata?.annotations != null and !#strings.isEmpty(post.metadata.annotations['nucma.cn/author']) ? post.metadata.annotations['nucma.cn/author'] : post.owner?.displayName},
+                              hasCover=${post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)},
+                              cardCat=${post.spec?.categories != null and !#lists.isEmpty(post.spec.categories) ? categoryFinder.getByName(post.spec.categories[0]) : null}"
+                     th:classappend="${hasCover ? '' : ' article-card--note'}">
+              <a class="article-link" th:href="@{${post.status?.permalink}}" target="_blank" rel="noopener noreferrer">
+                <div class="article-cover" th:if="${hasCover}">
+                  <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}" loading="lazy" decoding="async"
+                       sizes="(max-width: 767px) 92vw, (max-width: 1023px) 46vw, 380px" width="380" height="238" />
+                  <span class="article-tag" th:if="${cardCat != null}" th:text="${cardCat.spec?.displayName}">分类</span>
+                </div>
+                <div class="article-cover article-cover--empty" th:unless="${hasCover}" aria-hidden="true"><span>NUCMA</span></div>
+                <div class="article-body">
+                  <div class="article-meta">
+                    <span class="article-cat" th:if="${cardCat != null}" th:text="${cardCat.spec?.displayName}">分类</span>
+                    <time class="article-date" th:text="${#temporals.format(post.spec?.publishTime, 'MM-dd')}">11-03</time>
+                    <span class="article-pin" th:if="${post.spec?.pinned == true}" th:text="#{home.pinned}">置顶</span>
+                  </div>
+                  <h3 class="article-title" th:text="${post.spec?.title}">文章标题</h3>
+                  <span class="article-author" th:if="${cardAuthor != null and !#strings.isEmpty(cardAuthor)}">
+                    <em th:text="#{post.bylinePrefix}">文</em><span th:text="${cardAuthor}">作者</span>
+                  </span>
+                  <span class="article-more"><span th:text="#{home.heroReadMore}">阅读全文</span><i aria-hidden="true">→</i></span>
+                </div>
+              </a>
+            </article>
+          </div>
+        </div>
+      </th:block>
+    </th:block>
   </section>
 
   <section class="section" data-home-section="members"
@@ -297,16 +341,6 @@
 
   </div>
 
-  <!-- 分页 -->
-  <nav class="join pagination"
-       th:with="homeBlocks=${theme.config.home_hero?.section_blocks},
-                newsBlocks=${homeBlocks != null ? homeBlocks.?[type == 'news'] : null},
-                newsBlock=${newsBlocks != null and !#lists.isEmpty(newsBlocks) ? newsBlocks[0] : null},
-                newsCategories=${newsBlock?.category_blocks}"
-       th:if="${posts != null and (posts.hasPrevious() or posts.hasNext()) and (newsCategories == null or #lists.isEmpty(newsCategories))}">
-    <a th:if="${posts.hasPrevious()}" th:href="@{${posts.prevUrl}}" class="btn btn-outline btn-sm join-item page-btn" th:text="#{common.previousPage}">上一页</a>
-    <span class="badge badge-outline join-item page-info" th:text="|${posts.page} / ${posts.totalPages}|"></span>
-    <a th:if="${posts.hasNext()}" th:href="@{${posts.nextUrl}}" class="btn btn-outline btn-sm join-item page-btn" th:text="#{common.nextPage}">下一页</a>
-  </nav>
+  <!-- 首页已改为卡片网格（便当格/门户条目流等），不再输出列表分页；「更多」入口保留在各区块头部 -->
 </th:block>
 </html>
