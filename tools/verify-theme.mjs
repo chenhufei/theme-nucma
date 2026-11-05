@@ -1125,6 +1125,10 @@ if (built) {
   for (const path of ['templates/assets/err404/err404.css', 'templates/assets/err404/err404.js', 'templates/assets/err404/qrcode.js', 'templates/assets/err404/duck.png']) {
     if (!existsSync(join(root, path))) fail(`404 资源未构建：${path}`);
   }
+  // 页脚样式一 / 样式三：模板按固定文件名引用，缺文件只会静默少样式，必须显式检查
+  for (const path of ['templates/assets/footer/style12.css', 'templates/assets/footer/style12.js', 'templates/assets/footer/style33.css', 'templates/assets/footer/style33.js']) {
+    if (!existsSync(join(root, path))) fail(`页脚样式资源未构建：${path}`);
+  }
   if (existsSync(join(root, 'templates/assets/err404/err404.js'))) {
     const builtErrScript = read('templates/assets/err404/err404.js');
     for (const marker of ['__ERR404__', 'strapCanvas', 'badgeQr']) {
@@ -1318,10 +1322,12 @@ if (!columnsChild?.key) fail('首页区块子表单 columns 缺少唯一 key');
 
 // ③ 12 号页脚：按 0.0.10 版式（品牌 1.75fr + 其余 1fr + 二维码 max-content）；
 // 后台栏目多于 4 个时由脚本按真实 .footer-col 数覆盖 --l-cols
-if (!layout.includes('1.75fr 1fr 1fr max-content')) {
+// 样式与脚本已外置到 src/footer/（layout.html 只留开关与数据注入），断言跟着搬家。
+const footerStyle12 = read('src/footer/style12.css') + read('src/footer/style12.js');
+if (!footerStyle12.includes('1.75fr 1fr 1fr max-content')) {
   fail('12 号页脚兜底列必须保持 0.0.10 的 1.75fr 1fr 1fr max-content');
 }
-if (!layout.includes('if(n>4){')) {
+if (!footerStyle12.includes('if(n>4){')) {
   fail('12 号页脚必须按真实 .footer-col 数覆盖 --l-cols');
 }
 

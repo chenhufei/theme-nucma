@@ -4,6 +4,7 @@ templates/assets/js/
 templates/assets/data/
 templates/assets/err404/
 templates/assets/auth/
+templates/assets/footer/
 templates/assets/build-info.json
 .DS_Store
 *.log
@@ -16,3 +17,4 @@ dist/
 *.lnk
 compile*.txt
 diag.txt
+.backup/

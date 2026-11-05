@@ -85,12 +85,12 @@ git clone https://gitee.com/nucma/theme-nucma.git
 - **老站点**：升级前先跑一次迁移，把老数据搬进新组、并清掉僵尸分组：
 
 ```bash
-node scripts/migrate-theme-settings.mjs --base-url https://你的站点 --user 管理员账号 --pass 密码
+node tools/migrate-theme-settings.mjs --base-url https://你的站点 --user 管理员账号 --pass 密码
 # 确认计划无误后加 --apply 真正写入
 # 想连模板早已不读的僵尸分组一起清理，再加 --prune-unknown-groups
 ```
 
-规则：新组已有该字段时**不覆盖**（站长在新界面改过的值优先）；写入前自动备份到 `.local-halo/`；脚本幂等，没有老分组时直接退出。
+规则：新组已有该字段时**不覆盖**（站长在新界面改过的值优先）；写入前自动备份到 `.backup/`（已 gitignore）；脚本幂等，没有老分组时直接退出。
 
 ---
 

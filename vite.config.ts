@@ -33,6 +33,7 @@ export default defineConfig({
         rmSync(resolve(rootDir, 'templates/assets/data'), { recursive: true, force: true })
         rmSync(resolve(rootDir, 'templates/assets/err404'), { recursive: true, force: true })
         rmSync(resolve(rootDir, 'templates/assets/auth'), { recursive: true, force: true })
+        rmSync(resolve(rootDir, 'templates/assets/footer'), { recursive: true, force: true })
         rmSync(resolve(rootDir, 'templates/assets/build-info.json'), { force: true })
       },
       closeBundle: async () => {
@@ -130,9 +131,35 @@ export default defineConfig({
           mkdirSync(authOut, { recursive: true })
           copyFileSync(resolve(authSrc, 'auth.css'), resolve(authOut, 'auth.css'))
         }
+        // 页脚样式一 / 样式三：只在选中该「页脚样式」时按条件加载。
+        // 样式是手写 CSS 原样复制；脚本里有大量 DOM 拼装，走 esbuild 压一遍。
+        const footerSrc = resolve(rootDir, 'src/footer')
+        if (existsSync(footerSrc)) {
+          const footerOut = resolve(rootDir, 'templates/assets/footer')
+          mkdirSync(footerOut, { recursive: true })
+          const footerJs = []
+          for (const file of readdirSync(footerSrc)) {
+            if (file.endsWith('.css')) {
+              copyFileSync(resolve(footerSrc, file), resolve(footerOut, file))
+            } else if (file.endsWith('.js')) {
+              footerJs.push(resolve(footerSrc, file))
+            }
+          }
+          if (footerJs.length) {
+            await esbuild({
+              entryPoints: footerJs,
+              outdir: footerOut,
+              bundle: false,
+              target: 'es2018',
+              minify: true,
+              legalComments: 'none',
+              logLevel: 'info',
+            })
+          }
+        }
         writeFileSync(
           resolve(rootDir, 'templates/assets/build-info.json'),
-          `${JSON.stringify({ theme: packageJson.name, version: packageJson.version, assets: ['css/main.css', 'js/main.js', 'js/members.js', 'js/links.js', 'js/claim.js', 'data/china-provinces.json', 'err404/err404.css', 'err404/err404.js', 'js/qr-encoder.js', 'auth/auth.css'] }, null, 2)}\n`,
+          `${JSON.stringify({ theme: packageJson.name, version: packageJson.version, assets: ['css/main.css', 'js/main.js', 'js/members.js', 'js/links.js', 'js/claim.js', 'data/china-provinces.json', 'err404/err404.css', 'err404/err404.js', 'js/qr-encoder.js', 'auth/auth.css', 'footer/style12.css', 'footer/style12.js', 'footer/style33.css', 'footer/style33.js'] }, null, 2)}\n`,
           'utf8',
         )
         console.log('\nJS bundle completed!')

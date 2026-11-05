@@ -1367,7 +1367,7 @@ import { renderBadgeShare } from './modules/badge-share.js';
         var data = await resp.json();
 
         if (!resp.ok) {
-          throw new Error(data.message || t('members.sendFailed'));
+          throw new Error(data.detail || data.message || t('members.sendFailed'));
         }
 
         codeHint.textContent = data.message || t('members.sent');
@@ -1433,7 +1433,7 @@ import { renderBadgeShare } from './modules/badge-share.js';
         var data = await resp.json();
 
         if (!resp.ok) {
-          throw new Error(data.message || t('claim.submitFailed'));
+          throw new Error(data.detail || data.message || t('claim.submitFailed'));
         }
 
         // 后端会区分「直接生效」与「待审核」，文案由它给出，前端不再另写一套。
