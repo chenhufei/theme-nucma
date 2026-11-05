@@ -40,6 +40,6 @@
 - ZIP 文件名版本正确，包含最新 manifest、设置、模板、i18n 资源与前端资源。
 - 页面资源地址是 `?v=<版本>-<8 位指纹>`（如 `?v=0.0.3-3c07f907`）：同版本号覆盖安装时该值必须变化，否则浏览器会继续用旧 CSS/JS。
 - 在目标 Halo 版本完成安装、启用、配置、主要流程、停用和卸载检查。
-- 只推 Gitee：`git push gitee main --follow-tags`，GitHub 由 Push 镜像自动同步；发行版资产不随镜像，需要 GitHub Release 时单独补。
+- 只推 Gitee：`git push gitee main --follow-tags`，GitHub 由 Push 镜像自动同步；发行版资产不随镜像，需要 GitHub Release 时单独补。**被 main 分支保护拒绝时不得解除保护**，改推 `git push gitee main:xiui` 并开 PR 合入。
 - Gitee 发行版附上 `theme-nucma-<version>.zip`，并按 `-L` 下载一次比对字节数（发行版 `assets[].size` 恒为 0，不能作为校验依据）。
 - 发布说明列出功能变化、兼容范围、验证结果和未验证事项。

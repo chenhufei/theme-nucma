@@ -246,7 +246,7 @@
 
           <div class="member-grid">
             <th:block th:each="member : ${group.members}">
-              <th:block th:replace="~{::memberCard(member=${member}, group=${group})}"></th:block>
+              <th:block th:replace="~{modules/cards :: memberCard(member=${member}, group=${group}, compact=${false})}"></th:block>
             </th:block>
           </div>
         </div>
@@ -258,7 +258,7 @@
          th:unless="${isAllGroups or #lists.isEmpty(groups)}">
       <th:block th:each="group : ${groups}">
         <th:block th:each="member : ${group.members}">
-          <th:block th:replace="~{::memberCard(member=${member}, group=${group})}"></th:block>
+          <th:block th:replace="~{modules/cards :: memberCard(member=${member}, group=${group}, compact=${false})}"></th:block>
         </th:block>
       </th:block>
     </div>
@@ -447,7 +447,7 @@
     点眼睛后卡片从上掉落、吊带被拉长再弹回，可拖着晃；点卡片翻面，
     左上角「返回成员列表」或点遮罩关闭。
   -->
-  <div class="member-badge" id="memberBadge" role="dialog" aria-modal="true"
+  <div class="member-badge" id="memberBadge" role="dialog" aria-modal="true" tabindex="-1"
        th:aria-label="#{members.viewDetail}" inert>
     <div class="member-badge-shade" data-member-badge-close></div>
 
@@ -705,104 +705,7 @@
 
 </th:block>
 
-<!--
-  单张成员卡片。全量视图与单分组视图共用同一份标记，
-  避免两份近似的卡片结构各自漂移（此前全量视图就漏了 title 属性）。
-  参数：member —— Member 对象；group —— 该成员所属分组，用来写入 data-group 供筛选使用。
--->
-<div class="member-card-slot" th:fragment="memberCard(member, group)"
-     th:with="memberAvatar=${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar) ? member.spec.avatar : (member.spec.qq != null and !#strings.isEmpty(member.spec.qq) ? 'https://q1.qlogo.cn/g?b=qq&amp;nk=' + member.spec.qq + '&amp;s=640' : '')},
-              memberJoinedAt=${member.spec.joinedAt != null and !#strings.isEmpty(member.spec.joinedAt) ? member.spec.joinedAt : member.metadata.creationTimestamp}">
-
-  <!-- 已补全 QQ 加好友链接：整张卡片可点击跳转 -->
-  <a th:if="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
-     th:href="${member.spec.qqFriendLink}" target="_blank" rel="noopener noreferrer"
-     class="card card-border member-card member-card-verified"
-     th:title="${member.spec.school}"
-     th:attr="data-qq=${member.spec.qq ?: ''}, data-school=${member.spec.school ?: ''}, data-created=${memberJoinedAt}, data-group=${group.spec.displayName ?: #messages.msg('members.ungrouped')}">
-    <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
-          class="member-card-background" aria-hidden="true"
-          th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
-    <div class="member-avatar">
-      <img th:if="${!#strings.isEmpty(memberAvatar)}" th:src="${memberAvatar}"
-           th:classappend="${#strings.isEmpty(member.spec.avatar)} ? 'member-avatar-default' : ''"
-           th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
-      <svg th:if="${#strings.isEmpty(memberAvatar)}"
-           fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-      </svg>
-    </div>
-    <div class="member-info">
-      <div class="member-name-row">
-        <h3 class="member-name" th:text="${member.spec.displayName}">名称</h3>
-        <span class="member-status-badge member-status-badge--verified" th:text="#{members.verified}">已认证</span>
-      </div>
-      <span data-member-description hidden th:text="${member.spec.description ?: ''}"></span>
-      <div class="member-school"
-           th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
-           th:text="${member.spec.school}">学校</div>
-      <div class="member-school member-school-empty"
-           th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}" th:text="#{members.noBio}">暂无简介</div>
-    </div>
-    <!-- 桌面端聚焦时在浏览器本地生成 QQ 链接二维码 -->
-    <div class="member-qr-popup" data-member-qr-popup aria-hidden="true">
-      <canvas data-member-qr
-              th:attr="data-qr-text=${member.spec.qqFriendLink}" th:aria-label="|添加 ${member.spec.displayName} 的 QQ 二维码|"
-              width="240" height="240" role="img"></canvas>
-      <span class="member-qr-status" data-member-qr-status th:text="#{members.generating}">生成中</span>
-    </div>
-  </a>
-
-  <!-- 尚未补全：展示「待补全」状态，有 QQ 号时给出补全入口 -->
-  <div th:unless="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
-     class="card card-border member-card member-card-incomplete"
-     th:title="${member.spec.school}"
-     th:attr="data-qq=${member.spec.qq ?: ''}, data-school=${member.spec.school ?: ''}, data-created=${memberJoinedAt}, data-group=${group.spec.displayName ?: #messages.msg('members.ungrouped')}">
-    <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
-          class="member-card-background" aria-hidden="true"
-          th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
-    <div class="member-avatar">
-      <img th:if="${!#strings.isEmpty(memberAvatar)}" th:src="${memberAvatar}"
-           th:classappend="${#strings.isEmpty(member.spec.avatar)} ? 'member-avatar-default' : ''"
-           th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
-      <svg th:if="${#strings.isEmpty(memberAvatar)}"
-           fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-      </svg>
-    </div>
-    <div class="member-info" th:classappend="${member.spec.qq != null and !#strings.isEmpty(member.spec.qq)} ? ' member-info-with-claim' : ''">
-      <div class="member-name-row">
-        <h3 class="member-name" th:text="${member.spec.displayName}">名称</h3>
-        <span class="member-status-badge member-status-badge--pending" th:text="#{members.pending}">待补全</span>
-      </div>
-      <span data-member-description hidden th:text="${member.spec.description ?: ''}"></span>
-      <div class="member-school"
-           th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
-           th:text="${member.spec.school}">学校</div>
-      <div class="member-school member-school-empty"
-           th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}" th:text="#{members.noBio}">暂无简介</div>
-      <button th:if="${member.spec.qq != null and !#strings.isEmpty(member.spec.qq)}"
-              type="button" class="member-claim-btn" data-claim-modal-open
-              th:attr="data-claim-qq=${member.spec.qq},
-                       data-claim-name=${member.spec.displayName},
-                       data-claim-school=${member.spec.school},
-                       data-claim-avatar=${member.spec.avatar}"
-              title="补全 QQ 加好友链接" th:title="#{members.claimLinkTitle}">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-        </svg>
-        <span th:text="#{members.claimShort}">补全链接</span>
-      </button>
-    </div>
-  </div>
-
-  <button type="button" class="member-preview-trigger" data-member-preview th:attr="data-member-id=${member.metadata.name}" aria-label="查看成员详情" th:aria-label="#{members.viewDetail}" title="查看详情" th:title="#{moments.viewDetail}">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7S19 19 12 19 1.5 12 1.5 12Z"></path>
-      <circle cx="12" cy="12" r="3"></circle>
-    </svg>
-  </button>
-</div>
+<!-- 成员卡片已抽到 modules/cards.html :: memberCard，成员页、友链页与首页区块共用一套标记；
+     改卡片字段或徽标只改那一处，三个页面自动同步。 -->
 </html>
 </th:block>

@@ -1017,6 +1017,7 @@ footer.site-footer .footer-bottom{display:none!important}
   </footer>
 
   <halo:footer />
+  <th:block th:replace="~{modules/search-overlay :: overlay}"></th:block>
   <th:block th:replace="~{modules/i18n-dict :: dict}"></th:block>
   <script th:inline="javascript">
     window.NUCMA_RUNTIME = {

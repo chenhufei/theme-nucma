@@ -1,6 +1,7 @@
 import { t } from './modules/i18n.js';
 import { initDiagnostics } from './modules/diagnostics.js';
 import { initHighlight } from './modules/highlight.js';
+import { initSiteSearch } from './modules/site-search.js';
 
 /**
  * NUCMA 国风主题 - 主脚本
@@ -794,6 +795,9 @@ import { initHighlight } from './modules/highlight.js';
   }
 
   // ===== 首页卡片排序（pinned 优先，严格按 metadata.name 相等匹配） + 数量限制（pinned 不受限） =====
+  // 卡片可能被 .member-card-slot 包一层（成员卡模板统一后首页/成员页共用同一片段），
+  // 排序与隐藏都必须作用在最外层的 slot 上：直接隐藏内层卡片会留下 0 高度占位行，
+  // 网格 gap 仍按行数计算，底部会多出一截空白；把内层卡片 appendChild 到网格还会把它从 slot 里拎出来。
   function initGridLimit() {
     document.querySelectorAll('[data-limit]').forEach(function(grid) {
       var limit = parseInt(grid.dataset.limit) || 0;
@@ -805,48 +809,52 @@ import { initHighlight } from './modules/highlight.js';
       var cardSelector = grid.classList.contains('member-grid')
         ? '.member-card'
         : (grid.classList.contains('link-grid') ? '.link-card' : '.member-card, .link-card');
-      var cards = Array.from(grid.querySelectorAll(cardSelector));
 
-      if (pinnedIds.length > 0) {
-        var pinnedCards = [];
-        var otherCards = [];
-        cards.forEach(function(card) {
-          var id = (card.dataset.id || '').toString().trim();
-          if (!id) { otherCards.push(card); return; }
-          // 严格全等匹配：只有 pinnedIds 中完全相同的 id 才算固定
-          var rank = pinnedIds.indexOf(id);
-          if (rank >= 0) {
-            pinnedCards.push({ card: card, rank: rank });
-          } else {
-            otherCards.push(card);
-          }
-        });
-        pinnedCards.sort(function(a, b) { return a.rank - b.rank; });
-        var pinnedOnly = pinnedCards.map(function(x) { return x.card; });
-        var ordered = pinnedOnly.concat(otherCards);
-        // 全部按顺序重新 appendChild，保证 pinned 全部最前
-        ordered.forEach(function(card) { grid.appendChild(card); });
-        cards = ordered;
+      // card = 负责取 data-id 的元素；el = 真正参与网格布局的元素
+      var items = Array.from(grid.querySelectorAll(cardSelector)).map(function(card) {
+        return { card: card, el: card.closest('.member-card-slot') || card };
+      });
 
-        // 数量限制：只限制 otherCards，pinned 的卡永远保留
-        if (limit > 0 && pinnedOnly.length < limit) {
-          var remain = limit - pinnedOnly.length;
-          otherCards.forEach(function(card, i) {
-            card.style.display = i >= remain ? 'none' : '';
-          });
-          // pinned 的卡确保显示
-          pinnedOnly.forEach(function(card) { card.style.display = ''; });
-        } else if (limit > 0) {
-          // pinned 数已经超过 limit，pinned 仍然全部显示，other 全部隐藏
-          pinnedOnly.forEach(function(card) { card.style.display = ''; });
-          otherCards.forEach(function(card) { card.style.display = 'none'; });
-        }
-      } else {
+      if (pinnedIds.length === 0) {
         // 无 pinned：正常全局 limit
         if (limit > 0) {
-          cards.forEach(function(card, i) {
-            card.style.display = i >= limit ? 'none' : '';
+          items.forEach(function(it, i) {
+            it.el.style.display = i >= limit ? 'none' : '';
           });
+        }
+        return;
+      }
+
+      var pinned = [];
+      var others = [];
+      items.forEach(function(it) {
+        var id = (it.card.dataset.id || '').toString().trim();
+        // 严格全等匹配：只有 pinnedIds 中完全相同的 id 才算固定
+        var rank = id ? pinnedIds.indexOf(id) : -1;
+        if (rank >= 0) {
+          pinned.push({ el: it.el, rank: rank });
+        } else {
+          others.push(it);
+        }
+      });
+      pinned.sort(function(a, b) { return a.rank - b.rank; });
+
+      // 全部按顺序重新 appendChild，保证 pinned 全部最前
+      pinned.map(function(x) { return x.el; })
+        .concat(others.map(function(it) { return it.el; }))
+        .forEach(function(el) { grid.appendChild(el); });
+
+      if (limit > 0) {
+        pinned.forEach(function(x) { x.el.style.display = ''; });
+        if (pinned.length < limit) {
+          // 数量限制：只限制 others，pinned 的卡永远保留
+          var remain = limit - pinned.length;
+          others.forEach(function(it, i) {
+            it.el.style.display = i >= remain ? 'none' : '';
+          });
+        } else {
+          // pinned 数已经超过 limit，pinned 仍然全部显示，other 全部隐藏
+          others.forEach(function(it) { it.el.style.display = 'none'; });
         }
       }
     });
@@ -1627,6 +1635,7 @@ import { initHighlight } from './modules/highlight.js';
     initArticleImageViewer();
     initHistoryBackLinks();
     initWidgetOpeners();
+    initSiteSearch();
     initBannerAnimation();
     initHeroMembersMarquee();
     initHeaderLinksCarousel();

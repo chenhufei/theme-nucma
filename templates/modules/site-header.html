@@ -72,9 +72,8 @@
   <!-- 工具区：搜索 / 明暗切换 / 登录。首页与内页共用同一套，保证页头完全一致。 -->
   <div class="nh-tools">
     <th:block th:if="${theme.config.navigation?.search_enabled != false}">
-      <button th:if="${pluginFinder.available('PluginSearchWidget')}"
-              type="button"
-              data-widget-open="SearchWidget"
+      <button type="button"
+              data-search-open
               class="btn btn-ghost btn-circle btn-sm icon-btn" aria-label="搜索" th:aria-label="#{common.search}">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <circle cx="11" cy="11" r="8"></circle>

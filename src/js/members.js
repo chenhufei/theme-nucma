@@ -423,7 +423,8 @@ import { renderBadgeShare } from './modules/badge-share.js';
 
   /* 成员页工牌弹层：挂绳、卡扣、拖拽与入场全部由 err404.js 驱动，
      这里只负责打开/关闭、把点击的成员交给工牌、以及键盘可及性。 */
-  function initMemberBadge() {
+  function initMemberBadge(opts) {
+    var options = opts || {};
     var triggers = Array.from(document.querySelectorAll('[data-member-preview]'));
     var overlay = document.getElementById('memberBadge');
     if (!triggers.length || !overlay) return;
@@ -438,6 +439,7 @@ import { renderBadgeShare } from './modules/badge-share.js';
     var saving = false;
     var saveTimer = 0;
     var lastFocus = null;
+    var pendingScroll = null;
 
     /* 分享图预览层：点「保存工作证」先出图，不直接下载 */
     var preview = document.getElementById('badgePreview');
@@ -495,7 +497,29 @@ import { renderBadgeShare } from './modules/badge-share.js';
       if (saveStatus) saveStatus.textContent = '';
     }
 
-    function open(memberCard, trigger) {
+    var returnMarked = null;
+
+    function clearBadgeReturn() {
+      if (!returnMarked) return;
+      returnMarked.classList.remove('is-badge-return');
+      returnMarked = null;
+    }
+
+    function markBadgeReturn(card) {
+      clearBadgeReturn();
+      if (!card || !card.classList.contains('member-card')) return;
+      card.classList.add('is-badge-return');
+      returnMarked = card;
+      ['pointerdown', 'keydown'].forEach(function(type) {
+        document.addEventListener(type, clearBadgeReturn, { once: true, capture: true });
+      });
+      /* 悬停也要撤：撤掉之后二维码浮层才回到主题原来的 hover 行为 */
+      card.addEventListener('pointerenter', clearBadgeReturn, { once: true });
+    }
+
+    function open(memberCard, trigger, opts) {
+      var silentFocus = !!(opts && opts.silentFocus);
+      clearBadgeReturn();
       lastFocus = trigger || document.activeElement;
       currentCard = memberCard;
       resetSave();
@@ -522,11 +546,18 @@ import { renderBadgeShare } from './modules/badge-share.js';
       overlay.removeAttribute('inert');
       overlay.classList.add('is-open');
       document.documentElement.classList.add('member-badge-open');
-      closeButton.focus();
+      /* preventScroll：弹层是 fixed 的，但浏览器为了「把焦点元素纳入视口」照样会滚底层页面，
+         半透明遮罩下就表现为一进页面就下滑。
+         silentFocus：深链落地时页面还没有任何键鼠交互，程序化 focus 一律按 :focus-visible
+         画环，所以焦点交给弹层容器（不画环）而不是返回按钮；手动点眼睛时维持原来的焦点位置。 */
+      function focusInside() {
+        (silentFocus ? overlay : closeButton).focus({ preventScroll: true });
+      }
+      focusInside();
       /* 打开后滚动条消失、视口变宽，先重量尺寸再播入场 */
       requestAnimationFrame(function() {
         /* 首帧兜底：样式刚切到可见时 focus() 可能落空，焦点必须在弹层里 */
-        if (!overlay.contains(document.activeElement)) closeButton.focus();
+        if (!overlay.contains(document.activeElement)) focusInside();
         if (typeof window.__badgeMeasure === 'function') window.__badgeMeasure();
         requestAnimationFrame(function() {
           if (typeof window.__badgeDrop === 'function') window.__badgeDrop();
@@ -541,8 +572,20 @@ import { renderBadgeShare } from './modules/badge-share.js';
       overlay.classList.remove('is-previewing');   /* 关弹层时别把操作条留在透明态 */
       overlay.setAttribute('inert', '');
       document.documentElement.classList.remove('member-badge-open');
-      if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+      /* 关闭后高亮跟着那张卡，不再让卡右上角的眼睛带环；未补全的 div 卡片靠 tabindex="-1" 才接得住焦点。
+         高亮写在 .is-badge-return 上而不是等 :focus-visible：主题原有的卡片高亮挂在 :focus-visible，
+         鼠标点「返回成员列表」时程序化 focus 不算键盘交互、判不出环，只有键盘路径会亮，
+         补一个类让深链 / 鼠标 / 键盘三条路径表现一致；任何真实交互（点、键、悬停）就撤。 */
+      var returnTarget = currentCard && document.contains(currentCard) ? currentCard : lastFocus;
+      if (returnTarget && document.contains(returnTarget)) returnTarget.focus({ preventScroll: true });
       lastFocus = null;
+      markBadgeReturn(returnTarget);
+      /* 深链带进来的那张卡等弹层真关掉了再滚，打开期间底层一动不动；
+         slot 早被 revealAll 放行过，这里只负责滚进视口。 */
+      if (pendingScroll && document.contains(pendingScroll)) {
+        pendingScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      pendingScroll = null;
     }
 
     overlay.querySelectorAll('[data-member-badge-close]').forEach(function(el) {
@@ -797,6 +840,23 @@ import { renderBadgeShare } from './modules/badge-share.js';
         open(memberCard, trigger);
       });
     });
+
+    /* 站内搜索的成员卡片带 ?badge=<成员ID> 跳过来，就直接弹那张工牌。
+       信息流是分批放行的（没放行的 slot 是 display:none，滚不动），页面也可能停在星图视图，
+       所以先切回网格、放行全部匹配卡，再开弹层；ID 查不到就当普通落地。
+       那张卡的位置留到关弹层时才滚（pendingScroll），打开期间底层不跳。 */
+    if (!options.badgeId) return;
+    var target = triggers.filter(function(trigger) {
+      return trigger.getAttribute('data-member-id') === options.badgeId;
+    })[0];
+    if (!target) return;
+    var targetSlot = target.closest('.member-card-slot');
+    var targetCard = targetSlot ? targetSlot.querySelector('.member-card') : null;
+    if (!targetCard) return;
+    if (options.network) options.network.setMode('grid', false);
+    if (options.filters) options.filters.revealAll();
+    pendingScroll = targetSlot;
+    requestAnimationFrame(function() { open(targetCard, target, { silentFocus: true }); });
   }
 
   function initMemberFilters(cards, onFilterChange) {
@@ -977,6 +1037,13 @@ import { renderBadgeShare } from './modules/badge-share.js';
 
     revealed = REVEAL_BATCH;
     recompute();
+
+    return {
+      revealAll: function() {
+        revealed = matchedCards.length;
+        recompute();
+      }
+    };
   }
 
   function initMemberNetwork() {
@@ -1459,12 +1526,25 @@ import { renderBadgeShare } from './modules/badge-share.js';
     });
   }
 
+  /** 工牌深链参数读一次就用 replaceState 抹掉，刷新或转发都不会再弹一次。 */
+  function badgeDeepLink() {
+    var params = new URLSearchParams(window.location.search);
+    var badgeId = params.get('badge') || '';
+    if (!badgeId) return '';
+    params.delete('badge');
+    var query = params.toString();
+    window.history.replaceState({}, '', window.location.pathname +
+      (query ? '?' + query : '') + window.location.hash);
+    return badgeId;
+  }
+
   function init() {
     var cards = Array.from(document.querySelectorAll('.member-card'));
+    var badgeId = badgeDeepLink();
     var network = initMemberNetwork();
-    initMemberFilters(cards, function(matched) { network.setCards(matched); });
+    var filters = initMemberFilters(cards, function(matched) { network.setCards(matched); });
     initMemberOverview(cards);
-    initMemberBadge();
+    initMemberBadge({ network: network, filters: filters, badgeId: badgeId });
     initMemberQrPopups();
     initClaimModal();
   }

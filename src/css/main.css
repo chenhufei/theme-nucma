@@ -1555,9 +1555,9 @@ a.about-service-item:focus-visible .about-service-arrow { transform: translateX(
   transition: transform var(--transition-normal);
   border-radius: 3px 0 0 3px;
 }
-.member-card:hover::before, .member-card:focus-visible::before,
+.member-card:hover::before, .member-card:focus-visible::before, .member-card.is-badge-return::before,
 .link-card:hover::before, .link-card:focus-visible::before { transform: scaleY(1); }
-.member-card:hover, .member-card:focus-visible,
+.member-card:hover, .member-card:focus-visible, .member-card.is-badge-return,
 .link-card:hover, .link-card:focus-visible {
   border-color: rgba(var(--primary-rgb, 209,62,67), 0.45);
   transform: translateY(-4px);
@@ -2089,6 +2089,13 @@ a.about-service-item:focus-visible .about-service-arrow { transform: translateX(
   visibility: visible;
   transform: translate(0, -50%) scale(1);
 }
+/* 关闭工牌后的高亮期间不弹二维码：刚看完工牌，卡边再挂一张码是重复信息 */
+.member-card.is-badge-return:focus .member-qr-popup,
+.member-card.is-badge-return:focus-visible .member-qr-popup {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(6px, -50%) scale(0.96);
+}
 .member-qr-popup canvas {
   display: block;
   width: var(--member-card-height) !important;
@@ -2154,6 +2161,8 @@ a.about-service-item:focus-visible .about-service-arrow { transform: translateX(
 .member-card-slot { position: relative; display: flex; min-width: 0; }
 .member-card-slot > .member-card { flex: 1 1 auto; }
 .member-card-slot .member-info { padding-right: 1.4rem; }
+/* 首页成员区块用紧凑卡（不带详情预览按钮），去掉为按钮预留的右内距 */
+.member-grid--plain .member-card-slot .member-info { padding-right: 0; }
 .member-preview-trigger {
   position: absolute;
   top: 6px;
@@ -3332,6 +3341,10 @@ html.member-badge-open body { overflow: hidden; }
   pointer-events: none;
   /* 关闭时等淡出跑完再藏；打开时不延迟，否则首帧不可见、focus() 会落空 */
   transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+.member-badge:focus {
+  /* 深链落地时焦点交给弹层容器（不是返回按钮），容器只负责把焦点收进弹层，不画环 */
+  outline: none;
 }
 .member-badge.is-open {
   visibility: visible;
@@ -7877,4 +7890,470 @@ h1, h2, h3, h4, h5, h6,
   .prose blockquote { font-size: 15.5px; }
   .prose h2 { font-size: 17.5px; margin-top: 1.9em; }
   .prose h3 { font-size: 15.5px; }
+}
+
+/* ===== 站内搜索弹层（主题自带，替代 PluginSearchWidget 界面）=====
+   结构见 templates/modules/search-overlay.html，行为见 src/js/modules/site-search.js。
+   沿用站点语汇：平角细线、朱红短横做分组标记、右侧对齐的日期/分类元信息。 */
+.ns {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: block;
+}
+.ns[hidden] { display: none; }
+html.ns-open { overflow: hidden; }
+
+.ns__veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, .58);
+  cursor: default;
+}
+
+.ns__panel {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(820px, calc(100vw - 32px));
+  max-height: min(78vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, .30);
+  overflow: hidden;
+}
+.ns__panel.is-loading::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  animation: ns-sweep 900ms linear infinite;
+}
+@keyframes ns-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.ns__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  height: 56px;
+  border-bottom: 1px solid var(--border-color);
+}
+.ns__glyph {
+  flex: none;
+  display: flex;
+  align-items: center;
+  color: var(--text-tertiary);
+}
+.ns__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 15.5px;
+  color: var(--text-primary);
+}
+.ns__input::placeholder { color: var(--text-tertiary); }
+.ns__input::-webkit-search-cancel-button { display: none; }
+/* 全局 :focus-visible 的 3px 光环在整条搜索栏上太重，这里换成栏底的一条朱红实线。 */
+.ns__input:focus-visible { outline: none; box-shadow: none; }
+.ns__bar:focus-within { border-bottom-color: var(--primary); }
+.ns__clear {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.ns__clear:hover { color: var(--primary); background: var(--bg-secondary); }
+.ns__esc {
+  flex: none;
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 1px 6px;
+}
+
+.ns__body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 0 12px;
+}
+.ns__hint,
+.ns__state {
+  margin: 0;
+  padding: 26px 20px;
+  color: var(--text-tertiary);
+  font-size: 13.5px;
+  text-align: center;
+}
+.ns__state[hidden], .ns__hint[hidden] { display: none; }
+.ns__stateSub {
+  display: block;
+  margin-top: 6px;
+  font-size: 12.5px;
+}
+
+.ns__recent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 20px 4px;
+}
+.ns__recent[hidden] { display: none; }
+.ns__recentLabel,
+.ns__recentClear {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  letter-spacing: .02em;
+}
+.ns__recentClear {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ns__recentClear:hover { color: var(--primary); }
+.ns__recentList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ns__recentItem {
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+.ns__recentItem:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.ns__list { display: block; }
+.ns__list:empty { display: none; }
+
+.ns__group {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 20px 4px;
+  font-size: 11.5px;
+  letter-spacing: .12em;
+  color: var(--text-tertiary);
+}
+.ns__group:first-child { margin-top: 4px; }
+.ns__groupDash {
+  width: 14px;
+  height: 2px;
+  background: var(--primary);
+}
+.ns__groupN::before { content: "·"; margin: 0 6px; color: var(--border-color); }
+
+/* 类型 chips：点一下只留那一组（切换不打接口），右侧是本次耗时 */
+.ns__chips {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+.ns__chips[hidden] { display: none; }
+.ns__chipList { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.ns__chip {
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 4px 9px;
+  background: var(--bg-primary);
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ns__chip:hover { border-color: var(--primary); color: var(--primary); }
+.ns__chip.is-active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(var(--primary-rgb), .06);
+}
+.ns__chipN { margin-left: 5px; font-variant-numeric: tabular-nums; }
+.ns__chipsTime {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 文章/页面的行：左列日期柱（年份小字 + MM-DD 淡朱块），和归档页 --portalflow 同一套令牌 */
+.ns__row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+  padding: 13px 20px 12px;
+  border-bottom: 1px solid var(--border-color);
+  text-decoration: none;
+  color: inherit;
+}
+.ns__row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary);
+  transform: scaleY(0);
+  transition: transform .16s;
+}
+.ns__row:hover,
+.ns__row.is-selected { background: rgba(var(--primary-rgb), .045); }
+.ns__row:hover::before,
+.ns__row.is-selected::before { transform: scaleY(1); }
+.ns__main { flex: 1 1 auto; min-width: 0; }
+.ns__dayCol {
+  flex: none;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+.ns__year {
+  font-size: 9.5px;
+  letter-spacing: .26em;
+  text-indent: .26em;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.ns__day {
+  width: 72px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: rgba(221, 51, 51, .05);
+  color: var(--primary);
+  font-family: var(--font-mono, var(--font-sans));
+  font-size: .8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.ns__title {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 24px;
+  letter-spacing: .02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 第二行：署名 + 带划线的节选；节选没有划线整行不渲染（见 site-search.js 的 rowHtml） */
+.ns__byline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 5px;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 18px;
+}
+.ns__byline em { flex: none; font-style: normal; color: var(--text-tertiary); }
+.ns__byline em::after { content: " /"; }
+.ns__byline b {
+  flex: none;
+  font-weight: 500;
+  max-width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+.ns__byline i {
+  font-style: normal;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-tertiary);
+}
+.ns__byline b + i::before { content: "·"; margin-right: 8px; color: var(--border-color); }
+.ns__row mark,
+.ns__card mark {
+  background: transparent;
+  color: var(--primary);
+  font-weight: 700;
+  padding: 0;
+}
+
+/* 成员/链接的卡片：成员页与友链页同款结构，选中态用卡片自己的 3px 朱红左条 */
+.ns__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 6px 20px 14px;
+}
+.ns__card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  min-width: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+}
+.ns__card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary);
+  border-radius: 3px 0 0 3px;
+  transform: scaleY(0);
+  transition: transform .16s;
+}
+.ns__card:hover,
+.ns__card.is-selected { border-color: rgba(var(--primary-rgb), .3); }
+.ns__card:hover::before,
+.ns__card.is-selected::before { transform: scaleY(1); }
+.ns__logo {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 17px;
+}
+.ns__logo img { width: 100%; height: 100%; object-fit: cover; }
+.ns__cinfo { flex: 1 1 auto; min-width: 0; }
+.ns__cname { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ns__cname b {
+  font-size: 13.5px;
+  font-weight: 600;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ns__badge {
+  flex: none;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #047857;
+  background: rgba(16, 185, 129, .1);
+  border: 1px solid rgba(16, 185, 129, .24);
+}
+.ns__csub {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ns__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 36px;
+  padding: 0 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.ns__count { min-width: 0; }
+.ns__keys { display: flex; align-items: center; gap: 12px; }
+.ns__keyPair { display: flex; align-items: center; gap: 5px; }
+.ns__keyPair i {
+  font-style: normal;
+  font-family: var(--font-sans);
+  color: var(--text-secondary);
+}
+.ns__extra, .ns__authors { display: none; }
+
+@media (max-width: 719px) {
+  .ns__panel { top: 52px; max-height: calc(100vh - 88px); width: calc(100vw - 20px); }
+  .ns__bar { height: 50px; padding: 0 12px; }
+  .ns__input { font-size: 15px; }
+  .ns__esc { display: none; }
+  .ns__chips { padding: 9px 12px; gap: 6px; }
+  .ns__chipList { gap: 6px; overflow: hidden; }
+  .ns__chip { padding: 3px 7px; font-size: 11px; }
+  .ns__body { padding: 6px 0 8px; }
+  .ns__hint, .ns__state { padding: 20px 16px; font-size: 12.5px; }
+  .ns__recent { padding: 4px 14px; gap: 6px; }
+  .ns__group { margin: 10px 12px 2px; }
+  .ns__row { gap: 11px; padding: 10px 12px 9px; }
+  .ns__dayCol { width: 54px; gap: 5px; }
+  .ns__year { font-size: 8.5px; letter-spacing: .18em; text-indent: .18em; }
+  .ns__day { width: 54px; padding: 2px 4px; font-size: 11.2px; }
+  .ns__title { font-size: 12.8px; line-height: 18px; }
+  .ns__byline { margin-top: 4px; gap: 6px; font-size: 10.5px; line-height: 15px; }
+  .ns__byline b { max-width: 84px; }
+  .ns__byline b + i::before { margin-right: 6px; }
+  .ns__cards { grid-template-columns: 1fr; gap: 9px; padding: 4px 12px 12px; }
+  .ns__card { padding: 10px 12px; gap: 11px; }
+  .ns__logo { width: 40px; height: 40px; font-size: 15px; }
+  .ns__cname b { font-size: 12.8px; }
+  .ns__csub { font-size: 10.5px; }
+  .ns__badge { font-size: 9px; padding: 1px 5px; }
+  .ns__foot { height: 34px; padding: 0 14px; font-size: 11px; }
+  .ns__keys { gap: 9px; }
 }
