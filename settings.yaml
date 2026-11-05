@@ -178,28 +178,50 @@ spec:
           label: 首屏数字（8 / 10 / 11 号版式不显示）
           addLabel: 添加数字
           emptyText: 暂无数字
-          help: 数字、单位、指代含义都可以改。1/2/7 号版式取前 3 个，3/4/9 号取前 4 个，6 号取前 3 个（第 1 个同时作为左侧竖面的主数字），5 号只把第 1 个放进右侧圆环，8/10/11 号不显示数字。
+          help: 每条的「取值方式」可选手填，也可直接取站点真实数据（成员数 / 文章数 / 友链数 / 成员分组数 / 成员学校数）；选真实数据时「数字」一栏自动计算，留空即可。1/2/7 号版式取前 3 个，3/4/9 号取前 4 个，6 号取前 3 个（第 1 个同时作为左侧竖面的主数字），5 号只把第 1 个放进右侧圆环，8/10/11 号不显示数字；12–14 号旧版横幅固定显示真实统计，不读这里。
           itemLabels:
             - type: text
-              label: $value.value
-            - type: text
               label: $value.label
+            - type: text
+              label: $value.value
           value:
-            - value: '104'
-              unit: 所
-              label: 成员单位
-            - value: '356'
+            - source: members
+              value: ''
+              unit: 位
+              label: 联盟成员
+            - source: posts
+              value: ''
               unit: 篇
               label: 累计作品
-            - value: '42'
+            - source: groups
+              value: ''
               unit: 个
               label: 覆盖区县
           children:
+            - $formkit: select
+              name: source
+              label: 取值方式
+              value: manual
+              options:
+                - label: 手动填写
+                  value: manual
+                - label: 联盟成员数（真实数据）
+                  value: members
+                - label: 文章数（真实数据）
+                  value: posts
+                - label: 友情链接数（真实数据）
+                  value: links
+                - label: 成员分组数（真实数据）
+                  value: groups
+                - label: 成员学校数（真实数据）
+                  value: schools
             - $formkit: text
               name: value
               label: 数字
               value: '0'
-              validation: required
+              help: 取值方式选真实数据时这一格自动计算，手填无效。
+              key: hero-stat-value
+              if: $value.source !== 'members' && $value.source !== 'posts' && $value.source !== 'links' && $value.source !== 'groups' && $value.source !== 'schools'
             - $formkit: text
               name: unit
               label: 单位
@@ -211,7 +233,7 @@ spec:
               value: ''
               placeholder: 成员单位
               validation: required
-          if: $get('layout').value !== 'cards' && $get('layout').value !== 'minimal' && $get('layout').value !== 'p83' && $get('layout').value !== 'none' && $get('layout').value !== 'none'
+          if: $get('layout').value !== 'cards' && $get('layout').value !== 'minimal' && $get('layout').value !== 'p83' && $get('layout').value !== 'none' && $get('layout').value !== 'legacy-floaters' && $get('layout').value !== 'legacy-magazine' && $get('layout').value !== 'legacy-classic'
           key: hero-stats
         - $formkit: array
           name: blocks
@@ -732,9 +754,11 @@ spec:
           value: /members
         - $formkit: select
           name: nav_align
+          key: nav-align
           label: 菜单对齐
           value: right
           help: 页头内菜单与自定义链接的水平对齐。本组对所有页面生效，首页首屏自带的页头也读这里的设置。
+          if: "($get('header_menu').value != null && $get('header_menu').value !== '') || ($get('custom_links').value != null && $get('custom_links').value.length > 0)"
           options:
             - label: 居中对齐
               value: center
@@ -749,6 +773,8 @@ spec:
           help: 右上角显示登录按钮，已登录用户显示头像
         - $formkit: menuSelect
           name: header_menu
+          id: header_menu
+          key: nav-header_menu
           label: 顶部菜单
           clearable: true
           help: 选择 Header 顶部导航使用的菜单（从 Halo 后台已创建的菜单中选择），清空则不显示主菜单
@@ -768,8 +794,12 @@ spec:
           max: 10000
           step: 500
           help: 页头「自定义链接」超过 1 个时会自动上下滚动轮播，此处设置每个链接的停留时间，默认 3500ms。只影响页头，旧版横幅的轮播间隔在「首页首屏」组里单独设置。
+          key: nav-carousel_interval
+          if: "$get('custom_links').value != null && $get('custom_links').value.length > 1"
         - $formkit: array
           name: custom_links
+          id: custom_links
+          key: nav-custom_links
           label: 自定义链接
           value: []
           addLabel: 添加链接
@@ -865,6 +895,7 @@ spec:
           key: footer-join_style
         - $formkit: select
           name: footer_join_icon
+          id: footer_join_icon
           label: 「加入我们」图标
           value: arrow
           options:
@@ -891,8 +922,8 @@ spec:
           value: ''
           accepts:
             - image/*
-          help: 可选。上传后会替换上面的内置图标，建议使用透明背景的方形图片（16–24px 显示）。
-          if: "$get('footer_style').value === 'style12' || $get('footer_style').value === 'style33'"
+          help: 可选。上传后会替换上面的内置图标，建议使用透明背景的方形图片（16–24px 显示）。上面的图标选「无图标」时本项不生效。
+          if: "($get('footer_style').value === 'style12' || $get('footer_style').value === 'style33') && $get('footer_join_icon').value !== 'none'"
           key: footer-join_image
         - $formkit: array
           name: footer_menus
@@ -994,19 +1025,25 @@ spec:
           key: footer-custom_column_items
         - $formkit: text
           name: icp_number
+          id: icp_number
           label: ICP 备案号
           placeholder: 京ICP备XXXXXXXX号
         - $formkit: text
           name: icp_link
           label: ICP 备案链接
           value: https://beian.miit.gov.cn/
+          if: "$get('icp_number').value != null && $get('icp_number').value !== ''"
+          key: footer-icp_link
         - $formkit: text
           name: police_number
+          id: police_number
           label: 公安备案号
           placeholder: 京公网安备XXXXXXXXXXXXXX号
         - $formkit: text
           name: police_record_code
           label: 公安备案验证码
+          if: "$get('police_number').value != null && $get('police_number').value !== ''"
+          key: footer-police_record_code
     - group: sidebar
       label: 文章页与侧边栏
       formSchema:
@@ -1413,6 +1450,7 @@ spec:
       formSchema:
         - $formkit: checkbox
           name: members_overview_enabled
+          id: members_overview_enabled
           label: 成员页概览
           value: true
           help: 开启后成员页分组上方显示统计概览、地区分布与省份地图；关闭仅保留分组与成员列表。默认视图见本组「默认显示方式」，连线样式见本组「显示学校关联连线」
@@ -1421,6 +1459,8 @@ spec:
           label: 地图审图号
           value: ''
           help: 境内公开发布含中国地图的页面需标注审图号，格式如「GS(2024)1234号」。留空则不显示；未取得审图号前建议关闭成员页概览，或改用自然资源部标准地图底图。
+          if: $get('members_overview_enabled').value != false
+          key: pages-members_map_review_number
         - $formkit: checkbox
           name: members_comment_enabled
           label: 成员页评论区
@@ -1438,11 +1478,14 @@ spec:
           help: 访客首次打开成员页时使用的视图；访客手动切换后会记住自己的选择，不再跟随此处设置。
         - $formkit: checkbox
           name: globe_affinity_enabled
+          id: globe_affinity_enabled
+          key: pages-globe_affinity_enabled
           label: 显示学校关联连线
           value: true
           help: 需与插件「学校关联分析」的开关同时打开；任一处关闭都不会发起 AI 分析请求。
         - $formkit: select
           name: globe_affinity_min_strength
+          key: pages-globe_affinity_min_strength
           label: 连线显示阈值
           value: '0.35'
           options:
@@ -1453,11 +1496,14 @@ spec:
             - label: 仅强关联
               value: '0.7'
           help: 只显示关联强度不低于该值的连线；阈值越高连线越少，画面更干净。线宽与透明度按当前最强关联等比归一，强关联永远最粗。
+          if: $get('globe_affinity_enabled').value != false
         - $formkit: checkbox
           name: globe_affinity_show_reason
+          key: pages-globe_affinity_show_reason
           label: 显示分析依据
           value: true
           help: 在关系网下方展示参与分析的学校数、分析维度与每条关联的判断理由；鼠标移到连线上也会即时显示该条的判断理由。
+          if: $get('globe_affinity_enabled').value != false
         - $formkit: checkbox
           name: page_comment_enabled
           label: 自定义页评论区
@@ -1521,6 +1567,7 @@ spec:
           key: e404-home_text
         - $formkit: checkbox
           name: error404_show_back
+          id: error404_show_back
           label: 显示「返回上一页」
           value: true
           help: 有关历史就后退，没有历史则回首页。
@@ -1530,7 +1577,7 @@ spec:
           name: error404_back_text
           label: 「返回上一页」按钮文字
           value: 返回上一页
-          if: "$get('error404_style').value !== 'classic'"
+          if: "$get('error404_style').value !== 'classic' && $get('error404_show_back').value != false"
           key: e404-back_text
         - $formkit: text
           name: error404_tip_text
@@ -1541,6 +1588,7 @@ spec:
           key: e404-tip_text
         - $formkit: checkbox
           name: error404_show_badge
+          id: error404_show_badge
           label: 显示成员工牌
           value: true
           help: 关闭后只保留右侧说明卡片，页面变单栏居中；下面的工牌相关选项随之失效。
@@ -1551,7 +1599,7 @@ spec:
           label: 工牌英文标识
           value: Members Pass
           help: 工牌正面左上角那行小字。
-          if: "$get('error404_style').value !== 'classic'"
+          if: "$get('error404_style').value !== 'classic' && $get('error404_show_badge').value != false"
           key: e404-badge_label
         - $formkit: select
           name: error404_badge_source
@@ -1564,13 +1612,13 @@ spec:
               value: plugin
             - label: 手动数据
               value: manual
-          if: "$get('error404_style').value !== 'classic'"
+          if: "$get('error404_style').value !== 'classic' && $get('error404_show_badge').value != false"
           key: e404-badge_source
         - $formkit: text
           name: error404_badge_groups
           key: error404-badge-groups
           label: 只展示这些分组
-          if: "$get('error404_style').value !== 'classic' && $get('error404_badge_source').value === 'plugin'"
+          if: "$get('error404_style').value !== 'classic' && $get('error404_badge_source').value === 'plugin' && $get('error404_show_badge').value != false"
           value: ''
           placeholder: 留空展示全部分组
           help: 填后台「成员管理 → 成员分组」里的名称或标识，多个用逗号分隔，例如「重庆地区, 官方成员」。一个都没命中时退回展示全部成员，不会出现空工牌。
@@ -1578,7 +1626,7 @@ spec:
           name: error404_badge_pick
           key: error404-badge-pick
           label: 指定展示成员
-          if: "$get('error404_style').value !== 'classic' && $get('error404_badge_source').value === 'plugin'"
+          if: "$get('error404_style').value !== 'classic' && $get('error404_badge_source').value === 'plugin' && $get('error404_show_badge').value != false"
           value: ''
           rows: 4
           placeholder: 每行一个成员名或 QQ 号，留空展示所选分组的全部成员
@@ -1589,21 +1637,21 @@ spec:
           placeholder: 留空则每次随机
           value: ''
           help: 填成员名称或 QQ 号，只能填一位。匹配不到会自动退回随机，不会白屏。
-          if: "$get('error404_style').value !== 'classic'"
+          if: "$get('error404_style').value !== 'classic' && $get('error404_show_badge').value != false"
           key: e404-badge_member
         - $formkit: checkbox
           name: error404_badge_random
           label: 每次进入随机换人
           value: true
           help: 关闭后固定展示第一位成员；上面填了固定成员时本项不起作用。
-          if: "$get('error404_style').value !== 'classic'"
+          if: "$get('error404_style').value !== 'classic' && $get('error404_show_badge').value != false"
           key: e404-badge_random
         - $formkit: checkbox
           name: error404_badge_flip
           label: 允许点击翻面
           value: true
           help: 关闭后工牌只能拖拽，不会翻到档案面。
-          if: "$get('error404_style').value !== 'classic'"
+          if: "$get('error404_style').value !== 'classic' && $get('error404_show_badge').value != false"
           key: e404-badge_flip
         - $formkit: code
           name: error404_badge_members
@@ -1611,10 +1659,11 @@ spec:
           language: json
           height: 200px
           help: 「成员来源」为「手动数据」时使用这里；选「成员管理插件」但插件没有已通过成员时，也回落到这里兜底。留空使用主题内置快照（5 位成员，含一位测试号）。格式为 JSON 数组，每项支持 name/qq/school/group/url/verified/intro/no 字段；头像由 QQ 号自动取，无需填 avatar。
-          if: "$get('error404_style').value !== 'classic'"
+          if: "$get('error404_style').value !== 'classic' && $get('error404_show_badge').value != false"
           key: e404-badge_members
         - $formkit: checkbox
           name: error404_show_art
+          id: error404_show_art
           label: 显示插图
           value: true
           help: 说明卡片顶部的插画，默认是拿着放大镜的大黄鸭。
@@ -1627,7 +1676,7 @@ spec:
           accepts:
             - image/*
           help: 建议正方形、透明背景 PNG，显示尺寸约 116×116。留空用主题自带插图。
-          if: "$get('error404_style').value !== 'classic'"
+          if: "$get('error404_style').value !== 'classic' && $get('error404_show_art').value != false"
           key: e404-art
         - $formkit: select
           name: error404_animation

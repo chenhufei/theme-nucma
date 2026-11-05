@@ -11,6 +11,12 @@
   「三块内容」的跳转优先级是唯一一条要跨版式复用的规则：关联文章 → 关联分类（专栏）→ 手填链接。
   Thymeleaf 没有 map，无法把规则提前算成一个列表，所以 1 / 8 / 11 号版式里各自写一条同样的一行表达式
   （`nhHref`）；改优先级时按 `nhHref` 全局搜，一处漏改就会出现「有的版式点得动、有的点不动」。
+
+  首屏数字同理：后台每条可选「取值方式」（手填 / 成员数 / 文章数 / 友链数 / 分组数 / 学校数）。
+  th:with 里先把五种真实值各算一次，各版式再用一条三元表达式按 s.source 取值。
+  注意：不能在 th:with 里用 stats.![...] 投影成一个值列表再按下标取 —— 投影内部的属性访问
+  会先落到 Thymeleaf 的上下文变量解析上，拿不到 Map 的键（实测整列数字输出为空）。
+  改取值规则时全局搜 "s.source ==" 与 "stats[0].source =="，两处方能同步。
 -->
 <section th:fragment="hero"
          class="nh"
@@ -54,7 +60,13 @@
                   pinnedIds=${hero?.member_pinned},
                   hasPinned=${pinnedIds != null and !#lists.isEmpty(pinnedIds)},
                   memberGroups=${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null},
-                  useMembers=${memberGroups != null and memberGroups.items != null and !#lists.isEmpty(memberGroups.items)}">
+                  useMembers=${memberGroups != null and memberGroups.items != null and !#lists.isEmpty(memberGroups.items)},
+                  statMembers=${memberGroups != null and memberGroups.items != null ? (#aggregates.sum(memberGroups.items.![members.size()]) ?: 0) : 0},
+                  statPosts=${posts != null ? posts.total : 0},
+                  statLinkGroups=${pluginFinder.available('PluginLinks') ? linkFinder.groupBy() : null},
+                  statLinks=${statLinkGroups != null and !#lists.isEmpty(statLinkGroups) ? (#aggregates.sum(statLinkGroups.![links.size()]) ?: 0) : 0},
+                  statGroups=${memberGroups != null and memberGroups.items != null ? #lists.size(memberGroups.items) : 0},
+                  statSchools=${memberGroups != null and memberGroups.items != null ? (#aggregates.sum(memberGroups.items.![#sets.size(#sets.toSet(#this.members.?[spec.school != null and !#strings.isEmpty(spec.school)].![spec.school]))]) ?: 0) : 0}">
 
   <!-- 页头已独立为站点头部（modules/layout.html :: siteHeader），首屏不再内置页头 -->
 
@@ -75,7 +87,7 @@
       </div>
       <div class="nh-stats nh42-stats" th:if="${hasStats}">
         <div class="nh-stat" th:each="s, st : ${stats}" th:if="${st.index < 3}">
-          <b><span th:text="${s.value}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
+          <b><span th:text="${s.source == 'members' ? statMembers : (s.source == 'posts' ? statPosts : (s.source == 'links' ? statLinks : (s.source == 'groups' ? statGroups : (s.source == 'schools' ? statSchools : s.value))))}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
           <span th:text="${s.label}"></span>
         </div>
       </div>
@@ -109,7 +121,7 @@
       </div>
       <div class="nh-stats nhwall-stats" th:if="${hasStats}">
         <div class="nh-stat" th:each="s, st : ${stats}" th:if="${st.index < 3}">
-          <b><span th:text="${s.value}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
+          <b><span th:text="${s.source == 'members' ? statMembers : (s.source == 'posts' ? statPosts : (s.source == 'links' ? statLinks : (s.source == 'groups' ? statGroups : (s.source == 'schools' ? statSchools : s.value))))}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
           <span th:text="${s.label}"></span>
         </div>
       </div>
@@ -160,7 +172,7 @@
     </div>
     <div class="nhcover-glass" th:if="${hasStats}">
       <div class="nhcover-cell" th:each="s, st : ${stats}" th:if="${st.index < 4}">
-        <b><span th:text="${s.value}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
+        <b><span th:text="${s.source == 'members' ? statMembers : (s.source == 'posts' ? statPosts : (s.source == 'links' ? statLinks : (s.source == 'groups' ? statGroups : (s.source == 'schools' ? statSchools : s.value))))}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
         <span th:text="${s.label}"></span>
       </div>
     </div>
@@ -281,7 +293,7 @@
       </div>
       <div class="nhaur-foot" th:if="${hasStats}">
         <span class="nhaur-st" th:each="s, st : ${stats}" th:if="${st.index < 4}">
-          <i th:text="${s.label}"></i><b th:text="${s.value}"></b>
+          <i th:text="${s.label}"></i><b th:text="${s.source == 'members' ? statMembers : (s.source == 'posts' ? statPosts : (s.source == 'links' ? statLinks : (s.source == 'groups' ? statGroups : (s.source == 'schools' ? statSchools : s.value))))}"></b>
         </span>
       </div>
     </div>
@@ -307,7 +319,7 @@
       <s></s><b th:text="${#strings.arrayJoin(memberNames, '　')}"></b>
     </div>
     <div class="nhmesh-orb" th:if="${hasStats}">
-      <i th:text="${stats[0].value}"></i>
+      <i th:text="${stats[0].source == 'members' ? statMembers : (stats[0].source == 'posts' ? statPosts : (stats[0].source == 'links' ? statLinks : (stats[0].source == 'groups' ? statGroups : (stats[0].source == 'schools' ? statSchools : stats[0].value))))}"></i>
       <span th:text="${stats[0].label}"></span>
     </div>
   </div>
@@ -319,7 +331,7 @@
       <div class="nhsplit-ph"></div>
       <div class="nhsplit-vt" th:if="${!#strings.isEmpty(subtitle)}" th:text="${subtitle}"></div>
       <div class="nhsplit-nm" th:if="${hasStats}">
-        <b th:text="${stats[0].value}"></b>
+        <b th:text="${stats[0].source == 'members' ? statMembers : (stats[0].source == 'posts' ? statPosts : (stats[0].source == 'links' ? statLinks : (stats[0].source == 'groups' ? statGroups : (stats[0].source == 'schools' ? statSchools : stats[0].value))))}"></b>
         <span th:text="${stats[0].label}"></span>
       </div>
     </div>
@@ -336,7 +348,7 @@
       </div>
       <div class="nhsplit-st" th:if="${hasStats}">
         <div th:each="s, st : ${stats}" th:if="${st.index < 3}">
-          <b><span th:text="${s.value}"></span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
+          <b><span th:text="${s.source == 'members' ? statMembers : (s.source == 'posts' ? statPosts : (s.source == 'links' ? statLinks : (s.source == 'groups' ? statGroups : (s.source == 'schools' ? statSchools : s.value))))}"></span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
           <span th:text="${s.label}"></span>
         </div>
       </div>
@@ -369,7 +381,7 @@
     </div>
     <div class="nhorb-foot" th:if="${hasStats}">
       <div class="nh-stat" th:each="s, st : ${stats}" th:if="${st.index < 4}">
-        <b><span th:text="${s.value}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
+        <b><span th:text="${s.source == 'members' ? statMembers : (s.source == 'posts' ? statPosts : (s.source == 'links' ? statLinks : (s.source == 'groups' ? statGroups : (s.source == 'schools' ? statSchools : s.value))))}">0</span><i th:if="${!#strings.isEmpty(s.unit)}" th:text="${s.unit}"></i></b>
         <span th:text="${s.label}"></span>
       </div>
     </div>

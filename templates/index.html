@@ -273,71 +273,49 @@
 
   <section class="section" data-home-section="members"
            th:if="${(homeOrder == null or #lists.contains(homeOrder, 'members')) and pluginFinder.available('PluginMembers')}">
+    <!-- 标题计数与成员页同源：都按已审核成员的实际条数算，不在后台手填 -->
+    <th:block th:with="groupsResult = ${memberFinder.listApprovedMembers()},
+                       memberTotal = ${groupsResult != null and groupsResult.items != null ? (#aggregates.sum(groupsResult.items.![members.size()]) ?: 0) : 0}">
     <div class="section-container">
       <div class="section-header-bar">
-        <h2 class="section-title-bar" th:text="#{home.members}">成员公示</h2>
+        <h2 class="section-title-bar">
+          <span th:text="#{home.members}">成员公示</span>
+          <span class="badge badge-primary badge-soft badge-sm" th:if="${memberTotal > 0}" th:text="${memberTotal}">0</span>
+        </h2>
         <a th:href="@{/members}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
       </div>
-      <th:block th:with="groupsResult = ${memberFinder.listApprovedMembers()}">
-        <div class="member-grid" th:if="${groupsResult != null and groupsResult.items != null and !#lists.isEmpty(groupsResult.items)}"
+        <div class="member-grid member-grid--plain" th:if="${groupsResult != null and groupsResult.items != null and !#lists.isEmpty(groupsResult.items)}"
              th:attr="data-limit=${memberLimit},
                       data-pinned-ids=${memberPinned == null or #lists.isEmpty(memberPinned) ? '' : #strings.listJoin(memberPinned, ',')}">
           <th:block th:each="group : ${groupsResult.items}">
             <th:block th:each="member : ${group.members}">
-              <div class="card card-border member-card" th:attr="data-id=${#strings.defaultString(member.metadata?.name, '')}">
-                <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
-                      class="member-card-background" aria-hidden="true"
-                      th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
-                <div class="member-avatar">
-                  <img th:if="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
-                       th:src="${member.spec.avatar}" th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
-                  <svg th:unless="${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar)}"
-                       fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-                  </svg>
-                </div>
-                <div class="member-info">
-                  <div class="member-name" th:text="${member.spec.displayName}">名称</div>
-                  <div class="member-school" th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
-                       th:text="${member.spec.school}">学校</div>
-                  <div class="member-school member-school-empty" th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}" th:text="#{members.noBio}">暂无简介</div>
-                </div>
-              </div>
+              <th:block th:replace="~{modules/cards :: memberCard(member=${member}, group=${group}, compact=${true})}"></th:block>
             </th:block>
           </th:block>
         </div>
-      </th:block>
     </div>
+    </th:block>
   </section>
 
   <!-- 友情链接 -->
   <section class="section" data-home-section="links"
            th:if="${(homeOrder == null or #lists.contains(homeOrder, 'links')) and pluginFinder.available('PluginLinks')}">
+    <th:block th:with="linkGroups = ${linkFinder?.groupBy()},
+                       linkTotal = ${linkGroups != null and !#lists.isEmpty(linkGroups) ? (#aggregates.sum(linkGroups.![links.size()]) ?: 0) : 0}">
     <div class="section-container">
       <div class="section-header-bar">
-        <h2 class="section-title-bar" th:text="#{home.links}">友情链接</h2>
+        <h2 class="section-title-bar">
+          <span th:text="#{home.links}">友情链接</span>
+          <span class="badge badge-primary badge-soft badge-sm" th:if="${linkTotal > 0}" th:text="${linkTotal}">0</span>
+        </h2>
         <a th:href="@{/links}" class="btn btn-ghost btn-sm more-link" th:text="#{common.moreMsg}">更多</a>
       </div>
-      <th:block th:with="linkGroups = ${linkFinder?.groupBy()}">
         <div class="link-grid" th:if="${linkGroups != null and !#lists.isEmpty(linkGroups)}"
              th:attr="data-limit=${linkLimit},
                       data-pinned-ids=${linkPinned == null or #lists.isEmpty(linkPinned) ? '' : #strings.listJoin(linkPinned, ',')}">
           <th:block th:each="group : ${linkGroups}">
             <th:block th:each="link : ${group?.links}">
-              <a th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer"
-                 class="card card-border link-card" th:title="${link.spec?.description}"
-                 th:attr="data-id=${#strings.defaultString(link.metadata?.name, '')}">
-                <div class="link-logo">
-                  <img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec?.logo)}"
-                       th:src="${link.spec?.logo}" th:alt="${link.spec?.displayName}" loading="lazy" width="48" height="48" />
-                  <span th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec?.logo)}"
-                        class="link-logo-text"
-                        th:text="${link.spec?.displayName != null ? #strings.substring(link.spec?.displayName, 0, 1) : '?'}"></span>
-                </div>
-                <div class="link-body">
-                  <div class="link-name" th:text="${link.spec?.displayName}"></div>
-                </div>
-              </a>
+              <th:block th:replace="~{modules/cards :: linkCard(link=${link})}"></th:block>
             </th:block>
           </th:block>
         </div>
@@ -350,8 +328,8 @@
           <p class="empty-text" th:text="#{home.noLinks}">暂无友链</p>
           <p class="empty-sub" th:text="#{home.noLinksHint}">请在后台链接管理中添加友链</p>
         </div>
-      </th:block>
     </div>
+    </th:block>
   </section>
 
 

@@ -179,27 +179,9 @@
           </h2>
 
           <div class="link-grid">
-            <a th:each="link : ${g.links}"
-               th:href="${link.spec.url}"
-               target="_blank" rel="noopener noreferrer"
-               class="card card-border link-card"
-               th:title="${link.spec.description}">
-              <div class="link-logo">
-                <img th:if="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
-                     th:src="${link.spec.logo}" th:alt="${link.spec.displayName}"
-                     loading="lazy" width="48" height="48" />
-                <span th:unless="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
-                      class="link-logo-text"
-                      th:text="${#strings.isEmpty(link.spec.displayName) ? '?' : #strings.substring(link.spec.displayName, 0, 1)}">
-                </span>
-              </div>
-              <div class="link-body">
-                <h3 class="link-name" th:text="${link.spec.displayName}"></h3>
-                <div class="link-desc"
-                     th:if="${link.spec.description != null and !#strings.isEmpty(link.spec.description)}"
-                     th:text="${link.spec.description}"></div>
-              </div>
-            </a>
+            <th:block th:each="link : ${g.links}">
+              <th:block th:replace="~{modules/cards :: linkCard(link=${link})}"></th:block>
+            </th:block>
           </div>
         </div>
       </th:block>
@@ -211,27 +193,9 @@
          id="linkSearchResults"
          class="link-grid"
          th:if="${links != null and !#lists.isEmpty(links)}">
-      <a th:each="link : ${links}"
-         th:href="${link.spec.url}"
-         target="_blank" rel="noopener noreferrer"
-         class="card card-border link-card"
-         th:title="${link.spec.description}">
-        <div class="link-logo">
-          <img th:if="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
-               th:src="${link.spec.logo}" th:alt="${link.spec.displayName}"
-               loading="lazy" width="48" height="48" />
-          <span th:unless="${link.spec.logo != null and !#strings.isEmpty(link.spec.logo)}"
-                class="link-logo-text"
-                th:text="${#strings.isEmpty(link.spec.displayName) ? '?' : #strings.substring(link.spec.displayName, 0, 1)}">
-          </span>
-        </div>
-        <div class="link-body">
-          <h3 class="link-name" th:text="${link.spec.displayName}"></h3>
-          <div class="link-desc"
-               th:if="${link.spec.description != null and !#strings.isEmpty(link.spec.description)}"
-               th:text="${link.spec.description}"></div>
-        </div>
-      </a>
+      <th:block th:each="link : ${links}">
+        <th:block th:replace="~{modules/cards :: linkCard(link=${link})}"></th:block>
+      </th:block>
     </div>
 
     <!-- 计数区已经是 aria-live，这里不再重复播报，只做视觉空状态 -->

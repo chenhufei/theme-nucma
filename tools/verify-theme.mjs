@@ -554,8 +554,10 @@ for (const marker of [
 }
 for (const [path, markers] of [
   ['templates/modules/site-header.html', ['btn btn-ghost btn-circle', 'menu menu-sm login-dropdown']],
-  ['templates/members.html', ['input input-bordered page-search', 'btn btn-primary apply-btn', 'card card-border member-card']],
-  ['templates/links.html', ['input input-bordered page-search', 'btn btn-primary apply-btn', 'card card-border link-card']],
+  ['templates/members.html', ['input input-bordered page-search', 'btn btn-primary apply-btn']],
+  ['templates/links.html', ['input input-bordered page-search', 'btn btn-primary apply-btn']],
+  // 成员卡/友链卡的组件 class 已随卡片抽到公共模板
+  ['templates/modules/cards.html', ['card card-border member-card', 'card card-border link-card']],
   ['templates/post.html', ['card card-border sidebar-card']],
 ]) {
   const template = read(path);
@@ -785,6 +787,8 @@ const qqLinkScript = read('src/js/modules/qq-link.js');
 const linksScript = read('src/js/links.js');
 const linksTemplate = read('templates/links.html');
 const membersTemplate = read('templates/members.html');
+// 成员卡与友链卡已抽到 modules/cards.html，三处页面共用；卡片内的字段标记要在这里查
+const cardsTemplate = read('templates/modules/cards.html');
 const postTemplate = read('templates/post.html');
 const claimTemplate = read('templates/page_claim.html');
 const claimScript = read('src/js/claim.js');
@@ -796,7 +800,7 @@ for (const [feature, source, markers] of [
   ['文章图片查看器', layout + mainScript, ['id="articleImageViewer"', 'initArticleImageViewer']],
   ['友链拼音搜索', linksTemplate + linksScript, ['data-link-search', 'id="linkSearchEmpty"', 'initLinkSearch', "import('pinyin-pro')", "pattern: 'first'", 'assets/js/links.js']],
   ['成员本地搜索', membersTemplate + membersScript, ['id="memberSearchInput"', "import('pinyin-pro')", 'initMemberFilters', 'recompute', 'assets/js/members.js']],
-  ['成员本地二维码', membersTemplate + membersScript, ['data-member-qr', 'data-qr-text', "import('qrcode')", 'initMemberQrPopups', "removeProperty('width')", "removeProperty('height')", "setAttribute('aria-hidden'", 'pointerleave', 'focusout']],
+  ['成员本地二维码', membersTemplate + cardsTemplate + membersScript, ['data-member-qr', 'data-qr-text', "import('qrcode')", 'initMemberQrPopups', "removeProperty('width')", "removeProperty('height')", "setAttribute('aria-hidden'", 'pointerleave', 'focusout']],
   ['成员分布地图', membersTemplate + membersScript + mainCss, ['data-member-map', 'data-member-map-src', 'renderVectorMap', 'buildMapSvg', 'buildSouthSeaInset', 'member-map-svg', 'member-map-inset-frame', 'member-map-legend']],
   ['弹窗滚动条稳定', mainCss, ['scrollbar-gutter: stable']],
   ['认领弹窗表单节奏', membersTemplate + mainCss, ['claim-modal-form', 'claim-modal-field', 'claim-modal-label', 'claim-modal-input', 'claim-modal-actions', 'id="claimCodeHint"']],
@@ -804,10 +808,10 @@ for (const [feature, source, markers] of [
     ['claim-profile', 'data-claim-avatar-preview', 'data-avatar-hint', 'defaultQqAvatar',
      'setAvatarPreview', 'claim-mini-btn', 'id="claimName"', 'id="claimDisplayName"',
      'id="claimSchool"']],
-  ['成员卡片补全链接定位', membersTemplate + mainCss, ['member-info-with-claim', '.member-info-with-claim .member-school { padding-right: 4.5rem; }', 'position: absolute;\n  right: 0;\n  bottom: 0;', 'border-radius: 999px;']],
-  ['成员默认 QQ 头像', membersTemplate, ['q1.qlogo.cn', 'member-avatar-default']],
-  ['成员状态徽章', membersTemplate + mainCss, ['member-status-badge--verified', 'member-status-badge--pending', '.member-name-row']],
-  ['成员加入时间', membersTemplate + membersScript, ['spec.joinedAt', 'memberJoinedAt']],
+  ['成员卡片补全链接定位', membersTemplate + cardsTemplate + mainCss, ['member-info-with-claim', '.member-info-with-claim .member-school { padding-right: 4.5rem; }', 'position: absolute;\n  right: 0;\n  bottom: 0;', 'border-radius: 999px;']],
+  ['成员默认 QQ 头像', membersTemplate + cardsTemplate, ['q1.qlogo.cn', 'member-avatar-default']],
+  ['成员状态徽章', membersTemplate + cardsTemplate + mainCss, ['member-status-badge--verified', 'member-status-badge--pending', '.member-name-row']],
+  ['成员加入时间', membersTemplate + cardsTemplate + membersScript, ['spec.joinedAt', 'memberJoinedAt']],
   ['成员关系网视图', membersTemplate + membersScript + networkScript + mainCss,
     ['data-member-network', 'data-member-network-canvas', 'data-member-view="network"',
      'initMemberNetwork', 'member-network-tip', 'is-network-view', 'view.yaw', 'setMode']],

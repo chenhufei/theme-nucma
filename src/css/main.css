@@ -2161,6 +2161,8 @@ a.about-service-item:focus-visible .about-service-arrow { transform: translateX(
 .member-card-slot { position: relative; display: flex; min-width: 0; }
 .member-card-slot > .member-card { flex: 1 1 auto; }
 .member-card-slot .member-info { padding-right: 1.4rem; }
+/* 首页成员区块用紧凑卡（不带详情预览按钮），去掉为按钮预留的右内距 */
+.member-grid--plain .member-card-slot .member-info { padding-right: 0; }
 .member-preview-trigger {
   position: absolute;
   top: 6px;

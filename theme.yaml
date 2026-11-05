@@ -12,7 +12,7 @@ spec:
   homepage: https://nucma.cn
   repo: https://gitee.com/nucma/theme-nucma
   issues: https://qm.qq.com/q/YEqkx4fa0M
-  version: "0.0.11"
+  version: "0.0.12"
   requires: ">=2.27.0"
   settingName: theme-nucma-setting
   configMapName: theme-nucma-config

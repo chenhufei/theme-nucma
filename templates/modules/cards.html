@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<body>
+<!--
+  成员卡与友链卡的唯一渲染源：成员页（members.html）、友链页（links.html）与首页区块（index.html）
+  全部 th:replace 这里。改字段、改徽标、改头像兜底只改这一处，三个页面自动同步。
+
+  compact 参数：
+    false / 不传 —— 列表页用。带 QQ 二维码浮层、「补全链接」按钮、详情预览按钮，卡片可点开 QQ 加好友。
+    true        —— 首页用。首页不加载 members.js，二维码与补全弹窗都没有脚本驱动，所以这些交互块不输出，
+                   卡片改成指向成员页/友链页的入口，避免出现空白浮层和点不动的按钮。
+-->
+<div class="member-card-slot" th:fragment="memberCard(member, group, compact)"
+     th:with="memberAvatar=${member.spec.avatar != null and !#strings.isEmpty(member.spec.avatar) ? member.spec.avatar : (member.spec.qq != null and !#strings.isEmpty(member.spec.qq) ? 'https://q1.qlogo.cn/g?b=qq&amp;nk=' + member.spec.qq + '&amp;s=640' : '')},
+              memberJoinedAt=${member.spec.joinedAt != null and !#strings.isEmpty(member.spec.joinedAt) ? member.spec.joinedAt : member.metadata.creationTimestamp}">
+
+  <!-- 已补全 QQ 加好友链接：列表页整张卡片可点击跳 QQ，首页点进成员页 -->
+  <a th:if="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
+     th:href="${compact == true ? '/members' : member.spec.qqFriendLink}"
+     th:target="${compact == true ? null : '_blank'}"
+     th:rel="${compact == true ? null : 'noopener noreferrer'}"
+     class="card card-border member-card member-card-verified"
+     th:title="${member.spec.school}"
+     th:attr="data-id=${#strings.defaultString(member.metadata?.name, '')}, data-qq=${member.spec.qq ?: ''}, data-school=${member.spec.school ?: ''}, data-created=${memberJoinedAt ?: ''}, data-group=${group?.spec?.displayName ?: #messages.msg('members.ungrouped')}">
+    <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
+          class="member-card-background" aria-hidden="true"
+          th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
+    <div class="member-avatar">
+      <img th:if="${!#strings.isEmpty(memberAvatar)}" th:src="${memberAvatar}"
+           th:classappend="${#strings.isEmpty(member.spec.avatar)} ? 'member-avatar-default' : ''"
+           th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
+      <svg th:if="${#strings.isEmpty(memberAvatar)}"
+           fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+      </svg>
+    </div>
+    <div class="member-info">
+      <div class="member-name-row">
+        <h3 class="member-name" th:text="${member.spec.displayName}">名称</h3>
+        <span class="member-status-badge member-status-badge--verified" th:text="#{members.verified}">已认证</span>
+      </div>
+      <span data-member-description hidden th:text="${member.spec.description ?: ''}"></span>
+      <div class="member-school"
+           th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
+           th:text="${member.spec.school}">学校</div>
+      <div class="member-school member-school-empty"
+           th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}" th:text="#{members.noBio}">暂无简介</div>
+    </div>
+    <!-- 桌面端聚焦时在浏览器本地生成 QQ 链接二维码（首页无脚本，不输出） -->
+    <div class="member-qr-popup" data-member-qr-popup aria-hidden="true" th:if="${compact != true}">
+      <canvas data-member-qr
+              th:attr="data-qr-text=${member.spec.qqFriendLink}" th:aria-label="|添加 ${member.spec.displayName} 的 QQ 二维码|"
+              width="240" height="240" role="img"></canvas>
+      <span class="member-qr-status" data-member-qr-status th:text="#{members.generating}">生成中</span>
+    </div>
+  </a>
+
+  <!-- 尚未补全：展示「待补全」状态，有 QQ 号时给出补全入口 -->
+  <div th:unless="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
+     class="card card-border member-card member-card-incomplete" tabindex="-1"
+     th:title="${member.spec.school}"
+     th:attr="data-id=${#strings.defaultString(member.metadata?.name, '')}, data-qq=${member.spec.qq ?: ''}, data-school=${member.spec.school ?: ''}, data-created=${memberJoinedAt ?: ''}, data-group=${group?.spec?.displayName ?: #messages.msg('members.ungrouped')}">
+    <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
+          class="member-card-background" aria-hidden="true"
+          th:style="'background-image: url(' + ${member.spec.background} + ')'"> </span>
+    <div class="member-avatar">
+      <img th:if="${!#strings.isEmpty(memberAvatar)}" th:src="${memberAvatar}"
+           th:classappend="${#strings.isEmpty(member.spec.avatar)} ? 'member-avatar-default' : ''"
+           th:alt="${member.spec.displayName}" loading="lazy" width="48" height="48" />
+      <svg th:if="${#strings.isEmpty(memberAvatar)}"
+           fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+      </svg>
+    </div>
+    <div class="member-info" th:classappend="${member.spec.qq != null and !#strings.isEmpty(member.spec.qq)} ? ' member-info-with-claim' : ''">
+      <div class="member-name-row">
+        <h3 class="member-name" th:text="${member.spec.displayName}">名称</h3>
+        <span class="member-status-badge member-status-badge--pending" th:text="#{members.pending}">待补全</span>
+      </div>
+      <span data-member-description hidden th:text="${member.spec.description ?: ''}"></span>
+      <div class="member-school"
+           th:if="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}"
+           th:text="${member.spec.school}">学校</div>
+      <div class="member-school member-school-empty"
+           th:unless="${member.spec.school != null and !#strings.isEmpty(member.spec.school)}" th:text="#{members.noBio}">暂无简介</div>
+      <button th:if="${member.spec.qq != null and !#strings.isEmpty(member.spec.qq) and compact != true}"
+              type="button" class="member-claim-btn" data-claim-modal-open
+              th:attr="data-claim-qq=${member.spec.qq},
+                       data-claim-name=${member.spec.displayName},
+                       data-claim-school=${member.spec.school},
+                       data-claim-avatar=${member.spec.avatar}"
+              title="补全 QQ 加好友链接" th:title="#{members.claimLinkTitle}">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+        </svg>
+        <span th:text="#{members.claimShort}">补全链接</span>
+      </button>
+    </div>
+  </div>
+
+  <button type="button" class="member-preview-trigger" data-member-preview th:attr="data-member-id=${member.metadata.name}" aria-label="查看成员详情" th:aria-label="#{members.viewDetail}" title="查看详情" th:title="#{moments.viewDetail}" th:if="${compact != true}">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7S19 19 12 19 1.5 12 1.5 12Z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+  </button>
+</div>
+
+<!-- 友链卡：友链页与首页共用。首页只做展示，链接仍开新窗到目标站 -->
+<a th:fragment="linkCard(link)"
+   th:href="${link.spec?.url}" target="_blank" rel="noopener noreferrer"
+   class="card card-border link-card" th:title="${link.spec?.description}"
+   th:attr="data-id=${#strings.defaultString(link.metadata?.name, '')}">
+  <div class="link-logo">
+    <img th:if="${link.spec?.logo != null and !#strings.isEmpty(link.spec?.logo)}"
+         th:src="${link.spec?.logo}" th:alt="${link.spec?.displayName}" loading="lazy" width="48" height="48" />
+    <span th:unless="${link.spec?.logo != null and !#strings.isEmpty(link.spec?.logo)}"
+          class="link-logo-text"
+          th:text="${#strings.isEmpty(link.spec?.displayName) ? '?' : #strings.substring(link.spec?.displayName, 0, 1)}"></span>
+  </div>
+  <div class="link-body">
+    <h3 class="link-name" th:text="${link.spec?.displayName}">名称</h3>
+    <div class="link-desc"
+         th:if="${link.spec?.description != null and !#strings.isEmpty(link.spec?.description)}"
+         th:text="${link.spec?.description}"></div>
+  </div>
+</a>
+</body>
+</html>
