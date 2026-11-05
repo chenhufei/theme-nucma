@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>search-overlay</title>
+</head>
+<body>
+<!--
+  站内搜索弹层（主题自带，替代 PluginSearchWidget 的界面）。
+  数据直接走 Halo 核心的索引检索接口 /apis/api.halo.run/v1alpha1/indices/-/search，
+  返回体里带 title / description / permalink / type / creationTimestamp，
+  比插件那两行渲染能用的字段多；行为在 src/js/modules/site-search.js，样式在 main.css 尾段。
+  第 6 套「筛选条」：顶部类型 chips 带计数、点一下只留那一组；文章/页面是日期柱行，
+  成员/友情链接是站点同款卡片。署名与成员、链接都靠服务端隐藏池取，避免把中文写进脚本。
+-->
+<th:block th:fragment="overlay">
+  <div class="ns" id="nucma-search" hidden>
+    <div class="ns__veil" data-ns-close></div>
+
+    <section class="ns__panel" role="dialog" aria-modal="true" th:aria-label="#{search.title}">
+      <header class="ns__bar">
+        <span class="ns__glyph" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4.2-4.2"></path>
+          </svg>
+        </span>
+        <input id="ns-input" class="ns__input" type="search" autocomplete="off" spellcheck="false"
+               th:placeholder="#{search.placeholder}" aria-controls="ns-body">
+        <button type="button" class="ns__clear" data-ns-clear hidden th:aria-label="#{search.clear}">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+        <span class="ns__esc" aria-hidden="true">esc</span>
+      </header>
+
+      <!-- 类型 chips：JS 按当次结果填「全部 / 文章 / 页面 / 成员 / 链接」并带计数，点一下只留那一组 -->
+      <div class="ns__chips" data-ns-chips hidden>
+        <span class="ns__chipList" data-ns-chips-list></span>
+        <span class="ns__chipsTime" data-ns-time></span>
+      </div>
+
+      <div class="ns__body" id="ns-body">
+        <p class="ns__hint" data-ns-hint th:text="#{search.hint}"></p>
+
+        <div class="ns__recent" data-ns-recent hidden>
+          <span class="ns__recentLabel" th:text="#{search.recent}"></span>
+          <span class="ns__recentList" data-ns-recent-list></span>
+          <button type="button" class="ns__recentClear" data-ns-recent-clear th:text="#{search.clear}"></button>
+        </div>
+
+        <p class="ns__state" data-ns-state hidden>
+          <span data-ns-state-main></span>
+          <span class="ns__stateSub" data-ns-state-sub></span>
+        </p>
+
+        <div class="ns__list" data-ns-list role="list" aria-live="polite"></div>
+      </div>
+
+      <footer class="ns__foot">
+        <span class="ns__count" data-ns-count></span>
+        <span class="ns__keys" aria-hidden="true">
+          <span class="ns__keyPair"><i>↑↓</i><span th:text="#{search.navigateLabel}"></span></span>
+          <span class="ns__keyPair"><i>&#8629;</i><span th:text="#{search.openLabel}"></span></span>
+          <span class="ns__keyPair"><i>esc</i><span th:text="#{search.close}"></span></span>
+        </span>
+      </footer>
+    </section>
+  </div>
+
+  <!--
+    成员与友情链接不在核心索引里（PluginMembers / PluginLinks 自己的数据），
+    公开 REST 需要登录，所以服务端渲染成隐藏节点给前端本地匹配；两个插件都可用
+    pluginFinder 判存在，缺一个就那一组自然为空。只出已通过成员，和首页/404 同源。
+    成员链接带 ?badge=成员ID：members.js 认这个参数，落地直接把那张吊带工牌弹出来。
+  -->
+  <div class="ns__extra" data-ns-extra hidden
+       th:with="extraMemberGroups=${pluginFinder.available('PluginMembers') ? memberFinder.listApprovedMembers() : null},
+               extraLinkGroups=${pluginFinder.available('PluginLinks') ? linkFinder?.groupBy() : null}">
+    <th:block th:if="${extraMemberGroups != null and extraMemberGroups.items != null}">
+      <th:block th:each="group : ${extraMemberGroups.items}">
+        <span th:each="member : ${group.members}" data-ns-kind="member"
+              th:attr="data-name=${member.spec?.displayName},
+                       data-desc=${member.spec?.description},
+                       data-group=${group.spec?.displayName},
+                       data-school=${member.spec?.school},
+                       data-avatar=${member.spec?.avatar != null and !#strings.isEmpty(member.spec.avatar) ? member.spec.avatar : (member.spec?.qq != null and !#strings.isEmpty(member.spec.qq) ? 'https://q1.qlogo.cn/g?b=qq&amp;nk=' + member.spec.qq + '&amp;s=640' : '')},
+                       data-url=@{/members(badge=${member.metadata?.name})}"></span>
+      </th:block>
+    </th:block>
+    <th:block th:if="${extraLinkGroups != null}">
+      <th:block th:each="group : ${extraLinkGroups}">
+        <span th:each="link : ${group?.links}" data-ns-kind="link"
+              th:attr="data-name=${link.spec?.displayName},
+                       data-desc=${link.spec?.description},
+                       data-group=${group.spec?.displayName},
+                       data-logo=${link.spec?.logo},
+                       data-url=${link.spec?.url}"></span>
+      </th:block>
+    </th:block>
+  </div>
+
+  <!--
+    署名不在核心索引里：索引接口只给 ownerName（登录名），而本站的署名规则是
+    「单篇注解 nucma.cn/author → 后台默认署名 → 注册作者显示名」（和归档页同一条链），
+    所以服务端把这篇映射渲成隐藏节点给前端查。列表取前 100 篇，超出的回落后台默认署名，
+    默认也没填就不显示署名、只留节选。
+  -->
+  <div class="ns__authors" data-ns-authors hidden
+       th:with="authorPosts=${postFinder.list({page: 1, size: 100})}">
+    <span th:each="ap : ${authorPosts?.items}"
+          th:attr="data-id=${ap.metadata?.name},
+                  data-author=${ap.metadata?.annotations != null and !#strings.isEmpty(ap.metadata.annotations['nucma.cn/author']) ? ap.metadata.annotations['nucma.cn/author'] : (theme.config.sidebar?.author_text != null and !#strings.isEmpty(theme.config.sidebar.author_text) ? theme.config.sidebar.author_text : ap.owner?.displayName)}"></span>
+  </div>
+</th:block>
+</body>
+</html>

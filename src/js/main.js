@@ -1,6 +1,7 @@
 import { t } from './modules/i18n.js';
 import { initDiagnostics } from './modules/diagnostics.js';
 import { initHighlight } from './modules/highlight.js';
+import { initSiteSearch } from './modules/site-search.js';
 
 /**
  * NUCMA 国风主题 - 主脚本
@@ -1627,6 +1628,7 @@ import { initHighlight } from './modules/highlight.js';
     initArticleImageViewer();
     initHistoryBackLinks();
     initWidgetOpeners();
+    initSiteSearch();
     initBannerAnimation();
     initHeroMembersMarquee();
     initHeaderLinksCarousel();

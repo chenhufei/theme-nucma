@@ -387,7 +387,9 @@ const contracts = [
   // 验证码 /link-applications/captcha，提交 /link-applications。
   // 旧检查要求 /links/apply/submit 与 /links/apply/captcha，这两个地址在插件里并不存在。
   ['PluginLinks 官方申请', 'data-official-link-apply-open', 'officialLinkApplyDialog', 'officialLinkApplyForm', '/apis/api.link.halo.run/v1alpha1/link-applications', 'officialLinkApplyCaptcha'],
-  ['PluginSearchWidget', "pluginFinder.available('PluginSearchWidget')", 'data-widget-open="SearchWidget"'],
+  // 站内搜索界面由主题自带（templates/modules/search-overlay.html + src/js/modules/site-search.js），
+  // 不再依赖 PluginSearchWidget 的前端界面；数据走核心索引接口，由 JS 请求。
+  ['站内搜索', 'data-search-open', 'id="nucma-search"', 'modules/search-overlay :: overlay'],
 ];
 for (const [name, ...markers] of contracts) {
   for (const marker of markers) {

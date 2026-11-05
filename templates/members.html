@@ -447,7 +447,7 @@
     点眼睛后卡片从上掉落、吊带被拉长再弹回，可拖着晃；点卡片翻面，
     左上角「返回成员列表」或点遮罩关闭。
   -->
-  <div class="member-badge" id="memberBadge" role="dialog" aria-modal="true"
+  <div class="member-badge" id="memberBadge" role="dialog" aria-modal="true" tabindex="-1"
        th:aria-label="#{members.viewDetail}" inert>
     <div class="member-badge-shade" data-member-badge-close></div>
 
@@ -755,7 +755,7 @@
 
   <!-- 尚未补全：展示「待补全」状态，有 QQ 号时给出补全入口 -->
   <div th:unless="${member.spec.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink)}"
-     class="card card-border member-card member-card-incomplete"
+     class="card card-border member-card member-card-incomplete" tabindex="-1"
      th:title="${member.spec.school}"
      th:attr="data-qq=${member.spec.qq ?: ''}, data-school=${member.spec.school ?: ''}, data-created=${memberJoinedAt}, data-group=${group.spec.displayName ?: #messages.msg('members.ungrouped')}">
     <span th:if="${member.spec.background != null and !#strings.isEmpty(member.spec.background)}"
