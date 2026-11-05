@@ -413,20 +413,6 @@
     </div>
   </div>
 
-  <script th:inline="none">
-    (function () {
-      var sec = document.querySelector('.nh');
-      if (!sec || sec.dataset.navOn) return;
-      sec.dataset.navOn = '1';
-      var here = (location.pathname.replace(/\/+$/, '') || '/');
-      sec.querySelectorAll('.nh-nav a, .nhmin-side a').forEach(function (a) {
-        var href = a.getAttribute('href') || '';
-        if (!href || href.charAt(0) === '#') return;
-        var path = href.replace(/^https?:\/\/[^/]+/i, '').replace(/\/+$/, '') || '/';
-        if (path === here) a.classList.add('on');
-      });
-    })();
-  </script>
 </section>
 </body>
 </html>

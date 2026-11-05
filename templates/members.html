@@ -1,10 +1,23 @@
 <!DOCTYPE html>
+<!--
+  th:with 必须包在 <html> 外层：Thymeleaf 的处理顺序是 th:replace(100) → th:with(600)，
+  写在 <html> 上的 th:with 对 th:replace 的参数不可见（实测会拿到 null）。
+  这里的变量只服务 SEO：把插件注入的「分组 → 成员」嵌套结构拍平成一段可搜索的文字。
+  SpEL 没有 flatten，所以用嵌套投影：先按组把名字拼成串，再把各组的结果拼成整串。
+-->
+<th:block th:with="seoGroups=${groups != null ? groups.?[members != null and !#lists.isEmpty(members)] : null},
+                   seoMemberCount=${seoGroups != null ? #aggregates.sum(seoGroups.![members].![#this.size()]) : 0},
+                   seoGroupNames=${seoGroups != null ? #strings.listJoin(seoGroups.![spec.displayName], '、') : ''},
+                   seoMemberNames=${seoGroups != null ? #strings.listJoin(seoGroups.![members].![#this.![spec.displayName]].![#strings.listJoin(#this, '、')], '、') : ''},
+                   seoDesc=${seoMemberCount > 0 ? #messages.msg('members.seoDesc', seoMemberCount, seoGroupNames, #strings.abbreviate(seoMemberNames, 110)) : #messages.msg('members.description')}">
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{modules/layout :: html(title=|${#messages.msg('home.members')} - ${site.title}|, content=~{::content}, headExtra=~{::membersHead}, description=|${#messages.msg('members.description')}|, canonical='/members', image=${site.logo}, pageType='website', robots=null)}">
+      th:replace="~{modules/layout :: html(title=|${#messages.msg('home.members')} - ${site.title}|, content=~{::content}, headExtra=~{::membersHead}, description=${seoDesc}, canonical='/members', image=${site.logo}, pageType='website', robots=null)}">
 
-<!-- 成员工牌直接复用 404 的亚克力卡面样式，只在成员页加载 -->
+<!-- 成员工牌直接复用 404 的亚克力卡面样式，只在成员页加载；SEO 片段输出关键词与成员结构化数据 -->
 <th:block th:fragment="membersHead">
   <link rel="stylesheet" th:href="@{/assets/err404/err404.css(v=${theme.spec.version})}" />
+  <!-- 成员公示的结构化数据：每位成员一条 Person，供搜索引擎识别姓名/学校/分组 -->
+  <th:block th:replace="~{modules/seo :: membersPage(groups=${groups})}"></th:block>
 </th:block>
 
 <th:block th:fragment="content">
@@ -178,21 +191,46 @@
                       data-affinity-show-reason=${theme.config.pages?.globe_affinity_show_reason != false},
                       data-default-view=${#strings.defaultString(theme.config.pages?.globe_default_view, 'grid')}">
       <canvas data-member-network-canvas tabindex="0" role="application"
-              aria-roledescription="可拖动的成员关系网" th:aria-roledescription="#{members.networkRoleDesc}"
-              aria-label="成员关系网，拖动可平移整张网，鼠标移到关联线上可查看判断依据" th:aria-label="#{members.networkAria}"></canvas>
+              aria-roledescription="可旋转的成员关系星图" th:aria-roledescription="#{members.networkRoleDesc}"
+              aria-label="成员关系星图，拖动可旋转视角，鼠标移到关联线上可查看判断依据" th:aria-label="#{members.networkAria}"></canvas>
+
+      <!-- 星图抬头：标题 + 计数 + 操作提示，压在画布左上角 -->
+      <div class="mn-hud">
+        <p class="mn-title">
+          <span class="mn-title-dot" aria-hidden="true"></span>
+          <strong th:text="#{members.networkTitle}">成员关系星图</strong>
+        </p>
+        <p class="member-network-meta">
+          <span data-member-network-count th:text="${#messages.msg('members.networkCount', 0)}">0 位成员</span>
+          <span class="member-network-hint" th:text="#{members.networkHint}">点击头像聚焦关系 · 再点一次查看工作证 · 拖动旋转</span>
+        </p>
+        <!-- 聚焦提示：显示当前中心成员与关联数，由 network.js 填充 -->
+        <p class="mn-focus" data-member-network-focus hidden></p>
+      </div>
+
+      <!-- 星图工具条：暂停自转 / 重置视角 -->
+      <div class="mn-toolbar">
+        <button type="button" class="mn-btn" data-member-network-rotate aria-pressed="true"
+                th:text="#{members.networkRotateStop}">停止旋转</button>
+        <button type="button" class="mn-btn" data-member-network-reset
+                th:text="#{members.networkReset}">重置视角</button>
+      </div>
+
+      <!-- 图例已下线：星图只展示头像，不再按学校配色与分组 -->
+
       <div class="member-network-tip" data-member-network-tip hidden></div>
       <!-- 关联线提示：鼠标聚焦到某条关联线时显示判断依据，由 network.js 填充 -->
       <div class="member-network-link-tip" data-member-network-link-tip hidden aria-live="polite"></div>
-      <div class="member-network-meta">
-        <span data-member-network-count th:text="${#messages.msg('members.networkCount', 0)}">0 位成员</span>
-        <span class="member-network-hint" th:text="#{members.networkHint}">拖动平移 · 悬停连线看依据 · 点击头像查看详情</span>
-      </div>
-      <!-- 学校关联分析依据：由 network.js 在取得分析结果后填充，关闭「显示分析依据」时不出现 -->
+      <!-- 关系分析依据：由 network.js 在取得分析结果后填充，关闭「显示分析依据」时不出现 -->
       <aside class="member-network-affinity" data-member-network-affinity hidden
-             aria-label="学校关联分析依据" th:aria-label="#{members.schoolBasisTitle}"></aside>
+             aria-label="成员关系分析依据" th:aria-label="#{members.schoolBasisTitle}"></aside>
       <!-- 关系网的键盘与读屏等价入口：视觉隐藏但可聚焦，焦点落上时同步高亮对应头像 -->
       <ul class="visually-hidden member-network-list" data-member-network-list></ul>
     </section>
+
+    <!-- 「查看全部关系」展开面板：星图下方通栏展示某成员的全部关系（无需悬浮），由 network.js 填充 -->
+    <aside class="member-network-all" data-member-network-all hidden
+           aria-label="成员全部关系" th:aria-label="#{members.networkAllTitle}"></aside>
 
     <!-- 全量视图：按分组分段展示 -->
     <div th:if="${isAllGroups}" class="members-list">
@@ -696,7 +734,7 @@
     </div>
     <div class="member-info">
       <div class="member-name-row">
-        <span class="member-name" th:text="${member.spec.displayName}">名称</span>
+        <h3 class="member-name" th:text="${member.spec.displayName}">名称</h3>
         <span class="member-status-badge member-status-badge--verified" th:text="#{members.verified}">已认证</span>
       </div>
       <span data-member-description hidden th:text="${member.spec.description ?: ''}"></span>
@@ -734,7 +772,7 @@
     </div>
     <div class="member-info" th:classappend="${member.spec.qq != null and !#strings.isEmpty(member.spec.qq)} ? ' member-info-with-claim' : ''">
       <div class="member-name-row">
-        <span class="member-name" th:text="${member.spec.displayName}">名称</span>
+        <h3 class="member-name" th:text="${member.spec.displayName}">名称</h3>
         <span class="member-status-badge member-status-badge--pending" th:text="#{members.pending}">待补全</span>
       </div>
       <span data-member-description hidden th:text="${member.spec.description ?: ''}"></span>
@@ -767,3 +805,4 @@
   </button>
 </div>
 </html>
+</th:block>

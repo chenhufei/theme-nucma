@@ -23,14 +23,14 @@
                          prevYear = ${iter.index > 0 ? #temporals.format(posts.items[iter.index - 1].spec?.publishTime, 'yyyy') : ''},
                          hasCover = ${post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)},
                          cardCat = ${post.spec?.categories != null and !#lists.isEmpty(post.spec.categories) ? categoryFinder.getByName(post.spec.categories[0]) : null},
-                         cardAuthor = ${post.metadata?.annotations != null and !#strings.isEmpty(post.metadata.annotations['nucma.cn/author']) ? post.metadata.annotations['nucma.cn/author'] : post.owner?.displayName}">
+                         cardAuthor = ${post.metadata?.annotations != null and !#strings.isEmpty(post.metadata.annotations['nucma.cn/author']) ? post.metadata.annotations['nucma.cn/author'] : (theme.config.sidebar?.author_text != null and !#strings.isEmpty(theme.config.sidebar.author_text) ? theme.config.sidebar.author_text : post.owner?.displayName)}">
 
         <div th:if="${iter.index == 0 or currentYear != prevYear}" class="archive-year-section">
           <h2 class="archive-year-title" th:text="${currentYear}">2024</h2>
         </div>
 
         <!-- 年份行也是网格子元素，nth-child 会把六档色的下标错开，所以按页内序号直接写 --nk-b -->
-        <article class="article-card archive-timeline-item"
+        <article class="article-card archive-flow-item"
                  th:classappend="${hasCover ? '' : 'article-card--note'}"
                  th:style="${hasCover ? null : '--nk-b:' + notePalette[iter.index % 6]}">
           <a class="article-link" th:href="@{${post.status?.permalink}}">

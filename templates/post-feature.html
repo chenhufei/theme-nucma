@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{modules/layout :: html(title=|${post?.spec?.title} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=${post?.spec?.excerpt?.raw}, canonical=${post?.status?.permalink}, image=${post?.spec?.cover}, pageType='article', robots=null)}">
+      th:replace="~{modules/layout :: html(title=|${post?.spec?.title} - ${site.title}|, content=~{::content}, headExtra=~{modules/seo :: article(post=${post})}, description=${post?.spec?.excerpt?.raw != null and !#strings.isEmpty(post.spec.excerpt.raw) ? post.spec.excerpt.raw : post?.status?.excerpt}, canonical=${post?.status?.permalink}, image=${post?.spec?.cover}, pageType='article', robots=null)}">
 <th:block th:fragment="content">
   <th:block th:replace="~{fragments/post-special :: special('feature', #messages.msg('template.post.feature'))}"></th:block>
 </th:block>

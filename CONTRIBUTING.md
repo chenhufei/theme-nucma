@@ -52,14 +52,14 @@
 ### 2.3 拉取
 
 ```bash
-git clone https://gitee.com/xiui-cc/theme-nucma.git
+git clone https://gitee.com/nucma/theme-nucma.git
 ```
 
 ### 2.4 远程约定（重要）
 
 | 平台 | 地址形态 | 用途 |
 |---|---|---|
-| **Gitee（主）** | `gitee` → `https://gitee.com/xiui-cc/<repo>.git` | 日常协作、分支、PR、发版，**全部在这里** |
+| **Gitee（主）** | `gitee` → `https://gitee.com/nucma/<repo>.git` | 日常协作、分支、PR、发版，**全部在这里** |
 | GitHub（镜像） | `origin` → `https://github.com/chenhufei/<repo>.git` | 只读分发，由 Gitee 的 Push 镜像自动同步（约 5 分钟） |
 
 两条铁律：
@@ -421,7 +421,7 @@ git push gitee HEAD                 # 推分支，然后提 PR
 | 脚本 | 用途 | 常用参数 |
 |---|---|---|
 | `env.ps1` | 校验 Node ≥ 22 / JDK 21 并注入 PATH | — |
-| `clone-all.ps1` | 一次拉齐三仓并装依赖 | `-Owner xiui-cc` `-TargetDir D:\work\halo` `-Source gitee\|github` `-SkipInstall` |
+| `clone-all.ps1` | 一次拉齐三仓并装依赖 | `-Owner nucma` `-TargetDir D:\work\halo` `-Source gitee\|github` `-SkipInstall` |
 | `sync-all.ps1` | 改前同步（stash → fetch → rebase → pop） | `-Repos <名>` `-Remote gitee\|origin\|both` `-NoStash` |
 | `verify-all.ps1` | 三仓全量检查 | `-Package` 追加打包 |
 | `package-all.ps1` | 三仓测试 + 打包，并校验产物存在 | — |

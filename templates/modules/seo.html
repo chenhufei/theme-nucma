@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<!--
+  文章页 SEO 片段：由 templates/post*.html 通过 layout 的 headExtra 调用
+      headExtra=~{modules/seo :: article(post=${post})}
+  输出三组东西：
+    1. <meta name="author"> + <meta name="keywords">（百度 / 360 / 搜狗仍读这两项）
+    2. Open Graph 的 article:* （微信、微博、Telegram 等分享卡片读这些）
+    3. JSON-LD Article（Google / Bing / 头条 的富摘要读这个）
+  为什么放在这里而不是 layout：layout 是公共片段，拿不到 post；这里显式传参，作用域干净。
+  注意：layout 里那份通用 JSON-LD 已排除 article 页，避免两个 Article 打架。
+-->
+<body>
+<th:block th:fragment="article(post)"
+          th:with="siteBase=${#strings.endsWith(site.url, '/') ? #strings.substring(site.url, 0, #strings.length(site.url) - 1) : site.url},
+                   coverRaw=${post.spec?.cover},
+                   coverAbs=${coverRaw != null and !#strings.isEmpty(coverRaw) ? ((#strings.startsWith(coverRaw, 'http://') or #strings.startsWith(coverRaw, 'https://')) ? coverRaw : siteBase + (#strings.startsWith(coverRaw, '/') ? coverRaw : '/' + coverRaw)) : null},
+                   seoDesc=${post.spec?.excerpt?.raw != null and !#strings.isEmpty(post.spec.excerpt.raw) ? post.spec.excerpt.raw : (post.status?.excerpt != null and !#strings.isEmpty(post.status.excerpt) ? post.status.excerpt : (site.seo?.description ?: site.title))},
+                   pubAt=${post.spec?.publishTime},
+                   modAt=${post.status?.lastModifyTime != null ? post.status.lastModifyTime : post.spec?.publishTime},
+                   publishedIso=${#temporals.format(pubAt, 'yyyy-MM-dd') + 'T' + #temporals.format(pubAt, 'HH:mm:ss') + #temporals.format(pubAt, 'XXX')},
+                   modifiedIso=${#temporals.format(modAt, 'yyyy-MM-dd') + 'T' + #temporals.format(modAt, 'HH:mm:ss') + #temporals.format(modAt, 'XXX')},
+                   authorName=${post.metadata?.annotations != null and !#strings.isEmpty(post.metadata.annotations['nucma.cn/author']) ? post.metadata.annotations['nucma.cn/author'] : (theme.config.sidebar?.author_text != null and !#strings.isEmpty(theme.config.sidebar.author_text) ? theme.config.sidebar.author_text : post.owner?.displayName)},
+                   logoUrl=${site.logo != null and !#strings.isEmpty(site.logo) ? ((#strings.startsWith(site.logo, 'http://') or #strings.startsWith(site.logo, 'https://')) ? site.logo : siteBase + (#strings.startsWith(site.logo, '/') ? site.logo : '/' + site.logo)) : null},
+                   imageObj=${coverAbs != null ? {'@type':'ImageObject','url':coverAbs} : (logoUrl != null ? {'@type':'ImageObject','url':logoUrl} : null)},
+                   authorObj=${authorName != null and !#strings.isEmpty(authorName) ? {'@type':'Person','name':authorName} : null},
+                   publisherObj=${logoUrl != null ? {'@type':'Organization','name':site.title,'logo':{'@type':'ImageObject','url':logoUrl}} : {'@type':'Organization','name':site.title}},
+                   mainObj=${post.status?.permalink != null and !#strings.isEmpty(post.status.permalink) ? {'@type':'WebPage','@id':((#strings.startsWith(post.status.permalink, 'http://') or #strings.startsWith(post.status.permalink, 'https://')) ? post.status.permalink : siteBase + post.status.permalink)} : null},
+                   catName=${post.categories != null and !post.categories.isEmpty() ? post.categories[0].spec?.displayName : null},
+                   tagNames=${post.tags != null and !post.tags.isEmpty() ? #strings.listJoin(post.tags.![spec.displayName], ',') : null},
+                   pageUrl=${post.status?.permalink != null and !#strings.isEmpty(post.status.permalink) ? ((#strings.startsWith(post.status.permalink, 'http://') or #strings.startsWith(post.status.permalink, 'https://')) ? post.status.permalink : siteBase + post.status.permalink) : null},
+                   keywordsStr=${(tagNames != null ? tagNames : '') + (tagNames != null and catName != null ? ',' : '') + (catName != null ? catName : '')},
+                   langTag=${#locale.toLanguageTag()}">
+  <!-- 署名：中文搜索引擎识别作者用 -->
+  <meta name="author" th:if="${authorName != null and !#strings.isEmpty(authorName)}" th:content="${authorName}" />
+  <!-- 关键词：站点关键词 + 本文标签与分类 -->
+  <meta name="keywords"
+        th:content="${(site.seo?.keywords != null and !#strings.isEmpty(site.seo.keywords) ? site.seo.keywords + ',' : '') + (tagNames != null ? tagNames + ',' : '') + (catName != null ? catName : '')}" />
+  <!-- 分享卡片：文章时间、栏目、作者、标签 -->
+  <meta property="article:published_time" th:content="${publishedIso}" />
+  <meta property="article:modified_time" th:content="${modifiedIso}" />
+  <meta property="article:author" th:if="${authorName != null and !#strings.isEmpty(authorName)}" th:content="${authorName}" />
+  <meta property="article:section" th:if="${catName != null}" th:content="${catName}" />
+  <meta property="article:tag" th:each="tag : ${post.tags}" th:content="${tag.spec?.displayName}" />
+  <meta property="og:locale" th:content="${#strings.replace(langTag, '-', '_')}" />
+  <script type="application/ld+json" th:inline="javascript">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": /*[[${post.spec?.title}]]*/ "",
+      "description": /*[[${seoDesc}]]*/ "",
+      "image": /*[[${imageObj}]]*/ null,
+      "datePublished": /*[[${publishedIso}]]*/ "",
+      "dateModified": /*[[${modifiedIso}]]*/ "",
+      "author": /*[[${authorObj}]]*/ null,
+      "publisher": /*[[${publisherObj}]]*/ null,
+      "mainEntityOfPage": /*[[${mainObj}]]*/ null,
+      "articleSection": /*[[${catName}]]*/ null,
+      "keywords": /*[[${keywordsStr}]]*/ "",
+      "inLanguage": /*[[${langTag}]]*/ "",
+      "url": /*[[${pageUrl}]]*/ "",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": /*[[${site.title}]]*/ "",
+        "url": /*[[${site.url}]]*/ ""
+      }
+    }
+  </script>
+</th:block>
+
+<!--
+  ===== 列表型页面：成员公示 / 友情链接 =====
+  这两页的数据由插件注入成「分组 → 成员（或链接）」的嵌套结构，模板要的是「所有名字拼成一句」。
+  SpEL 没有 flatten 操作，所以统一用嵌套投影：
+      groups.![members].![#this.![spec.displayName]].![#strings.listJoin(#this, '、')]
+  先在内层把每组名字拼成串，再把各组的结果拼成整串；外层再套一层 #strings.listJoin 收口。
+  结构化数据采用「一个条目一个 <script>」的写法：嵌套遍历时元素间没有逗号问题，也不会拼出非法 JSON。
+-->
+
+<!-- 成员公示：关键词 + 每位成员一条 Person -->
+<th:block th:fragment="membersPage(groups)"
+          th:with="mGroups=${groups != null ? groups.?[members != null and !#lists.isEmpty(members)] : null},
+                   mGroupKw=${mGroups != null ? #strings.listJoin(mGroups.![spec.displayName], ',') : ''},
+                   mNameKw=${mGroups != null ? #strings.listJoin(mGroups.![members].![#this.![spec.displayName]].![#strings.listJoin(#this, ',')], ',') : ''},
+                   mSchoolKw=${mGroups != null ? #strings.listJoin(mGroups.![members].![#this.![spec.school].?[#this != null and !#strings.isEmpty(#this)]].![#strings.listJoin(#this, ',')], ',') : ''},
+                   mKeywords=${(site.seo?.keywords != null and !#strings.isEmpty(site.seo.keywords) ? site.seo.keywords + ',' : '') + #messages.msg('members.seoKeyword') + ',' + site.title + (mGroupKw != '' ? ',' + mGroupKw : '') + (mNameKw != '' ? ',' + mNameKw : '') + (mSchoolKw != '' ? ',' + mSchoolKw : '')}">
+  <!-- 站点若已在 Halo 设置里填了关键词，layout 会先输出一条；这里只在没有时才补，避免同名标签重复 -->
+  <meta name="keywords" th:if="${(site.seo?.keywords == null or #strings.isEmpty(site.seo.keywords)) and !#strings.isEmpty(mKeywords)}"
+        th:content="${mKeywords}" />
+
+  <th:block th:each="group : ${mGroups}">
+    <th:block th:each="member : ${group.members}">
+      <th:block th:replace="~{modules/seo :: memberItem(member=${member}, group=${group})}"></th:block>
+    </th:block>
+  </th:block>
+</th:block>
+
+<!-- 单个成员：姓名 / 学校 / 分组 / 简介 / QQ / 加好友链接 / 头像 全部进 Person -->
+<th:block th:fragment="memberItem(member, group)"
+          th:with="mName=${member.spec?.displayName},
+                   mSchool=${member.spec?.school},
+                   mDesc=${member.spec?.description != null and !#strings.isEmpty(member.spec.description) ? member.spec.description : null},
+                   mQq=${member.spec?.qq != null and !#strings.isEmpty(member.spec.qq) ? member.spec.qq : null},
+                   mLink=${member.spec?.qqFriendLink != null and !#strings.isEmpty(member.spec.qqFriendLink) ? member.spec.qqFriendLink : null},
+                   itemBase=${#strings.endsWith(site.url, '/') ? #strings.substring(site.url, 0, #strings.length(site.url) - 1) : site.url},
+                   mAvatarRaw=${member.spec?.avatar != null and !#strings.isEmpty(member.spec.avatar) ? member.spec.avatar : null},
+                   mGroup=${group.spec?.displayName != null and !#strings.isEmpty(group.spec.displayName) ? group.spec.displayName : null},
+                   mAvatar=${mAvatarRaw != null ? ((#strings.startsWith(mAvatarRaw, 'http://') or #strings.startsWith(mAvatarRaw, 'https://')) ? mAvatarRaw : itemBase + (#strings.startsWith(mAvatarRaw, '/') ? mAvatarRaw : '/' + mAvatarRaw)) : (mQq != null ? 'https://q1.qlogo.cn/g?b=qq&amp;nk=' + mQq + '&amp;s=640' : null)},
+                   mAffiliation=${mSchool != null and !#strings.isEmpty(mSchool) ? {'@type':'EducationalOrganization','name':mSchool} : null},
+                   mMemberOf=${mGroup != null ? {'@type':'Organization','name':site.title,'department':{'@type':'Organization','name':mGroup}} : {'@type':'Organization','name':site.title}},
+                   mIdentifier=${mQq != null ? {'@type':'PropertyValue','propertyID':'QQ','value':mQq} : null}">
+  <script type="application/ld+json" th:inline="javascript"
+          th:if="${theme.config.seo?.enable_structured_data != false and mName != null and !#strings.isEmpty(mName)}">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": /*[[${mName}]]*/ "",
+      "description": /*[[${mDesc}]]*/ null,
+      "image": /*[[${mAvatar}]]*/ null,
+      "url": /*[[${mLink}]]*/ null,
+      "identifier": /*[[${mIdentifier}]]*/ null,
+      "affiliation": /*[[${mAffiliation}]]*/ null,
+      "memberOf": /*[[${mMemberOf}]]*/ null
+    }
+  </script>
+</th:block>
+
+<!-- 友情链接：关键词 + 每个站点一条 WebSite -->
+<th:block th:fragment="linksPage(groups, links)"
+          th:with="lGroups=${links != null ? null : (groups != null ? groups.?[links != null and !#lists.isEmpty(links)] : null)},
+                   lGroupKw=${lGroups != null ? #strings.listJoin(lGroups.![spec.displayName], ',') : ''},
+                   lNameKw=${links != null ? #strings.listJoin(links.![spec.displayName], ',') : (lGroups != null ? #strings.listJoin(lGroups.![links].![#this.![spec.displayName]].![#strings.listJoin(#this, ',')], ',') : '')},
+                   lUrlKw=${links != null ? #strings.listJoin(links.![spec.url], ',') : (lGroups != null ? #strings.listJoin(lGroups.![links].![#this.![spec.url]].![#strings.listJoin(#this, ',')], ',') : '')},
+                   lKeywords=${(site.seo?.keywords != null and !#strings.isEmpty(site.seo.keywords) ? site.seo.keywords + ',' : '') + #messages.msg('links.seoKeyword') + ',' + site.title + (lGroupKw != '' ? ',' + lGroupKw : '') + (lNameKw != '' ? ',' + lNameKw : '') + (lUrlKw != '' ? ',' + lUrlKw : '')}">
+  <meta name="keywords" th:if="${(site.seo?.keywords == null or #strings.isEmpty(site.seo.keywords)) and !#strings.isEmpty(lKeywords)}"
+        th:content="${lKeywords}" />
+
+  <!-- 单分组视图：插件给的是拍平的 links -->
+  <th:block th:if="${links != null}">
+    <th:block th:each="link : ${links}">
+      <th:block th:replace="~{modules/seo :: linkItem(link=${link}, groupName=null)}"></th:block>
+    </th:block>
+  </th:block>
+  <!-- 全部视图：按分组展开 -->
+  <th:block th:unless="${links != null}">
+    <th:block th:each="group : ${lGroups}">
+      <th:block th:each="link : ${group.links}">
+        <th:block th:replace="~{modules/seo :: linkItem(link=${link}, groupName=${group.spec?.displayName})}"></th:block>
+      </th:block>
+    </th:block>
+  </th:block>
+</th:block>
+
+<!-- 单个友链：站点名 / 网址 / 简介 / Logo / 所属分组 -->
+<th:block th:fragment="linkItem(link, groupName)"
+          th:with="lName=${link.spec?.displayName},
+                   lUrl=${link.spec?.url != null and !#strings.isEmpty(link.spec.url) ? link.spec.url : null},
+                   lDesc=${link.spec?.description != null and !#strings.isEmpty(link.spec.description) ? link.spec.description : null},
+                   itemBase=${#strings.endsWith(site.url, '/') ? #strings.substring(site.url, 0, #strings.length(site.url) - 1) : site.url},
+                   lLogoRaw=${link.spec?.logo != null and !#strings.isEmpty(link.spec.logo) ? link.spec.logo : null},
+                   lLogo=${lLogoRaw != null ? ((#strings.startsWith(lLogoRaw, 'http://') or #strings.startsWith(lLogoRaw, 'https://')) ? lLogoRaw : itemBase + (#strings.startsWith(lLogoRaw, '/') ? lLogoRaw : '/' + lLogoRaw)) : null},
+                   lGroupObj=${groupName != null and !#strings.isEmpty(groupName) ? {'@type':'Organization','name':site.title,'department':{'@type':'Organization','name':groupName}} : null}">
+  <script type="application/ld+json" th:inline="javascript"
+          th:if="${theme.config.seo?.enable_structured_data != false and lName != null and !#strings.isEmpty(lName)}">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": /*[[${lName}]]*/ "",
+      "url": /*[[${lUrl}]]*/ null,
+      "description": /*[[${lDesc}]]*/ null,
+      "image": /*[[${lLogo}]]*/ null,
+      "isPartOf": /*[[${lGroupObj}]]*/ null
+    }
+  </script>
+</th:block>
+</body>
+</html>

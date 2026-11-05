@@ -594,7 +594,9 @@ function drawFooterBrand(ctx, data) {
 
 function drawProfile(ctx, data) {
   var rx = 700;
-  var rw = W - 80 - rx;
+  /* 右端对齐落款（drawFooterBrand 的 right = W - 140）：
+     标题最后一个字不能越过下方站名的最后一个字 */
+  var rw = W - 140 - rx;
 
   /* 眉标：顶边与卡片齐平，字号放大一档 */
   var eyeY = CARD_TOP + 48;
@@ -618,19 +620,62 @@ function drawProfile(ctx, data) {
   ctx.fillStyle = RED;
   ctx.fillText(t('members.badgeShareTitle'), ex + 18, eyeY);
 
-  /* 姓名：与眉标拉开距离 */
+  /* 姓名：单行优先；单行得把字压到 30 出头（比副文本还小）时改折两行。
+     折两行能撑到 66 上下，才配当这张图的主角。
+     折行后分隔线和三行档案整体下移一行，行距保持不变，不会压线。 */
   var name = data.name || 'NUCMA';
-  var size = 96;
-  setFont(ctx, size, 400, DISPLAY, 1.5);
-  while (size > 44 && ctx.measureText(name).width > rw) {
-    size -= 3;
-    setFont(ctx, size, 400, DISPLAY, 1.5);
-  }
-  ctx.fillStyle = INK;
-  ctx.fillText(name, rx, CARD_TOP + 196);
+  var NAME_MAX = 96;      /* 短名字的上限，与原设计一致 */
+  var ONE_FLOOR = 48;     /* 单行缩到这个字号还放不下，就考虑折行 */
+  var TWO_MAX = 72;       /* 折行后的上限，两个字的名字不会被吹大 */
+  var TWO_FLOOR = 34;
 
-  /* 分隔线：原来学校 / 分组的位置直接换成 hr */
-  var ruleY = CARD_TOP + 262;
+  function nameW(sz) {
+    setFont(ctx, sz, 400, DISPLAY, 1.5);
+    return ctx.measureText(name).width;
+  }
+  /* 断行位置：左右两行宽度最接近，且两边都不超宽 */
+  function splitAt(sz) {
+    setFont(ctx, sz, 400, DISPLAY, 1.5);
+    var best = -1, bestDiff = Infinity, k, a, b;
+    for (k = 1; k < name.length; k++) {
+      a = ctx.measureText(name.slice(0, k)).width;
+      b = ctx.measureText(name.slice(k)).width;
+      if (a > rw || b > rw) continue;
+      if (Math.abs(a - b) < bestDiff) { bestDiff = Math.abs(a - b); best = k; }
+    }
+    return best;
+  }
+
+  var size = NAME_MAX;
+  while (size > ONE_FLOOR && nameW(size) > rw) size -= 1;
+  var lines = [name];
+  if (nameW(size) > rw) {
+    var two = 0, ts;
+    for (ts = TWO_MAX; ts >= TWO_FLOOR; ts -= 1) {
+      if (splitAt(ts) > 0) { two = ts; break; }
+    }
+    /* 单行缩到 ONE_FLOOR 还放不下 → 折两行。
+       长名字折两行永远比挤成 12px 一行好看，所以这里不再跟单行比大小。 */
+    if (two) {
+      var cut = splitAt(two);
+      lines = [name.slice(0, cut), name.slice(cut)];
+      size = two;
+    }
+  }
+  /* 快看体字身比常规字高（墨迹约 1.15 倍），行距按 1.34 才留得出空隙 */
+  var lineH = lines.length > 1 ? Math.round(size * 1.34) : 0;
+
+  ctx.fillStyle = INK;
+  setFont(ctx, size, 400, DISPLAY, 1.5);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  /* 折行时整块上提 16px，把下移的空间还给下面的分隔线与档案 */
+  var nameY = CARD_TOP + (lineH ? 180 : 196);
+  ctx.fillText(lines[0], rx, nameY, rw);
+  if (lines.length > 1) ctx.fillText(lines[1], rx, nameY + lineH, rw);
+
+  /* 分隔线：原来学校 / 分组的位置直接换成 hr；折行时跟着最后一行下移 */
+  var ruleY = nameY + lineH + 66;
   var rule = ctx.createLinearGradient(rx, ruleY, W - 80, ruleY);
   rule.addColorStop(0, 'rgba(36,29,28,.16)');
   rule.addColorStop(1, 'rgba(36,29,28,0)');

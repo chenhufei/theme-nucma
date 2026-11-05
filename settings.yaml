@@ -40,8 +40,8 @@ spec:
         - $formkit: select
           name: site_bg
           label: 全站承接背景
-          value: auto
-          help: 铺在所有页面最底层。「跟随首屏」时，1/2/6/7/8/9/10/11 号首屏为纯白底；3 校墙封面、4 光斑、5 柔光渐层沿用原纹理并过渡到底色。
+          value: "off"
+          help: 铺在所有页面最底层，默认整站纯白。切「跟随首屏」时，1/2/6/7/8/9/10/11 号首屏为纯白底；3 校墙封面、4 光斑、5 柔光渐层沿用原纹理并过渡到底色。
           options:
             - label: 跟随首屏版式
               value: auto
@@ -54,7 +54,7 @@ spec:
         - $formkit: color
           name: site_bg_color
           label: 全站背景底色
-          value: '#F8F6F1'
+          value: '#FFFFFF'
           help: 用于 3/4/5 号首屏和固定纹理模式：首屏底部过渡到这个颜色，滚动时没有接缝；深色模式会压暗。纯白首屏不受此项影响。
         - $formkit: checkbox
           name: developer_mode
@@ -73,6 +73,7 @@ spec:
           placeholder: 直接输入 JavaScript 代码，无需 <script> 标签
           language: javascript
           height: 240px
+
     - group: home_hero
       label: 首页首屏
       formSchema:
@@ -732,7 +733,7 @@ spec:
         - $formkit: select
           name: nav_align
           label: 菜单对齐
-          value: center
+          value: right
           help: 页头内菜单与自定义链接的水平对齐。本组对所有页面生效，首页首屏自带的页头也读这里的设置。
           options:
             - label: 居中对齐
@@ -1026,6 +1027,55 @@ spec:
           name: show_tags
           label: 显示文章标签
           value: true
+        - $formkit: select
+          name: date_style
+          label: 发布日期精度
+          value: day
+          options:
+            - label: 年月日（跟随「外观与版式 → 日期格式」）
+              value: day
+            - label: 年月（2026年11月）
+              value: month
+            - label: 仅年份（2026年）
+              value: year
+          help: 只影响文章页（标题下方与侧栏「发布于」）和首页卡片的日期，归档页与其他列表不受影响；做专题合集时选「年月」更耐看。
+          key: post-date_style
+        - $formkit: checkbox
+          name: pair_images
+          label: 连续图片自动并排
+          value: true
+          help: 正文里前后相邻的两张横图会自动排成一行（各带图注）；竖图、手机端仍为上下排列。关闭后所有图片一律通栏。
+          key: post-pair_images
+        - $formkit: text
+          name: author_text
+          label: 文章署名文字
+          value: ""
+          help: '留空＝沿用注册作者（后台登录账号，例如 Administrator）。填了就全站文章统一显示这段文字，不再绑定注册用户。单篇要单独署名时，在文章编辑页的「高级 → 自定义元数据」加键 nucma.cn/author、值写作者名，优先级高于这里（文章页署名、首页卡片、归档与 SEO 会一起生效）。'
+          key: post-author_text
+        - $formkit: text
+          name: credit_label
+          label: 文末署名标题
+          value: 署名
+          help: '正文末尾「【拍摄: …】」这类署名区的标题，留空则不显示标题。'
+          key: post-credit_label
+        - $formkit: checkbox
+          name: highlight_enabled
+          id: highlight_enabled
+          label: 允许划线
+          value: true
+          help: 读者选中正文即可划线、生成分享图，无需登录。划线记录只保存在读者自己的浏览器里；关闭后旧划线也不再显示。
+          key: post-highlight_enabled
+        - $formkit: select
+          name: highlight_style
+          label: 划线样式
+          value: underline
+          options:
+            - label: 红色下划线（同公众号）
+              value: underline
+            - label: 荧光笔底色
+              value: wash
+          if: $get('highlight_enabled').value != false
+          key: post-highlight_style
         - $formkit: checkbox
           name: auto_toc
           label: 自动生成文章目录

@@ -412,6 +412,9 @@ for (const marker of ['LinkSubmitWidget', 'data-link-application-enabled']) {
 }
 
 const layout = read('templates/modules/layout.html');
+// 全站页头只有一份标记：modules/site-header.html；layout 的 siteHeader 片段只负责套作用域。
+// 首屏不内置页头（0.0.8 起），所以首页与内页用的是同一个粘性外壳。
+const siteHeader = read('templates/modules/site-header.html');
 const pageLayout = read('templates/layout.html');
 if (!/th:fragment="html \(head, content\)"/.test(pageLayout)) {
   fail('templates/layout.html 必须声明 Halo 页面布局契约 html(head, content)');
@@ -465,7 +468,6 @@ if (contentMax == null || frameMax == null) {
   fail(`画框必须比版心宽：--frame-max(${frameMax}) 应大于 --content-max(${contentMax})`);
 }
 for (const [selector, css] of [
-  ['.site-header .container', mainCss],
   ['.site-footer .container', mainCss],
 ]) {
   const rule = css.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{[^}]*\\}`, 's'))?.[0] || '';
@@ -549,10 +551,10 @@ for (const marker of [
   if (!mainCss.includes(marker)) fail(`视觉层级声明缺少 ${marker}`);
 }
 for (const [path, markers] of [
-  ['templates/modules/layout.html', ['btn btn-ghost btn-circle', 'menu menu-sm login-dropdown']],
+  ['templates/modules/site-header.html', ['btn btn-ghost btn-circle', 'menu menu-sm login-dropdown']],
   ['templates/members.html', ['input input-bordered page-search', 'btn btn-primary apply-btn', 'card card-border member-card']],
   ['templates/links.html', ['input input-bordered page-search', 'btn btn-primary apply-btn', 'card card-border link-card']],
-  ['templates/post.html', ['badge badge-primary badge-soft', 'card card-border sidebar-card']],
+  ['templates/post.html', ['card card-border sidebar-card']],
 ]) {
   const template = read(path);
   for (const marker of markers) {
@@ -619,7 +621,8 @@ for (const marker of [
 }
 for (const marker of [
   '.login-entry-wrap.is-authenticated .login-icon',
-  '.category-cols-wrapper.category-cols--count-3',
+  '.category-cols-wrapper',
+  '.category-cols--c3',
   '.home-sections > .section[data-home-section="members"] .member-grid',
   'transition-property: color, background-color, border-color, outline-color, box-shadow, fill, stroke, opacity',
   // 明暗切换必须给整页颜色属性补过渡，且图标动画不能被这条通配规则吃掉
@@ -628,7 +631,7 @@ for (const marker of [
 ]) {
   if (!mainCss.includes(marker)) fail(`主题响应式或切换契约缺少：${marker}`);
 }
-if (!read('templates/index.html').includes('category-cols--count-')) {
+if (!read('templates/index.html').includes("'category-cols--c' + catCols")) {
   fail('首页分类栏缺少确定性列数标记');
 }
 for (const [path, markers] of [
@@ -688,7 +691,7 @@ if (!existsSync(join(root, errCssPath))) {
 if (!mainScript.includes('initHistoryBackLinks')) {
   fail('主脚本缺少历史返回链接增强逻辑');
 }
-// 认证页：覆盖 Halo gateway 布局做外形，样式独立成包，配置走 theme.config.auth_page。
+// 认证页：覆盖 Halo gateway 布局做外形，样式独立成包，配置走 theme.config.system_pages。
 // 表单必须原样交给 Halo —— 自己重写字段名或 action 会直接登不上。
 const gatewayLayoutPath = 'templates/gateway_fragments/layout.html';
 if (!existsSync(join(root, gatewayLayoutPath))) {
@@ -722,7 +725,7 @@ if (!existsSync(join(root, gatewayLayoutPath))) {
 }
 const authPageForm = groups.find((form) => form.group === 'system_pages');
 if (!authPageForm) {
-  fail('设置缺少「登录注册页」分组');
+  fail('设置缺少「system_pages」分组（认证页字段）');
 } else {
   const authFields = authPageForm.formSchema.map((node) => node.name);
   if (!authFields.includes('auth_polish')) fail('认证页设置缺少字段：auth_polish');
@@ -805,9 +808,21 @@ for (const [feature, source, markers] of [
   ['成员加入时间', membersTemplate + membersScript, ['spec.joinedAt', 'memberJoinedAt']],
   ['成员关系网视图', membersTemplate + membersScript + networkScript + mainCss,
     ['data-member-network', 'data-member-network-canvas', 'data-member-view="network"',
-     'initMemberNetwork', 'member-network-tip', 'is-network-view', 'panX', 'setMode']],
-  ['成员关系网平面拖动与连线依据', membersScript + networkScript,
-    ['clampPan', 'node.vx', 'findHoveredLink', 'data-member-network-link-tip']],
+     'initMemberNetwork', 'member-network-tip', 'is-network-view', 'view.yaw', 'setMode']],
+  ['成员关系星图旋转与连线依据', membersScript + networkScript,
+    ['projectNode', 'CAM_Z', 'findHoveredLink', 'data-member-network-link-tip']],
+  // 星图只画头像：节点不再有学校/簇这一层，名称画在头像下方
+  ['成员星图只画头像', networkScript,
+    ['MEMBER_WORLD_R', 'focusNode', 'drawLabels', 'nodeColor']],
+  // 两段式点击：第一次聚焦关系网，再点同一个头像弹工作证
+  ['成员星图两段式点击', networkScript + membersTemplate,
+    ['activateNode', 'openBadge', 'relatedList', 'data-member-network-focus']],
+  // 头像主色发光：跨域头像走插件同源代理才读得到像素
+  ['成员星图头像主色', networkScript,
+    ['sampleAvatarColor', 'AVATAR_PROXY', 'hslToRgb', 'getImageData']],
+  // 关系分析：先问成员级大模型接口，退回学校级，再退回同校同组
+  ['成员关系分析数据源', networkScript,
+    ['member-affinity', 'school-affinity', 'applyAiRelations', 'buildLocalRelations']],
   ['QQ 加好友链接校验', membersScript + claimScript + qqLinkScript,
     ['normalizeQqLink', 'qm.qq.com', 'cgi-bin/qm/qr', 'decodeQrFromFile']],
   // /cgi-bin/qm/qr 的 path 恰好等于前缀，token 在 k 参数里：不能再拿"路径比前缀长"当判据，
@@ -890,7 +905,7 @@ for (const alpineDirective of ['x-data=', 'x-show=', 'x-if=', 'x-init=', 'x-coll
   if (allTemplates.includes(alpineDirective)) fail(`模板仍残留 Alpine 指令：${alpineDirective}`);
 }
 for (const marker of ['id="mobileMenuToggle"', 'data-mobile-menu-close', 'aria-hidden="true"']) {
-  if (!layout.includes(marker)) fail(`移动菜单原生交互缺少标记：${marker}`);
+  if (!(layout + siteHeader).includes(marker)) fail(`移动菜单原生交互缺少标记：${marker}`);
 }
 for (const marker of ['<details class="collapse collapse-arrow faq-item"', '<summary class="collapse-title faq-question"']) {
   if (!read('templates/page_about.html').includes(marker)) fail(`关于页 FAQ 缺少原生折叠标记：${marker}`);
@@ -1156,7 +1171,14 @@ if (built) {
       if (!builtLinksScript.includes(marker)) fail(`友链页构建脚本缺少标记：${marker}`);
     }
   }
-  const knownEntries = ['main.js', 'members.js', 'links.js', 'claim.js'];
+  // 分享图二维码编码器：只在生成分享图时按需加载，独立成文件，不算死分包。
+  if (existsSync(join(root, 'templates/assets/js/qr-encoder.js'))) {
+    const builtQrEncoder = read('templates/assets/js/qr-encoder.js');
+    for (const marker of ['var qrcode', 'createSvgTag']) {
+      if (!builtQrEncoder.includes(marker)) fail(`二维码编码器构建产物缺少标记：${marker}`);
+    }
+  }
+  const knownEntries = ['main.js', 'members.js', 'links.js', 'claim.js', 'qr-encoder.js'];
   const strayScripts = readdirSync(join(root, 'templates/assets/js'), { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith('.js') && !knownEntries.includes(entry.name))
     .map((entry) => entry.name);
@@ -1234,11 +1256,13 @@ for (const file of walk('templates', '.html')) {
     if (unknown.length) {
       fail(`${file}:${line} 调用 layout :: html 传了签名里没有的参数 ${unknown.join(', ')}（签名要求：${signatureParams.join(', ')}）`);
     }
-    // headExtra 指向的片段必须真的存在，否则同样在渲染期抛异常
+    // headExtra 指向的片段必须真的存在，否则同样在渲染期抛异常。
+    // 允许带参数（如 modules/seo :: article(post=${post})），参数会作为 fragment 的形参传入。
     const headPiece = pieces.find((piece) => /^\s*headExtra\s*=/.test(piece));
     if (headPiece) {
-      const local = headPiece.match(/~\{\s*::\s*([\w-]+)\s*\}/);
-      const external = headPiece.match(/~\{\s*([\w./-]+)\s*::\s*([\w-]+)\s*\}/);
+      // 片段可以带参数：~{modules/seo :: article(post=${post})}
+      const local = headPiece.match(/~\{\s*::\s*([\w-]+)\s*(?:\([^)]*\))?\s*\}/);
+      const external = headPiece.match(/~\{\s*([\w./-]+)\s*::\s*([\w-]+)\s*(?:\([^)]*\))?\s*\}/);
       if (local) {
         if (!source.includes(`th:fragment="${local[1]}`)) {
           fail(`${file}:${line} 的 headExtra 引用了本模板不存在的片段 ${local[1]}`);
@@ -1286,12 +1310,13 @@ if ((columnsChild?.if || '').replace(/\s+/g, ' ') !== "$value.type === 'news' &&
 }
 if (!columnsChild?.key) fail('首页区块子表单 columns 缺少唯一 key');
 
-// ③ 12 号页脚：兜底列数自适应，脚本按真实 .footer-col 数铺，不留 0px 空列
-if (layout.includes('1.75fr 1fr 1fr max-content')) {
-  fail('12 号页脚不得保留固定 4 列兜底模板（会产生 0px 空列与右侧空白）');
+// ③ 12 号页脚：按 0.0.10 版式（品牌 1.75fr + 其余 1fr + 二维码 max-content）；
+// 后台栏目多于 4 个时由脚本按真实 .footer-col 数覆盖 --l-cols
+if (!layout.includes('1.75fr 1fr 1fr max-content')) {
+  fail('12 号页脚兜底列必须保持 0.0.10 的 1.75fr 1fr 1fr max-content');
 }
-if (!layout.includes('if(n>=2){')) {
-  fail('12 号页脚必须按真实 .footer-col 数（n>=2）设置 --l-cols，不能只在 n>4 时覆盖');
+if (!layout.includes('if(n>4){')) {
+  fail('12 号页脚必须按真实 .footer-col 数覆盖 --l-cols');
 }
 
 // ④ hero → 正文：细线不能压在首屏下沿，否则形成一条全宽硬分界

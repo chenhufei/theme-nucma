@@ -109,6 +109,19 @@ export default defineConfig({
             })
           }
         }
+        // 分享图二维码：编码器只在生成分享图时按需加载，不进主包。
+        // 与 404 页共用同一份源码；bundle:false 的原因同 err404（UMD 写法，打 IIFE 会丢 this）。
+        if (existsSync(resolve(rootDir, 'src/err404/qrcode.js'))) {
+          await esbuild({
+            entryPoints: [resolve(rootDir, 'src/err404/qrcode.js')],
+            outfile: resolve(outDir, 'qr-encoder.js'),
+            bundle: false,
+            target: 'es2018',
+            minify: true,
+            legalComments: 'none',
+            logLevel: 'info',
+          })
+        }
         // 认证页专用样式：只在登录/注册等 gateway 页面按需加载，不进主包。
         // 源文件是手写 CSS（不经过 Tailwind），构建期原样复制到 assets/auth/。
         const authSrc = resolve(rootDir, 'src/auth')
@@ -119,7 +132,7 @@ export default defineConfig({
         }
         writeFileSync(
           resolve(rootDir, 'templates/assets/build-info.json'),
-          `${JSON.stringify({ theme: packageJson.name, version: packageJson.version, assets: ['css/main.css', 'js/main.js', 'js/members.js', 'js/links.js', 'js/claim.js', 'data/china-provinces.json', 'err404/err404.css', 'err404/err404.js', 'auth/auth.css'] }, null, 2)}\n`,
+          `${JSON.stringify({ theme: packageJson.name, version: packageJson.version, assets: ['css/main.css', 'js/main.js', 'js/members.js', 'js/links.js', 'js/claim.js', 'data/china-provinces.json', 'err404/err404.css', 'err404/err404.js', 'js/qr-encoder.js', 'auth/auth.css'] }, null, 2)}\n`,
           'utf8',
         )
         console.log('\nJS bundle completed!')

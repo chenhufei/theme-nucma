@@ -14,6 +14,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" th:content="${#strings.defaultString(theme.config.appearance?.primary_color, '#D13E43')}" />
+  <!-- 百度移动适配：同一套 HTML 响应式，声明对 PC / 移动都适用 -->
+  <meta name="applicable-device" content="pc,mobile" />
   <title th:text="${title ?: site.title}"></title>
   <meta name="keywords" th:if="${site.seo?.keywords != null and !#strings.isEmpty(site.seo.keywords)}" th:content="${site.seo.keywords}" />
   <!--
@@ -27,6 +29,7 @@
   <meta name="robots" th:if="${robots != null}" th:content="${robots}" />
   <th:block th:if="${theme.config.seo?.enable_metadata != false}">
   <link rel="canonical" th:if="${seoCanonical != null and !#strings.isEmpty(seoCanonical)}" th:href="${seoCanonical}" />
+  <link rel="alternate" type="application/rss+xml" th:href="@{/rss.xml}" th:title="|${site.title} RSS|" />
   <meta property="og:site_name" th:content="${site.title}" />
   <meta property="og:title" th:content="${title ?: site.title}" />
   <meta property="og:description" th:content="${seoDescription}" />
@@ -38,10 +41,12 @@
   <meta name="twitter:description" th:content="${seoDescription}" />
   <meta name="twitter:image" th:if="${seoImage != null and !#strings.isEmpty(seoImage)}" th:content="${seoImage}" />
   </th:block>
-  <script th:if="${theme.config.seo?.enable_structured_data != false}" type="application/ld+json" th:inline="javascript">
+  <!-- 文章页的 Article 结构化数据由 modules/seo.html 输出（它能拿到 post），这里不再重复输出 Article，
+       否则同一页会出现两个 Article，搜索引擎只会取第一个。 -->
+  <script th:if="${theme.config.seo?.enable_structured_data != false and seoPageType != 'article'}" type="application/ld+json" th:inline="javascript">
     {
       "@context": "https://schema.org",
-      "@type": /*[[${seoPageType == 'article' ? 'Article' : 'WebPage'}]]*/ "WebPage",
+      "@type": "WebPage",
       "name": /*[[${title ?: site.title}]]*/ "Page",
       "description": /*[[${seoDescription}]]*/ "",
       "url": /*[[${seoCanonical}]]*/ "",
@@ -119,7 +124,7 @@
       th:classappend="${(seoPageType == 'article' ? ' page-article' : '') + (siteBgStyle == 'off' ? ' site-bg-off' : '') + (siteBgStyle == 'auto' and !heroKeepsTint ? ' site-bg-white' : '')}"
       th:data-template="${_templateId}"
       th:data-theme-version="${theme.spec.version}"
-      th:style="${'--site-paper:' + (#strings.defaultString(theme.config.appearance?.site_bg_color, '#F8F6F1'))}">
+      th:style="${'--site-paper:' + (#strings.defaultString(theme.config.appearance?.site_bg_color, '#FFFFFF'))}">
   <div class="site-bg" aria-hidden="true"
        th:classappend="${' site-bg--' + siteBgStyle + (siteBgStyle == 'auto' ? ' site-bg--h-' + bgLayout : '')}"></div>
   <a class="skip-link" href="#mainContent" th:text="#{a11y.skipToContent}">跳到主要内容</a>
@@ -134,150 +139,25 @@
     <span class="reading-progress__bar"></span>
   </div>
 
-  <!-- 顶部导航：所有页面（含首页）统一使用这一个页头，首屏不再内置页头 -->
-  <header class="site-header" th:fragment="siteHeader">
-    <div class="container">
-      <div class="header-inner"
-           th:with="navAlign = ${#strings.defaultString(theme.config.navigation?.nav_align, 'center')}"
-           th:classappend="${'nav-align-' + navAlign}">
-        <a th:href="@{/}" class="logo">
-          <img th:if="${hdrLogoMode == 'image' and hdrLogoImage != null and !#strings.isEmpty(hdrLogoImage)}"
-               th:src="${hdrLogoImage}" th:alt="${hdrBrandName}" width="32" height="32" decoding="async" />
-          <s th:if="${hdrLogoMode == 'mark'}" class="logo-mark" th:text="${hdrLogoChar}">N</s>
-          <span th:text="${hdrBrandName}"></span>
-          <u th:if="${!#strings.isEmpty(hdrBrandEn)}" th:text="${hdrBrandEn}">NUCMA</u>
-        </a>
-        <nav class="main-nav"
-             th:with="headerLinks=${theme.config.navigation?.custom_links},
-                      headerLinkInterval=${theme.config.navigation?.carousel_interval ?: 3500}">
-          <!-- 主菜单（header_menu 为空则不显示） -->
-          <th:block th:if="${theme.config.navigation?.header_menu != null and !#strings.isEmpty(theme.config.navigation?.header_menu)}"
-             th:with="menu = ${menuFinder.getByName(theme.config.navigation?.header_menu)}">
-            <th:block th:if="${menu != null and menu.menuItems != null and !#lists.isEmpty(menu.menuItems)}">
-              <a th:each="item : ${menu.menuItems}"
-                 th:if="${!#strings.isEmpty(item.status?.href ?: item.spec?.href)}"
-                 th:href="@{${item.status?.href ?: item.spec?.href}}"
-                 th:text="${item.status?.displayName ?: item.spec?.displayName}"
-                 th:target="${item.spec?.target?.value}"></a>
-            </th:block>
-          </th:block>
-          <!-- 自定义链接跟在菜单右侧，超过1个时自动上下滚动轮播 -->
-          <th:block th:if="${headerLinks != null and !#lists.isEmpty(headerLinks)}">
-            <th:block th:with="carousel = ${#lists.size(headerLinks) > 1}">
-                 <div class="header-links-wrap" th:classappend="${carousel ? 'is-carousel' : ''}"
-                   th:data-interval="${carousel ? headerLinkInterval : null}">
-                <div class="header-links-track" th:if="${carousel}">
-                  <th:block th:each="link : ${headerLinks}">
-                    <div class="header-links-slide">
-                      <a th:if="${link.url != null and !#strings.isEmpty(link.url) and (link.text != null and !#strings.isEmpty(link.text) or link.image != null and !#strings.isEmpty(link.image))}"
-                         th:href="${link.url}"
-                         th:target="${link.target ?: '_blank'}"
-                         class="header-link"
-                         th:title="${link.text}"
-                     th:aria-label="${link.text != null and !#strings.isEmpty(link.text) ? link.text : link.url}">
-                        <img th:if="${link.image != null and !#strings.isEmpty(link.image)}"
-                             th:src="${link.image}" th:alt="${link.text != null and !#strings.isEmpty(link.text) ? link.text : link.url}"
-                             class="header-link-img" width="20" height="20" loading="lazy" decoding="async" />
-                        <span th:if="${(link.image == null or #strings.isEmpty(link.image)) and link.text != null and !#strings.isEmpty(link.text)}"
-                              th:text="${link.text}"></span>
-                      </a>
-                    </div>
-                  </th:block>
-                </div>
-                <th:block th:unless="${carousel}">
-                  <th:block th:each="link : ${headerLinks}">
-                    <a th:if="${link.url != null and !#strings.isEmpty(link.url) and (link.text != null and !#strings.isEmpty(link.text) or link.image != null and !#strings.isEmpty(link.image))}"
-                       th:href="${link.url}"
-                     th:target="${link.target ?: '_blank'}"
-                     class="header-link"
-                     th:title="${link.text}"
-                     th:aria-label="${link.text != null and !#strings.isEmpty(link.text) ? link.text : link.url}">
-                      <img th:if="${link.image != null and !#strings.isEmpty(link.image)}"
-                           th:src="${link.image}" th:alt="${link.text != null and !#strings.isEmpty(link.text) ? link.text : link.url}"
-                           class="header-link-img" width="20" height="20" loading="lazy" decoding="async" />
-                      <span th:if="${(link.image == null or #strings.isEmpty(link.image)) and link.text != null and !#strings.isEmpty(link.text)}"
-                            th:text="${link.text}"></span>
-                    </a>
-                  </th:block>
-                </th:block>
-              </div>
-            </th:block>
-          </th:block>
-        </nav>
-        <div class="header-actions">
-          <a class="header-cta" th:if="${hdrCtaText != null and !#strings.isEmpty(hdrCtaText)}"
-             th:href="@{${hdrCtaUrl}}" th:text="${hdrCtaText}">加入联盟</a>
-          <th:block th:if="${theme.config.navigation?.search_enabled != false}">
-            <button th:if="${pluginFinder.available('PluginSearchWidget')}"
-                    type="button"
-                    data-widget-open="SearchWidget"
-                    class="btn btn-ghost btn-circle btn-sm icon-btn" aria-label="搜索" th:aria-label="#{common.search}">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-              </svg>
-            </button>
-          </th:block>
-          <button th:if="${theme.config.navigation?.theme_toggle_enabled != false}"
-                  id="themeToggle" class="btn btn-ghost btn-circle btn-sm icon-btn theme-toggle-btn"
-                  aria-label="切换主题" th:aria-label="#{theme.switchTheme}" aria-pressed="false">
-            <!-- 两个图标叠在同一个旋转容器里：切主题时容器整体转半圈，太阳/月亮各自缩放淡入淡出 -->
-            <span class="theme-toggle-icons" aria-hidden="true">
-              <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="5"></circle>
-                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 5.64l1.42-1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 18.36l1.42 1.42"></path>
-              </svg>
-              <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-              </svg>
-            </span>
-          </button>
-          <!-- 登录入口（在明暗切换右侧） -->
-          <th:block th:if="${theme.config.navigation?.show_login_btn != false}">
-            <div class="login-entry-wrap" id="loginEntryWrap">
-              <button id="loginEntry" class="btn btn-ghost btn-circle btn-sm icon-btn login-entry" type="button" title="登录" th:title="#{user.login}" aria-label="登录" th:aria-label="#{user.login}" aria-expanded="false" aria-controls="loginDropdown">
-                <img class="login-avatar" alt="" width="28" height="28" hidden />
-                <span class="login-avatar-placeholder" hidden>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
-                </span>
-                <svg class="login-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                  <circle cx="12" cy="8" r="3.5"></circle>
-                  <path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path>
-                  <circle cx="12" cy="12" r="10"></circle>
-                </svg>
-              </button>
-              <ul id="loginDropdown" class="menu menu-sm login-dropdown" role="menu" aria-label="用户菜单" th:aria-label="#{user.menu}" aria-hidden="true">
-                <li>
-                  <a href="/uc" role="menuitem" class="login-menu-uc">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                    <span th:text="#{user.center}">个人中心</span>
-                  </a>
-                </li>
-                <li>
-                  <a href="/logout" role="menuitem" class="login-menu-logout">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                      <polyline points="16 17 21 12 16 7"></polyline>
-                      <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                    <span th:text="#{user.logout}">退出登录</span>
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </th:block>
-          <button id="mobileMenuToggle" type="button" class="btn btn-ghost btn-circle btn-sm icon-btn mobile-only" aria-label="菜单" th:aria-label="#{common.menu}" aria-controls="mobileMenu" aria-expanded="false">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 12h18M3 6h18M3 18h18"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-  </header>
+  <!-- 顶部导航：与首屏共用同一份页头片段（modules/site-header），造型跟随当前首屏方案。
+       首页首屏不内置页头，所以这里对所有页面都渲染。 -->
+  <th:block th:fragment="siteHeader">
+    <th:block th:replace="~{modules/site-header :: siteHeader(layout=${#strings.defaultString(theme.config.home_hero?.layout, 'p42r')}, mode='page')}"></th:block>
+  </th:block>
+
+  <!-- 划词工具条：选中正文文字后浮出，划线记录只存在读者本地，不需要登录 -->
+  <div th:if="${seoPageType == 'article' and theme.config.sidebar?.highlight_enabled != false}"
+       id="hlToolbar"
+       class="hl-toolbar"
+       role="toolbar"
+       th:aria-label="#{hl.toolbar}"
+       th:attr="data-tip-saved=#{hl.saved},data-tip-removed=#{hl.removed},data-tip-select=#{hl.selectFirst}">
+    <button type="button" class="hl-toolbar__btn" data-hl-action="mark" th:text="#{hl.mark}">划线</button>
+    <button type="button" class="hl-toolbar__btn" data-hl-action="unmark" hidden th:text="#{hl.unmark}">取消划线</button>
+    <button type="button" class="hl-toolbar__btn hl-toolbar__btn--share" data-hl-action="share" th:text="#{hl.share}">分享</button>
+  </div>
+
+  <!-- 顶部导航：首页启用新版首屏时由首屏自带的页头接管，这里不再重复渲染 -->
 
   <!-- 移动端菜单 -->
   <div id="mobileMenu" class="mobile-menu" aria-hidden="true" th:fragment="mobileMenu">
@@ -400,58 +280,94 @@
           class="article-image-viewer"
           aria-labelledby="articleImageViewerTitle"
           hidden>
+    <h2 id="articleImageViewerTitle" class="visually-hidden" th:text="#{lightbox.title}">图片预览</h2>
     <div class="article-image-viewer__shell">
-      <header class="article-image-viewer__header">
-        <div class="article-image-viewer__heading">
-          <h2 id="articleImageViewerTitle" th:text="#{lightbox.title}">图片预览</h2>
-          <span id="articleImageViewerCounter" aria-live="polite"></span>
-        </div>
+      <!-- 顶部：计数 + 关闭，浮在黑场上 -->
+      <div class="article-image-viewer__top">
+        <span id="articleImageViewerCounter" class="article-image-viewer__counter" aria-live="polite"></span>
         <button type="button" class="btn btn-ghost btn-circle btn-sm viewer-icon-btn" data-image-viewer-close aria-label="关闭图片预览" th:aria-label="#{lightbox.close}">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12"></path>
           </svg>
         </button>
-      </header>
+      </div>
 
+      <!-- 舞台：左箭头 · 图片与说明 · 右箭头 -->
       <div class="article-image-viewer__stage">
-        <button type="button" class="btn btn-ghost btn-circle viewer-nav viewer-nav--prev" data-image-viewer-prev aria-label="上一张图片" th:aria-label="#{lightbox.prev}">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <button type="button" class="viewer-nav viewer-nav--prev" data-image-viewer-prev aria-label="上一张图片" th:aria-label="#{lightbox.prev}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
             <path d="m15 18-6-6 6-6"></path>
           </svg>
         </button>
-        <div id="articleImageViewerCanvas" class="article-image-viewer__canvas">
-      <img id="articleImageViewerImage" alt="" width="1200" height="800" decoding="async" draggable="false" />
+        <div class="article-image-viewer__body">
+          <div id="articleImageViewerCanvas" class="article-image-viewer__canvas">
+            <img id="articleImageViewerImage" alt="" width="1600" height="1200" decoding="async" draggable="false" />
+          </div>
+          <p id="articleImageViewerCaption" class="article-image-viewer__caption"></p>
         </div>
-        <button type="button" class="btn btn-ghost btn-circle viewer-nav viewer-nav--next" data-image-viewer-next aria-label="下一张图片" th:aria-label="#{lightbox.next}">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <button type="button" class="viewer-nav viewer-nav--next" data-image-viewer-next aria-label="下一张图片" th:aria-label="#{lightbox.next}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
             <path d="m9 18 6-6-6-6"></path>
           </svg>
         </button>
       </div>
 
-      <footer class="article-image-viewer__footer">
-        <p id="articleImageViewerCaption"></p>
-        <div class="article-image-viewer__toolbar" aria-label="图片缩放" th:aria-label="#{lightbox.zoom}">
-          <button type="button" class="btn btn-ghost btn-circle btn-sm viewer-icon-btn" data-image-viewer-zoom-out aria-label="缩小图片" th:aria-label="#{lightbox.zoomOut}">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35M8 11h6"></path>
-            </svg>
-          </button>
-          <button type="button" class="btn btn-ghost btn-sm viewer-reset-btn" data-image-viewer-reset aria-label="重置图片缩放" th:aria-label="#{lightbox.zoomReset}">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path>
-            </svg>
-            <span id="articleImageViewerZoom">100%</span>
-          </button>
-          <button type="button" class="btn btn-ghost btn-circle btn-sm viewer-icon-btn" data-image-viewer-zoom-in aria-label="放大图片" th:aria-label="#{lightbox.zoomIn}">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35M11 8v6M8 11h6"></path>
-            </svg>
-          </button>
-        </div>
-      </footer>
+      <!-- 缩放工具：右下角浮动 -->
+      <div class="article-image-viewer__toolbar" aria-label="图片缩放" th:aria-label="#{lightbox.zoom}">
+        <button type="button" class="btn btn-ghost btn-circle btn-sm viewer-icon-btn" data-image-viewer-zoom-out aria-label="缩小图片" th:aria-label="#{lightbox.zoomOut}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35M8 11h6"></path>
+          </svg>
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm viewer-reset-btn" data-image-viewer-reset aria-label="重置图片缩放" th:aria-label="#{lightbox.zoomReset}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path>
+          </svg>
+          <span id="articleImageViewerZoom">100%</span>
+        </button>
+        <button type="button" class="btn btn-ghost btn-circle btn-sm viewer-icon-btn" data-image-viewer-zoom-in aria-label="放大图片" th:aria-label="#{lightbox.zoomIn}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35M11 8v6M8 11h6"></path>
+          </svg>
+        </button>
+      </div>
     </div>
   </dialog>
+
+  <!-- 分享图：划词或划线后生成的图片卡片（含二维码），构图在 share-card.js 里 -->
+  <dialog th:if="${seoPageType == 'article' and theme.config.sidebar?.highlight_enabled != false}"
+          id="shareCardDialog"
+          class="share-card-dialog"
+          aria-labelledby="shareCardTitle"
+          th:attr="data-qr-script=@{/assets/js/qr-encoder.js(v=${theme.spec.version})},
+                   data-brand=#{shareCard.brand},
+                   data-brand-short=#{shareCard.brandShort},
+                   data-tip-qr=#{shareCard.qrHint},
+                   data-tip-saved=#{shareCard.saved},
+                   data-tip-failed=#{shareCard.failed}">
+    <div class="share-card-dialog__panel">
+      <header class="share-card-dialog__head">
+        <h2 id="shareCardTitle" th:text="#{shareCard.title}">分享图片</h2>
+        <button type="button" class="btn btn-ghost btn-circle btn-sm viewer-icon-btn" data-share-card-close
+                aria-label="关闭分享图" th:aria-label="#{lightbox.close}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </header>
+      <div class="share-card-dialog__stage">
+        <p class="share-card-dialog__loading" data-share-card-loading th:text="#{shareCard.generating}">正在生成图片…</p>
+        <img id="shareCardImage" alt="分享图片预览" th:alt="#{shareCard.title}" width="1080" height="1440" decoding="async" />
+      </div>
+      <p class="share-card-dialog__tip" th:text="#{shareCard.tip}">长按图片保存，或点下面的按钮下载</p>
+      <div class="share-card-dialog__actions">
+        <button type="button" class="btn btn-primary btn-sm" data-share-card-download th:text="#{shareCard.download}">下载图片</button>
+        <button type="button" class="btn btn-outline btn-sm" data-share-card-native hidden th:text="#{shareCard.share}">直接分享</button>
+        <span id="shareCardStatus" class="sr-only" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+  </dialog>
+
 
   <!-- 页脚 -->
   <footer class="site-footer" th:fragment="siteFooter"
@@ -616,9 +532,8 @@ footer.site-footer{--n-red:#dd3333;--n-red2:#fb5151;--n-tint:#fff0ee;--n-tint2:#
 
 footer.site-footer{background:linear-gradient(180deg,#fff 55%,#fffaf9)!important;padding:0 0 22px!important;margin-top:76px!important;position:relative}
 footer.site-footer .container{border-top:1px dashed var(--n-dash)}
-/* 兜底列数按真实栏目数自适应，不再写死 4 列；脚本会用 --l-cols 覆盖成精确的 n 列 */
-footer.site-footer .footer-inner{display:grid!important;grid-template-columns:var(--l-cols,repeat(auto-fit,minmax(min(100%,220px),1fr)));
- gap:30px var(--l-gap,34px);padding:38px 0 26px!important;margin:0!important;align-items:start;position:relative;overflow:hidden}
+footer.site-footer .footer-inner{display:grid!important;grid-template-columns:var(--l-cols,1.75fr 1fr 1fr max-content);
+ gap:30px var(--l-gap,34px);padding:38px max(0px,calc((100% - 1152px)/2)) 26px!important;margin:0!important;align-items:start;position:relative;overflow:hidden}
 footer.site-footer .footer-col{width:auto!important;min-width:0!important}
 footer.site-footer .footer-col-title{margin:0 0 14px!important;padding:0!important;display:flex;align-items:center;gap:8px;
  font:600 12px/1 var(--n-k)!important;color:var(--n-t1)!important;letter-spacing:.04em!important;text-transform:none!important}
@@ -669,7 +584,7 @@ footer.site-footer .footer-bottom{display:flex!important;justify-content:space-b
 footer.site-footer .footer-copyright,footer.site-footer .footer-links,footer.site-footer .footer-links a{
  font-size:11.6px!important;color:#bdb3b2!important}
 footer.site-footer .footer-links a:hover{color:var(--n-red)!important}
-@media(max-width:980px){ footer.site-footer .footer-inner{grid-template-columns:var(--l-cols-t,repeat(auto-fit,minmax(min(100%,200px),1fr)));gap:28px var(--l-gap-t,22px)}
+@media(max-width:980px){ footer.site-footer .footer-inner{grid-template-columns:var(--l-cols-t,1fr 1fr 1fr);gap:28px var(--l-gap-t,22px)}
  footer.site-footer .f-brand{grid-column:1/-1} .l-wm{font-size:130px} }
 /* 手机：品牌区居中、按钮拉通，二维码横过来跟在标题下面 */
 @media(max-width:640px){
@@ -805,20 +720,15 @@ footer.site-footer .footer-links a:hover{color:var(--n-red)!important}
     if(/底部菜单/.test(t.textContent)) c.remove();
     else if(/关注/.test(t.textContent)) c.classList.add('l-qr'); });
   var wm=el('div','l-wm','NUCMA');
-  // 各栏等宽均分。原先桌面模板是「品牌 1.75fr + 其余 1fr」，首栏比别的栏宽出近一倍，
-  // 看上去像没对齐；现一律 1fr，n 栏平分整行。平板（≤980px）品牌仍独占首行，
-  // 第二行铺 n-1 栏，同样均分。
   var n=[].filter.call(inner.children,function(c){return c.classList&&c.classList.contains('footer-col')}).length;
-  if(n>=2){
-    var desk='', tab='', i=0;
-    while(i<n){ desk+='1fr '; i++; }
-    i=0; while(i<n-1){ tab+='1fr '; i++; }
-    inner.style.setProperty('--l-cols',desk.trim());
-    inner.style.setProperty('--l-cols-t',tab.trim());
-    if(n>4){
-      inner.style.setProperty('--l-gap','28px');
-      inner.style.setProperty('--l-gap-t','18px');
-    }
+  if(n>4){
+    var desk='1.75fr ', tab='', i=0;
+    while(i!==n-2){ desk+='1fr '; i++; }
+    i=0; while(i!==n-2){ tab+='1fr '; i++; }
+    inner.style.setProperty('--l-cols',desk+'max-content');
+    inner.style.setProperty('--l-gap','28px');
+    inner.style.setProperty('--l-cols-t',tab+'max-content');
+    inner.style.setProperty('--l-gap-t','18px');
   }
   inner.appendChild(wm);
 })();

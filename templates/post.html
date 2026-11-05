@@ -1,45 +1,68 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{modules/layout :: html(title=|${post?.spec?.title} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=${post?.spec?.excerpt?.raw}, canonical=${post?.status?.permalink}, image=${post?.spec?.cover}, pageType='article', robots=null)}">
-<th:block th:fragment="content" th:with="dateFmt=${theme.config.appearance?.date_format == null or #strings.isEmpty(theme.config.appearance?.date_format) ? #messages.msg('format.date') : #strings.replace(#strings.replace(theme.config.appearance.date_format, 'YYYY', 'yyyy'), 'DD', 'dd')}">
+      th:replace="~{modules/layout :: html(title=|${post?.spec?.title} - ${site.title}|, content=~{::content}, headExtra=~{modules/seo :: article(post=${post})}, description=${post?.spec?.excerpt?.raw != null and !#strings.isEmpty(post.spec.excerpt.raw) ? post.spec.excerpt.raw : post?.status?.excerpt}, canonical=${post?.status?.permalink}, image=${post?.spec?.cover}, pageType='article', robots=null)}">
+<th:block th:fragment="content"
+          th:with="globalDateFmt=${theme.config.appearance?.date_format == null or #strings.isEmpty(theme.config.appearance?.date_format) ? #messages.msg('format.date') : #strings.replace(#strings.replace(theme.config.appearance.date_format, 'YYYY', 'yyyy'), 'DD', 'dd')},
+                   postDateStyle=${theme.config.sidebar?.date_style ?: 'day'},
+                   postDatePattern=${postDateStyle == 'month' ? #messages.msg('format.month') : (postDateStyle == 'year' ? #messages.msg('format.year') : globalDateFmt)},
+                   creditName=${post.metadata?.annotations != null and !#strings.isEmpty(post.metadata.annotations['nucma.cn/author']) ? post.metadata.annotations['nucma.cn/author'] : (theme.config.sidebar?.author_text != null and !#strings.isEmpty(theme.config.sidebar.author_text) ? theme.config.sidebar.author_text : (post.owner?.displayName ?: ''))}">
   <div class="post-layout">
     <!-- 左侧：文章内容 -->
-    <article class="post-main" th:attr="data-article-title=${post?.spec?.title}">
-      <!-- 文章头部 -->
-      <header class="post-header">
-        <div class="post-meta">
-          <span class="badge badge-primary badge-soft badge-sm post-category" th:each="cat : ${post.categories}"
-                th:text="${cat.spec?.displayName}"></span>
-          <time th:text="${#temporals.format(post.spec?.publishTime, dateFmt)}"></time>
-          <span th:if="${theme.config.sidebar?.show_views != false and post.stats?.visit != null}"
-                th:text="${#messages.msg('post.viewsSuffix', post.stats?.visit)}"></span>
+    <article class="post-main"
+             th:attr="data-article-title=${post?.spec?.title},
+                      data-pair-images=${theme.config.sidebar?.pair_images != false},
+                      data-credit-label=${theme.config.sidebar?.credit_label != null and !#strings.isEmpty(theme.config.sidebar.credit_label) ? theme.config.sidebar.credit_label : #messages.msg('post.creditLabel')},
+                      data-highlight=${theme.config.sidebar?.highlight_enabled != false},
+                      data-highlight-style=${theme.config.sidebar?.highlight_style ?: 'underline'},
+                      data-article-url=${post?.status?.permalink},
+                      data-article-category=${post?.categories != null and !post.categories.isEmpty() ? post.categories[0].spec?.displayName : ''},
+                      data-article-author=${creditName},
+                      data-author-prefix=#{post.bylinePrefix},
+                      data-article-date=${#temporals.format(post.spec?.publishTime, postDatePattern)}">
+      <!-- 文章头部：栏目 · 日期 · 阅读 → 标题 → 副标题（标题块居中），署名单独一行左顶格 -->
+      <header class="post-header"
+              th:with="deckText=${post.spec?.excerpt?.raw != null and !#strings.isEmpty(post.spec.excerpt.raw) ? post.spec.excerpt.raw : post.status?.excerpt}">
+        <div class="post-kicker">
+          <a class="post-cat" th:each="cat : ${post.categories}"
+             th:href="@{${cat.status?.permalink}}"
+             th:text="${cat.spec?.displayName}"></a>
+          <span class="post-kicker-sep" aria-hidden="true">·</span>
+          <time th:text="${#temporals.format(post.spec?.publishTime, postDatePattern)}"></time>
+          <th:block th:if="${theme.config.sidebar?.show_views != false and post.stats?.visit != null}">
+            <span class="post-kicker-sep" aria-hidden="true">·</span>
+            <span th:text="${#messages.msg('post.viewsSuffix', post.stats?.visit)}"></span>
+          </th:block>
         </div>
+
         <h1 class="post-title" th:text="${post.spec?.title}"></h1>
-        <div class="post-author" th:if="${post.owner != null}">
-          <img th:if="${post.owner?.avatar != null and !#strings.isEmpty(post.owner?.avatar)}"
-               th:src="${post.owner?.avatar}" th:alt="${post.owner?.displayName}" class="author-avatar" width="26" height="26" />
-          <span th:text="${post.owner?.displayName}"></span>
+
+        <!-- 副标题：优先自定义摘要，抽屉里没填时回落到 Halo 的最终摘要（自动生成摘要=是 时只有后者有值） -->
+        <p class="post-deck" th:if="${deckText != null and !#strings.isEmpty(deckText)}"
+           th:text="${deckText}"></p>
+
+        <!--
+          署名：三级回落 —— 单篇元数据 nucma.cn/author（「文章署名」插件写入）→ 主题设置「文章署名文字」→ 注册作者。
+        -->
+        <div class="post-byline" th:if="${!#strings.isEmpty(creditName)}">
+          <span class="post-byline-label" th:text="#{post.bylinePrefix}">文</span>
+          <span class="post-byline-sep" aria-hidden="true">/</span>
+          <span class="post-byline-name" th:text="${creditName}"></span>
         </div>
       </header>
 
       <!-- 文章封面 -->
-      <div class="post-cover" th:if="${theme.config.sidebar?.show_cover != false and post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}">
+      <figure class="post-cover" th:if="${theme.config.sidebar?.show_cover != false and post.spec?.cover != null and !#strings.isEmpty(post.spec?.cover)}">
         <img th:src="${post.spec?.cover}" th:alt="${post.spec?.title}"
              width="1600" height="900" loading="eager" fetchpriority="high" decoding="async"
              sizes="(max-width: 900px) 100vw, 900px" />
-      </div>
+      </figure>
 
       <!-- 文章内容 -->
       <div class="post-content prose" th:utext="${post.content?.content}"></div>
 
-      <!-- 标签 -->
-      <div class="post-tags" th:if="${theme.config.sidebar?.show_tags != false and post.tags != null and !post.tags.isEmpty()}">
-        <a th:each="tag : ${post.tags}" th:href="@{${tag.status?.permalink}}"
-           class="badge badge-outline badge-sm tag" th:text="|#${tag.spec?.displayName}|"></a>
-      </div>
-
-      <!-- 上一篇/下一篇 -->
-      <div class="post-nav" th:with="cursor = ${postFinder.cursor(post.metadata.name)}">
+      <!-- 上一篇/下一篇：对开两栏，中间一条竖线 -->
+      <nav class="post-nav" th:with="cursor = ${postFinder.cursor(post.metadata.name)}"
+           th:aria-label="#{post.navLabel}">
         <a th:if="${cursor.hasPrevious()}" th:href="@{${cursor.previous.status?.permalink}}" class="post-nav-item prev">
           <span class="post-nav-label" th:text="#{common.previous}">上一篇</span>
           <span class="post-nav-title" th:text="${cursor.previous.spec?.title}"></span>
@@ -48,6 +71,11 @@
           <span class="post-nav-label" th:text="#{common.next}">下一篇</span>
           <span class="post-nav-title" th:text="${cursor.next.spec?.title}"></span>
         </a>
+      </nav>
+
+      <div class="post-tags" th:if="${theme.config.sidebar?.show_tags != false and post.tags != null and !post.tags.isEmpty()}">
+        <a th:each="tag : ${post.tags}" th:href="@{${tag.status?.permalink}}"
+           class="badge badge-outline badge-sm tag" th:text="|#${tag.spec?.displayName}|"></a>
       </div>
 
       <!-- 评论区 -->
@@ -59,7 +87,7 @@
     <!-- 右侧：侧边栏 -->
     <aside class="post-sidebar"
            th:with="sidebarOrder=${theme.config.sidebar?.section_blocks != null ? theme.config.sidebar.section_blocks.![type] : null}"
-           th:data-sidebar-order="${sidebarOrder != null ? #strings.listJoin(sidebarOrder, ',') : 'menu,info,author,recent,toc'}">
+           th:data-sidebar-order="${sidebarOrder != null ? #strings.listJoin(sidebarOrder, ',') : 'menu,info,toc'}">
       <!-- 自定义菜单 -->
       <!-- sidebar_menu 只属于 sidebar 组，navigation 组从未声明该字段；旧的三元回落是永久空值死分支 -->
       <th:block th:with="sidebarMenuName = ${#strings.defaultString(theme.config.sidebar?.sidebar_menu, '')}">
@@ -83,7 +111,7 @@
         <div class="sidebar-info">
           <div class="info-item">
             <span class="info-label" th:text="#{post.publishedAt}">发布于</span>
-            <span th:text="${#temporals.format(post.spec?.publishTime, dateFmt)}"></span>
+            <span th:text="${#temporals.format(post.spec?.publishTime, postDatePattern)}"></span>
           </div>
           <div class="info-item" th:if="${post.stats?.visit != null}">
             <span class="info-label" th:text="#{post.viewsLabel}">阅读量</span>
@@ -94,48 +122,6 @@
             <span th:text="${post.stats?.upvote}"></span>
           </div>
         </div>
-      </div>
-
-      <!-- 作者信息 -->
-      <div class="card card-border sidebar-card" data-sidebar-section="author"
-           th:if="${(sidebarOrder == null or #lists.contains(sidebarOrder, 'author')) and post.owner != null}"
-           th:with="authorPosts = ${postFinder.list({page: 1, size: 1, ownerName: post.owner?.metadata?.name})}">
-        <h3 class="sidebar-title" th:text="#{common.author}">作者</h3>
-        <div class="author-info">
-          <img th:if="${post.owner?.avatar != null and !#strings.isEmpty(post.owner?.avatar)}"
-               th:src="${post.owner?.avatar}" th:alt="${post.owner?.displayName}" class="author-avatar-lg" width="68" height="68" />
-          <span class="author-name" th:text="${post.owner?.displayName}"></span>
-          <p class="author-bio" th:if="${post.owner?.bio != null and !#strings.isEmpty(post.owner?.bio)}"
-             th:text="${post.owner?.bio}"></p>
-          <div class="author-stats">
-            <div class="author-stat-item">
-              <span class="author-stat-number" th:text="${authorPosts?.total ?: 0}"></span>
-              <span class="author-stat-label" th:text="#{about.articles}">文章</span>
-            </div>
-            <div class="author-stat-item">
-              <span class="author-stat-number" th:text="${post.stats?.comment ?: 0}"></span>
-              <span class="author-stat-label" th:text="#{common.comment}">评论</span>
-            </div>
-            <div class="author-stat-item">
-              <span class="author-stat-number" th:text="${post.stats?.upvote ?: 0}"></span>
-              <span class="author-stat-label" th:text="#{post.upvotes}">点赞</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 最近文章（归档区块） -->
-      <div class="card card-border sidebar-card" data-sidebar-section="recent"
-           th:if="${sidebarOrder == null or #lists.contains(sidebarOrder, 'recent')}"
-           th:with="recentPosts = ${postFinder.list({page: 1, size: 5})}">
-        <h3 class="sidebar-title" th:text="#{post.recent}">最近文章</h3>
-        <ul class="sidebar-post-list" th:if="${recentPosts != null and recentPosts.items != null and !recentPosts.items.isEmpty()}">
-          <li th:each="rp : ${recentPosts.items}" th:if="${rp.metadata.name != post.metadata.name}">
-            <a th:href="@{${rp.status?.permalink}}" th:text="${rp.spec?.title}" class="sidebar-post-link"></a>
-            <time th:text="${#temporals.format(rp.spec?.publishTime, 'MM-dd')}" class="sidebar-post-date"></time>
-          </li>
-        </ul>
-        <p class="sidebar-empty" th:if="${recentPosts == null or recentPosts.items == null or recentPosts.items.isEmpty()}" th:text="#{post.noRecent}">暂无其他文章</p>
       </div>
 
       <!-- 目录 -->

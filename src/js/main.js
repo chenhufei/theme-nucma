@@ -1,5 +1,6 @@
 import { t } from './modules/i18n.js';
 import { initDiagnostics } from './modules/diagnostics.js';
+import { initHighlight } from './modules/highlight.js';
 
 /**
  * NUCMA 国风主题 - 主脚本
@@ -413,12 +414,35 @@ import { initDiagnostics } from './modules/diagnostics.js';
     });
   }
 
-  // ===== Header 滚动阴影 =====
+  // ===== 页头滚动状态（内页吸顶页头，与首屏共用同一份标记） =====
   function initHeaderScroll() {
-    const header = document.querySelector('.site-header');
+    const shell = document.querySelector('.nh-hd-shell');
+    const header = document.querySelector('.nh-hd-shell--page .nh-hd');
     if (!header) return;
+    // 各版式页头高度不同（72 / 60 / 52px），首屏要靠 --header-h 扣掉页头才会刚好一屏
+    function syncHeaderHeight() {
+      const h = shell ? shell.getBoundingClientRect().height : 0;
+      if (h > 0) document.documentElement.style.setProperty('--header-h', h + 'px');
+    }
+    syncHeaderHeight();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncHeaderHeight);
+    window.addEventListener('resize', syncHeaderHeight, { passive: true });
     subscribeScroll(function() {
-      header.classList.toggle('is-scrolled', window.scrollY > 10);
+      header.classList.toggle('is-scrolled', window.scrollY > 6);
+    });
+  }
+
+  // ===== 页头当前项高亮（首页首屏与内页共用） =====
+  function initActiveNav() {
+    const scope = document.querySelector('.nh');
+    if (!scope || scope.dataset.navOn) return;
+    scope.dataset.navOn = '1';
+    const here = (location.pathname.replace(/\/+$/, '') || '/');
+    scope.querySelectorAll('.nh-nav a, .nhmin-side a').forEach(function(a) {
+      const href = a.getAttribute('href') || '';
+      if (!href || href.charAt(0) === '#') return;
+      const path = href.replace(/^https?:\/\/[^/]+/i, '').replace(/\/+$/, '') || '/';
+      if (path === here) a.classList.add('on');
     });
   }
 
@@ -679,7 +703,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
   // ===== 滚动显现动画 =====
   function initScrollReveal() {
     var selector = '.news-item, .member-card, .link-card, .category-card, ' +
-      '.faq-item, .archive-timeline-item, .about-timeline-item, .about-service-item, ' +
+      '.faq-item, .archive-flow-item, .about-timeline-item, .about-service-item, ' +
       '.moment-item, .photo-item, ' +
       '.sidebar-card, .section-header-bar, .post-card, .intro-stat';
     var items = document.querySelectorAll(selector);
@@ -694,6 +718,8 @@ import { initDiagnostics } from './modules/diagnostics.js';
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.01 });
 
     items.forEach(function(element) {
+      // 文章侧栏是 sticky 的，入场动画会让它在首屏外整块消失，直接不参与
+      if (element.closest('.post-sidebar')) return;
       element.classList.add('scroll-reveal');
       observer.observe(element);
     });
@@ -851,7 +877,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
     }
   }
 
-  // ===== 文章排版：仅对中文正文启用段落首行缩进 =====
+  // ===== 文章排版：判断中文 / 书信，决定正文细节 =====
   function initPostTypography() {
     var content = document.querySelector('.post-content.prose');
     if (!content) return;
@@ -864,6 +890,208 @@ import { initDiagnostics } from './modules/diagnostics.js';
     if (hasCjk && !letterOpening) content.classList.add('prose--cjk');
     if (letterOpening || !hasCjk) content.classList.add('prose--letter');
   }
+
+
+  // ===== 文末署名：把连续的「【标签: 内容】」段落收成一块版权页 =====
+  // 通讯稿、实践报告常用这种署名行；规则只在文章末尾生效，正文中间的【】引用不受影响。
+  function initPostCredit() {
+    var content = document.querySelector('.post-content.prose');
+    if (!content || content.querySelector('.post-credit')) return;
+    var isCredit = /^[【\[]([^】\]]{1,8})[:：][\s\S]*[】\]]$/;
+    var nodes = Array.prototype.slice.call(content.children);
+    var rows = [];
+    for (var i = nodes.length - 1; i >= 0 && rows.length < 12; i--) {
+      var el = nodes[i];
+      var text = (el.textContent || '').trim();
+      if (!text) continue;
+      if (el.tagName === 'P' && !el.querySelector('img') && isCredit.test(text)) {
+        rows.unshift(el);
+        continue;
+      }
+      break;
+    }
+    if (rows.length < 2) return;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'post-credit';
+    var articleEl = document.querySelector('.post-main');
+    var labelText = articleEl ? (articleEl.dataset.creditLabel || '') : '';
+    if (labelText) {
+      var label = document.createElement('div');
+      label.className = 'post-credit-label';
+      label.textContent = labelText;
+      wrap.appendChild(label);
+    }
+    rows.forEach(function (p) {
+      var text = (p.textContent || '').trim().replace(/^[【\[]|[】\]]$/g, '');
+      var idx = text.search(/[:：]/);
+      var row = document.createElement('div');
+      row.className = 'post-credit-row';
+      var key = document.createElement('span');
+      key.className = 'post-credit-key';
+      key.textContent = text.slice(0, idx).trim();
+      var val = document.createElement('span');
+      val.className = 'post-credit-val';
+      // 中文署名里的半角逗号统一成顿号，读起来更像正式稿件
+      val.textContent = text.slice(idx + 1).trim().replace(/\s*,\s*/g, '、');
+      row.appendChild(key);
+      row.appendChild(val);
+      wrap.appendChild(row);
+      p.parentNode.removeChild(p);
+    });
+    content.appendChild(wrap);
+  }
+
+  // ===== 正文图片：并排成组 + 低清图不放大 =====
+  // 1) 同一个 figure 里的多张图、后台连续插入的两张横图 → 收成 .prose-gallery：
+  //    桌面并排（每图各带说明），手机自动改上下排列。
+  // 2) 原图比版心窄时最多放大到原图的 1.25 倍 —— 模糊的图不再被拉满整栏，宁可小一点居中。
+  function initContentImages() {
+    var content = document.querySelector('.post-content.prose');
+    if (!content) return;
+    var article = document.querySelector('.post-main');
+    var autoPair = !article || article.dataset.pairImages !== 'false';
+
+    var images = Array.prototype.slice.call(content.querySelectorAll('img'));
+    if (!images.length) return;
+    if (!images.every(function (img) { return img.complete; })) {
+      if (content.dataset.pendingImages === 'true') return;
+      content.dataset.pendingImages = 'true';
+      var pending = images.filter(function (img) { return !img.complete; });
+      var remaining = pending.length;
+      pending.forEach(function (img) {
+        img.addEventListener('load', function () {
+          remaining -= 1;
+          if (remaining <= 0) {
+            delete content.dataset.pendingImages;
+            initContentImages();
+          }
+        }, { once: true });
+        img.addEventListener('error', function () {
+          remaining -= 1;
+          if (remaining <= 0) {
+            delete content.dataset.pendingImages;
+            initContentImages();
+          }
+        }, { once: true });
+      });
+      return;
+    }
+
+    function childImages(figure) {
+      return Array.prototype.slice.call(figure.children).filter(function (el) {
+        return el.tagName === 'IMG';
+      });
+    }
+    function captionOf(figure) {
+      var cap = figure.querySelector(':scope > figcaption');
+      return cap ? (cap.textContent || '').trim() : '';
+    }
+    function isWide(img) {
+      return img.naturalWidth > 0 && img.naturalWidth >= img.naturalHeight * 0.95;
+    }
+    function splitCaption(text, count) {
+      if (!text) return null;
+      var parts = text.split(/\s*[｜|]\s*/);
+      if (parts.length === count) return parts;
+      // i18n-ignore 图注里的中文连词，用于把一句说明拆给两张并排图
+      parts = text.split(/\s*[，,]\s*与\s*|\s*[，,]\s*和\s*/);
+      if (parts.length === count) return parts;
+      return null;
+    }
+    function captionNode(text) {
+      var cap = document.createElement('figcaption');
+      cap.textContent = text;
+      return cap;
+    }
+    function makeItem(img, captionText) {
+      var fig = document.createElement('figure');
+      // 并排后每格只有半个版心，sizes 跟着收，避免下载用不上的大图
+      if (img.hasAttribute('sizes')) {
+        img.setAttribute('sizes', '(max-width: 640px) 92vw, (max-width: 1100px) 44vw, 340px');
+      }
+      fig.appendChild(img);
+      if (captionText) fig.appendChild(captionNode(captionText));
+      return fig;
+    }
+    function makeGallery(items, cols) {
+      var gallery = document.createElement('div');
+      gallery.className = 'prose-gallery';
+      gallery.style.setProperty('--gallery-cols', String(cols || 2));
+      items.forEach(function (item) { gallery.appendChild(item); });
+      return gallery;
+    }
+
+    // 一、同一个 figure 里的多图 → 图组
+    Array.prototype.slice.call(content.querySelectorAll('figure')).forEach(function (figure) {
+      var imgs = childImages(figure);
+      if (imgs.length < 2) return;
+      var capText = captionOf(figure);
+      var parts = splitCaption(capText, imgs.length);
+      var items = imgs.map(function (img, index) {
+        return makeItem(img, parts ? parts[index] : '');
+      });
+      var gallery = makeGallery(items, imgs.length);
+      if (!parts && capText) gallery.appendChild(captionNode(capText));
+      figure.replaceWith(gallery);
+    });
+
+    // 二、后台连续插入的两张横图 → 自动并排（竖图并排会太窄，保持上下）
+    if (autoPair) {
+      var nodes = Array.prototype.slice.call(content.children);
+      for (var i = 0; i < nodes.length - 1; i++) {
+        var first = nodes[i];
+        var second = nodes[i + 1];
+        if (!first || !second || first.tagName !== 'FIGURE' || second.tagName !== 'FIGURE') continue;
+        var a = childImages(first);
+        var b = childImages(second);
+        if (a.length !== 1 || b.length !== 1) continue;
+        if (!isWide(a[0]) || !isWide(b[0])) continue;
+        var gallery = makeGallery([
+          makeItem(a[0], captionOf(first)),
+          makeItem(b[0], captionOf(second))
+        ], 2);
+        content.insertBefore(gallery, first);
+        first.remove();
+        second.remove();
+        nodes.splice(i, 2, gallery);
+      }
+    }
+
+    // 三、低清图限制放大倍数：比版心窄的图最多放大到原图的 1.25 倍
+    function limitUpscale(img) {
+      if (img.closest('.prose-gallery')) return;
+      var box = (img.closest('figure') || img.parentElement);
+      var boxWidth = box ? box.clientWidth : 0;
+      var natural = img.naturalWidth;
+      if (!boxWidth || !natural) return;
+      var max = Math.round(natural * 1.25);
+      if (max < boxWidth - 2) {
+        img.style.maxWidth = max + 'px';
+        img.style.marginLeft = 'auto';
+        img.style.marginRight = 'auto';
+        img.setAttribute('data-lowres', 'true');
+      } else {
+        img.style.removeProperty('max-width');
+        img.style.removeProperty('margin-left');
+        img.style.removeProperty('margin-right');
+        img.removeAttribute('data-lowres');
+      }
+    }
+    Array.prototype.slice.call(content.querySelectorAll('img')).forEach(limitUpscale);
+
+    if (!content.dataset.upscaleBound) {
+      content.dataset.upscaleBound = 'true';
+      var resizeTimer = null;
+      window.addEventListener('resize', function () {
+        window.clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(function () {
+          Array.prototype.slice.call(content.querySelectorAll('img')).forEach(limitUpscale);
+        }, 180);
+      }, { passive: true });
+    }
+  }
+
 
   // ===== 文章阅读进度 =====
   function initReadingProgress() {
@@ -1103,8 +1331,36 @@ import { initDiagnostics } from './modules/diagnostics.js';
     }
     function imageCaption(image) {
       var figure = image.closest('figure');
-      var figureCaption = figure ? figure.querySelector('figcaption') : null;
+      var figureCaption = figure ? figure.querySelector(':scope > figcaption') : null;
+      if (!figureCaption && figure) figureCaption = figure.querySelector('figcaption');
       return ((figureCaption && figureCaption.textContent) || image.getAttribute('alt') || image.getAttribute('title') || '').trim();
+    }
+    // 预览用原图（srcset 里最大的一档），不要拿正文里那个小尺寸版本放大
+    function bestSource(image) {
+      var srcset = image.getAttribute('srcset') || '';
+      var best = '';
+      var bestWidth = -1;
+      srcset.split(',').forEach(function (part) {
+        var bits = part.trim().split(/\s+/);
+        if (!bits[0]) return;
+        var width = parseInt(bits[1], 10) || 0;
+        if (width > bestWidth) {
+          bestWidth = width;
+          best = bits[0];
+        }
+      });
+      return best || image.currentSrc || image.src;
+    }
+    // 图片在画布里按可用空间铺开，最多放大到原图的 1.8 倍
+    function fitViewerImage() {
+      var naturalWidth = viewerImage.naturalWidth;
+      var naturalHeight = viewerImage.naturalHeight;
+      if (!naturalWidth || !naturalHeight) return;
+      var box = canvas.getBoundingClientRect();
+      if (!box.width || !box.height) return;
+      var fit = Math.min(box.width / naturalWidth, box.height / naturalHeight, 1.8);
+      viewerImage.style.width = Math.round(naturalWidth * fit) + 'px';
+      viewerImage.style.height = 'auto';
     }
     function applyTransform() {
       viewerImage.style.transform = 'translate3d(' + panX + 'px,' + panY + 'px,0) scale(' + scale.toFixed(2) + ')';
@@ -1129,7 +1385,9 @@ import { initDiagnostics } from './modules/diagnostics.js';
       var source = currentImages[currentIndex];
       if (!source) return;
       resetTransform();
-      viewerImage.src = source.currentSrc || source.src;
+      viewerImage.onload = fitViewerImage;
+      viewerImage.src = bestSource(source);
+      if (viewerImage.complete && viewerImage.naturalWidth) fitViewerImage();
       viewerImage.alt = source.getAttribute('alt') || t('main.articleImage');
       counter.textContent = (currentIndex + 1) + ' / ' + currentImages.length;
       caption.textContent = imageCaption(source);
@@ -1170,6 +1428,7 @@ import { initDiagnostics } from './modules/diagnostics.js';
       document.documentElement.classList.add('image-viewer-open');
       window.requestAnimationFrame(function() {
         viewer.classList.add('is-open');
+        fitViewerImage();
         var closeButton = viewer.querySelector('[data-image-viewer-close]');
         if (closeButton) closeButton.focus();
       });
@@ -1198,12 +1457,17 @@ import { initDiagnostics } from './modules/diagnostics.js';
       closeViewer();
     });
     viewer.addEventListener('click', function(event) {
-      if (event.target === viewer) closeViewer();
+      // 点图片之外的底色也算关闭，和常见看图器一致
+      if (event.target === viewer || event.target === canvas || event.target.classList.contains('article-image-viewer__body')) closeViewer();
     });
     viewer.addEventListener('close', function() {
       viewer.classList.remove('is-open');
       document.documentElement.classList.remove('image-viewer-open');
     });
+    window.addEventListener('resize', function() {
+      if (!viewer.open) return;
+      fitViewerImage();
+    }, { passive: true });
     viewer.addEventListener('keydown', function(event) {
       if (event.key === 'ArrowLeft') showImage(-1);
       if (event.key === 'ArrowRight') showImage(1);
@@ -1348,12 +1612,16 @@ import { initDiagnostics } from './modules/diagnostics.js';
     initArticleActions();
     initImageAccessibility();
     initHeaderScroll();
+    initActiveNav();
     initMobileMenu();
     initLoginMenu();
     // 先按后台固定项顺序排序，再应用显示数量限制。
     initGridLimit();
     initSectionOrdering();
     initPostTypography();
+    initPostCredit();
+    initContentImages();
+    initHighlight();
     initReadingProgress();
     initArticleToc();
     initArticleImageViewer();

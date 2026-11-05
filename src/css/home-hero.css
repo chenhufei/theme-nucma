@@ -22,11 +22,12 @@
     calc((100% - var(--content-max, 1200px)) / 2 + var(--content-gutter, clamp(1rem, 3vw, 24px))),
     var(--content-gutter, clamp(1rem, 3vw, 24px))
   );
-  /* 首屏页头贴的是「画框」线（--frame-*），与站点头部、页脚同一条外框线；
-     它比首屏大字（--nh-gx）更靠外，这一层差距是刻意的，不要合并成同一个值 */
+  /* 页头贴的是「页脚版心 / 内容红竖条」那条线：页脚 = .container 的 frame 内距 + .footer-inner 的 1152 居中，
+     两层叠加后的净效果就是下面这个式子 —— 宽屏 (100% - 1152)/2，窄屏退回内容内距（--content-gutter）。
+     页头的 logo 与最右工具区因此和页脚首列、以及「信息公告 / 友情链接」标题前的红竖条落在同一条竖线上（2026-11-05）。 */
   --nh-hx: max(
-    calc((100% - var(--frame-max, 1440px)) / 2 + var(--frame-gutter, clamp(1rem, 3vw, 40px))),
-    var(--frame-gutter, clamp(1rem, 3vw, 40px))
+    calc((100% - 1152px) / 2),
+    var(--content-gutter, clamp(1rem, 3vw, 1.5rem))
   );
   position: relative;
   isolation: isolate;
@@ -166,10 +167,34 @@
 }
 .nh42-l { max-width: 560px; }
 .nh42-title { font-size: clamp(34px, 3.6vw, 52px); line-height: 1.24; }
-.nh42-p { margin: 22px 0 0; max-width: 400px; font-size: 13px; line-height: 1.95; color: #6c6860; }
+/* 副标题：快看体首字墨迹比文字框内缩约 3px，这里补回去，跟标题首字对齐 */
+.nh42-p {
+  margin: 20px 0 0;
+  padding-left: 2px;
+  max-width: 420px;
+  font-size: clamp(15px, 1.15vw, 17px);
+  line-height: 1.8;
+  letter-spacing: .01em;
+  color: #5f5b53;
+}
 .nh42 .nh-btns { margin-top: 30px; }
-.nh42-stats { margin-top: 38px; padding-top: 24px; border-top: 1px solid #e2ded3; }
+/* 横线宽度只包住统计项本身：末组数字到哪儿，线就收到哪儿（最多不超过左栏宽） */
+.nh42-stats {
+  margin-top: 38px;
+  padding-top: 24px;
+  width: max-content;
+  max-width: 100%;
+  border-top: 1px solid #e2ded3;
+}
 .nh42-ph { position: relative; height: clamp(380px, 60vh, 520px); }
+/* PC 首屏三块封面放大一档：高度 +13%、右栏多分约 4% 宽（面积 +19%）。
+   只在 ≥1024px 生效，平板/手机维持原尺寸。 */
+@media (min-width: 1024px) {
+  .nh42-ph { height: clamp(420px, 68vh, 588px); }
+}
+@media (min-width: 1181px) {
+  .nh42 { grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr); }
+}
 .nh42-t {
   position: absolute;
   display: block;
@@ -1061,12 +1086,16 @@
   .nh--p42r .nh-hd { top: 12px; padding: 0 var(--nh-hx); gap: 12px; }
   .nh--p42r .nh-brand b { font-size: 14px; }
   .nh--p42r .nh-mark { width: 22px; height: 22px; font-size: 11px; }
-  .nh42 { min-height: 0; padding: 84px var(--nh-gx) 40px; gap: 22px; }
-  .nh42-title { font-size: clamp(28px, 7.6vw, 38px); }
-  .nh42-p { margin-top: 16px; font-size: 12.5px; }
-  .nh42 .nh-btns { margin-top: 22px; }
-  .nh42-stats { margin-top: 26px; padding-top: 18px; gap: 22px; }
-  .nh42-ph { height: min(78vw, 420px); min-height: 300px; }
+  /* 手机端首屏收紧：原来 84px 顶距 + 29.6px 大标题把封面整块挤出首屏，
+     这里统一降一档，让「标题—按钮—统计—封面」在一屏内读完。 */
+  .nh42 { min-height: 0; padding: 70px var(--nh-gx) 30px; gap: 18px; }
+  .nh42-title { font-size: clamp(24px, 6.4vw, 32px); line-height: 1.28; }
+  .nh42-p { margin-top: 12px; padding-left: 2px; font-size: 13.5px; line-height: 1.68; }
+  .nh42 .nh-btns { margin-top: 16px; }
+  .nh42-stats { margin-top: 20px; padding-top: 14px; gap: 16px; }
+  .nh42-stats .nh-stat b { font-size: 21px; }
+  .nh42-stats .nh-stat > span { margin-top: 5px; font-size: 9.5px; }
+  .nh42-ph { height: min(74vw, 380px); min-height: 280px; }
   .nh42-tag { font-size: 9px; padding: 6px 9px; }
   .nh42-idx { font-size: 8.5px; padding: 4px 8px; }
 
@@ -1377,3 +1406,128 @@
   background: radial-gradient(58% 100% at 50% 0%, rgba(240, 144, 144, .075), transparent 72%);
 }
 .nh + .home-sections > .section:first-child { padding-top: clamp(52px, 7vw, 92px); }
+
+/* ==========================================================================
+   内页复用首屏页头（与首页同一份标记，见 modules/site-header.html）
+   外壳只提供 .nh--pXX 作用域与 CSS 变量，不参与首屏布局；
+   页头从「absolute 叠在首屏上」改成「sticky 吸顶」，造型仍按所选方案。
+   ========================================================================== */
+.nh.nh-hd-shell {
+  /* 外壳自己当吸顶容器（不再用 display:contents）。
+     原因：.nh 是首屏类，自带 min-height:100svh + overflow:hidden，
+     一旦外壳退化成 block（老浏览器、或 HTML/CSS 版本不同步时的缓存），
+     它就会撑满一整屏，把内页内容整体推下去，顶部留一大片空白。
+     这里显式清零首屏属性，外壳高度永远等于页头高度。 */
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  isolation: auto;
+}
+.nh-hd-shell--page .nh-hd {
+  /* 吸顶由外壳承担，页头回到普通流 */
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  transform: none;
+  width: auto;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--border-color, #e7e4dc);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #17171b);
+  animation: none;
+}
+.nh-hd-shell--page .nh-hd.is-scrolled {
+  box-shadow: 0 10px 24px -22px rgba(0, 0, 0, .55);
+}
+/* 3 · 校墙封面：保留居中胶囊造型，悬浮间距改由外壳 padding 提供 */
+.nh--cover.nh-hd-shell--page { padding: 12px 0 6px; }
+.nh--cover.nh-hd-shell--page .nh-hd {
+  width: min(920px, 92%);
+  margin: 0 auto;
+  border-radius: 999px;
+  border: 1px solid rgba(20, 20, 22, .08);
+  background: rgba(255, 255, 255, .88);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 14px 30px -24px rgba(0, 0, 0, .5);
+}
+/* 2 · 品牌墙 / 8 · 层叠卡片：底线由页头自身绘制，外壳不重复 */
+.nh--wall.nh-hd-shell--page .nh-hd,
+.nh--cards.nh-hd-shell--page .nh-hd { border-bottom: 0; }
+/* 6 · 双色分栏：内页没有右侧色块，去掉分栏留白 */
+.nh--p46.nh-hd-shell--page .nh-hd { padding: 0 var(--nh-gx); gap: 24px; }
+.nh--p46.nh-hd-shell--page .nh-brand { padding-left: 0; }
+.nh--p46.nh-hd-shell--page .nh-nav { padding-right: 0; }
+.nh--p46.nh-hd-shell--page .nh-cta {
+  flex: 0 0 auto;
+  padding-right: 0;
+  border-left: 0;
+}
+
+@media (max-width: 719px) {
+  .nh-hd-shell--page .nh-hd { padding: 0 var(--nh-gx); }
+  .nh--cover.nh-hd-shell--page .nh-hd { width: 94%; padding: 0 4px 0 12px; }
+}
+
+/* 工具区：搜索 / 明暗切换 / 登录（首页与内页共用，只渲染一套） */
+.nh-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+  flex: 0 0 auto;
+}
+/* 8 · 层叠卡片：首页页头三件是绝对定位，工具区贴着 CTA 左侧排 */
+.nh--cards:not(.nh-hd-shell--page) .nh-tools {
+  position: absolute;
+  right: calc(var(--nh-gx) + 94px);
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 0;
+}
+.nh-tools .icon-btn {
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+}
+.nh-tools .icon-btn:hover {
+  color: var(--nh-red-deep);
+  background: rgba(20, 20, 22, .05);
+  transform: none;
+}
+.nh-tools .icon-btn:active { transform: none; }
+
+/* 菜单对齐：首页首屏外壳（section.nh）与内页外壳（.nh-hd-shell--page）都带 nav-align-*，
+   这里用 .nh 统一匹配，保证后台「菜单对齐」这一设置对首页与内页同时生效、位置完全一致 */
+.nh.nav-align-center .nh-nav { margin-left: auto; margin-right: auto; }
+.nh.nav-align-left .nh-nav { margin-left: clamp(16px, 2.4vw, 40px); margin-right: auto; }
+.nh.nav-align-right .nh-nav { margin-left: auto; margin-right: 0; }
+
+/* 8 · 层叠卡片：内页把绝对定位的三块改回流式，底边装饰线与 66px 红线保留 */
+.nh--cards.nh-hd-shell--page .nh-brand,
+.nh--cards.nh-hd-shell--page .nh-nav,
+.nh--cards.nh-hd-shell--page .nh-cta {
+  position: static;
+  transform: none;
+}
+.nh--cards.nh-hd-shell--page .nh-nav { height: auto; }
+
+/* 窄屏只留品牌 / CTA / 汉堡，工具栏交给抽屉，避免页头拥挤 */
+@media (max-width: 1023px) {
+  .nh-tools { display: none; }
+}

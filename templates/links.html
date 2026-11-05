@@ -1,6 +1,21 @@
 <!DOCTYPE html>
+<!--
+  外层 th:block 只服务 SEO：Thymeleaf 的处理顺序是 th:replace(100) → th:with(600)，
+  写在 <html> 上的 th:with 对 th:replace 的参数不可见，所以必须包在外面。
+  这里把插件注入的「分组 → 链接」拍平成一句可直接进 meta description 的文字。
+-->
+<th:block th:with="seoLinkGroups=${links != null ? null : (groups != null ? groups.?[links != null and !#lists.isEmpty(links)] : null)},
+                   seoLinkCount=${links != null ? #lists.size(links) : (seoLinkGroups != null ? #aggregates.sum(seoLinkGroups.![links].![#this.size()]) : 0)},
+                   seoLinkNames=${links != null ? #strings.listJoin(links.![spec.displayName], '、') : (seoLinkGroups != null ? #strings.listJoin(seoLinkGroups.![links].![#this.![spec.displayName]].![#strings.listJoin(#this, '、')], '、') : '')},
+                   seoLinkDesc=${seoLinkCount > 0 ? #messages.msg('links.seoDesc', seoLinkCount, #strings.abbreviate(seoLinkNames, 110)) : #messages.msg('links.description')}">
 <html xmlns:th="https://www.thymeleaf.org"
-      th:replace="~{modules/layout :: html(title=|${linksTitle ?: #messages.msg('home.links')} - ${site.title}|, content=~{::content}, headExtra=~{modules/layout :: noHead}, description=|${#messages.msg('links.description')}|, canonical='/links', image=${site.logo}, pageType='website', robots=null)}">
+      th:replace="~{modules/layout :: html(title=|${linksTitle ?: #messages.msg('home.links')} - ${site.title}|, content=~{::content}, headExtra=~{::linksHead}, description=${seoLinkDesc}, canonical='/links', image=${site.logo}, pageType='website', robots=null)}">
+
+<!-- 友链页 head：关键词与每个站点的结构化数据由 SEO 片段输出 -->
+<th:block th:fragment="linksHead">
+  <th:block th:replace="~{modules/seo :: linksPage(groups=${groups}, links=${links})}"></th:block>
+</th:block>
+
 <th:block th:fragment="content">
 
   <!--
@@ -179,7 +194,7 @@
                 </span>
               </div>
               <div class="link-body">
-                <div class="link-name" th:text="${link.spec.displayName}"></div>
+                <h3 class="link-name" th:text="${link.spec.displayName}"></h3>
                 <div class="link-desc"
                      th:if="${link.spec.description != null and !#strings.isEmpty(link.spec.description)}"
                      th:text="${link.spec.description}"></div>
@@ -211,7 +226,7 @@
           </span>
         </div>
         <div class="link-body">
-          <div class="link-name" th:text="${link.spec.displayName}"></div>
+          <h3 class="link-name" th:text="${link.spec.displayName}"></h3>
           <div class="link-desc"
                th:if="${link.spec.description != null and !#strings.isEmpty(link.spec.description)}"
                th:text="${link.spec.description}"></div>
@@ -294,3 +309,4 @@
 
 </th:block>
 </html>
+</th:block>

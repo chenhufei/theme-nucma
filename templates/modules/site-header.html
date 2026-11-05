@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<body>
+<!--
+  全站页头 · 单一真源
+  ------------------------------------------------------------------
+  造型来自当前首屏方案（theme.config.home_hero.layout）：
+  每套首屏的页头样式写在 home-hero.css 的 `.nh--pXX .nh-hd` 作用域里，
+  这里只负责把同一段标记套进对应作用域，所以换首屏 = 全站页头一起换。
+
+  mode:
+    home  —— 首屏内使用，absolute 叠在首屏之上（沿用原行为）
+    page  —— 内页使用，外面包一层 .nh-hd-shell 提供变量与白底，
+             由 home-hero.css 的 `.nh-hd-shell--page` 把它改成 sticky。
+  ------------------------------------------------------------------
+-->
+<th:block th:fragment="siteHeader(layout, mode)">
+  <div th:if="${mode == 'page'}"
+       class="nh nh-hd-shell nh-hd-shell--page"
+       style="min-height:0"
+       th:classappend="${(layout == 'p42' ? 'nh--p42r' : 'nh--' + layout) + ' nav-align-' + #strings.defaultString(theme.config.navigation?.nav_align, 'right')}">
+    <th:block th:replace="~{modules/site-header :: navBar(mode=${mode})}"></th:block>
+  </div>
+  <!-- th:replace 的优先级(100)高于 th:unless(300)，条件必须放在外层，否则会两条分支都渲染 -->
+  <th:block th:unless="${mode == 'page'}">
+    <th:block th:replace="~{modules/site-header :: navBar(mode=${mode})}"></th:block>
+  </th:block>
+</th:block>
+
+<header class="nh-hd" th:fragment="navBar(mode)"
+        th:with="pageMode=${mode == 'page'},
+                 nav=${theme.config.navigation},
+                 logoMode=${#strings.defaultString(nav?.logo_mode, 'mark')},
+                 logoImage=${nav?.logo_image},
+                 brandName=${#strings.isEmpty(nav?.brand_name) ? site.title : nav.brand_name},
+                 brandEn=${nav?.brand_en},
+                 ctaText=${nav?.header_cta_text},
+                 ctaUrl=${#strings.defaultString(nav?.header_cta_url, '/members')},
+                 navMenuName=${nav?.header_menu},
+                 navMenu=${navMenuName != null and !#strings.isEmpty(navMenuName) ? menuFinder.getByName(navMenuName) : null},
+                 useMenu=${navMenu != null and navMenu.menuItems != null and !#lists.isEmpty(navMenu.menuItems)},
+                 navItems=${nav?.custom_links},
+                 hasNavItems=${navItems != null and !#lists.isEmpty(navItems)},
+                 hasLogoImage=${logoMode == 'image' and logoImage != null and !#strings.isEmpty(logoImage)},
+                 showMark=${logoMode == 'mark'},
+                 logoChar=${!#strings.isEmpty(brandEn) ? #strings.substring(brandEn, 0, 1) : (!#strings.isEmpty(brandName) ? #strings.substring(brandName, 0, 1) : 'N')}">
+  <a class="nh-brand" th:href="@{/}">
+    <img th:if="${hasLogoImage}" class="nh-logo-img" th:src="${logoImage}" th:alt="${brandName}" width="28" height="28" decoding="async" />
+    <s th:if="${showMark}" class="nh-mark" th:text="${logoChar}">N</s>
+    <b th:text="${brandName}">全国高校自媒体联盟</b>
+    <u th:if="${!#strings.isEmpty(brandEn)}" th:text="${brandEn}">NUCMA</u>
+  </a>
+  <nav class="nh-nav" th:aria-label="#{home.heroNavAria}">
+    <th:block th:if="${useMenu}">
+      <a th:each="item : ${navMenu.menuItems}"
+         th:if="${!#strings.isEmpty(item.status?.href ?: item.spec?.href)}"
+         th:href="@{${item.status?.href ?: item.spec?.href}}"
+         th:text="${item.status?.displayName ?: item.spec?.displayName}"
+         th:target="${item.spec?.target?.value}"></a>
+    </th:block>
+    <th:block th:unless="${useMenu}">
+      <th:block th:if="${hasNavItems}">
+        <a th:each="item : ${navItems}"
+           th:if="${item.text != null and !#strings.isEmpty(item.text) and item.url != null and !#strings.isEmpty(item.url)}"
+           th:href="@{${item.url}}"
+           th:text="${item.text}"></a>
+      </th:block>
+    </th:block>
+  </nav>
+  <a class="nh-cta" th:if="${ctaText != null and !#strings.isEmpty(ctaText)}"
+     th:href="@{${ctaUrl}}" th:text="${ctaText}">加入联盟</a>
+  <!-- 工具区：搜索 / 明暗切换 / 登录。首页与内页共用同一套，保证页头完全一致。 -->
+  <div class="nh-tools">
+    <th:block th:if="${theme.config.navigation?.search_enabled != false}">
+      <button th:if="${pluginFinder.available('PluginSearchWidget')}"
+              type="button"
+              data-widget-open="SearchWidget"
+              class="btn btn-ghost btn-circle btn-sm icon-btn" aria-label="搜索" th:aria-label="#{common.search}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+      </button>
+    </th:block>
+    <button th:if="${theme.config.navigation?.theme_toggle_enabled != false}"
+            id="themeToggle" class="btn btn-ghost btn-circle btn-sm icon-btn theme-toggle-btn"
+            aria-label="切换主题" th:aria-label="#{theme.switchTheme}" aria-pressed="false">
+      <span class="theme-toggle-icons" aria-hidden="true">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"></circle>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 5.64l1.42-1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 18.36l1.42 1.42"></path>
+        </svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </span>
+    </button>
+    <th:block th:if="${theme.config.navigation?.show_login_btn != false}">
+      <div class="login-entry-wrap" id="loginEntryWrap">
+        <button id="loginEntry" class="btn btn-ghost btn-circle btn-sm icon-btn login-entry" type="button" title="登录" th:title="#{user.login}" aria-label="登录" th:aria-label="#{user.login}" aria-expanded="false" aria-controls="loginDropdown">
+          <img class="login-avatar" alt="" width="28" height="28" hidden />
+          <span class="login-avatar-placeholder" hidden>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+          </span>
+          <svg class="login-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <circle cx="12" cy="8" r="3.5"></circle>
+            <path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path>
+            <circle cx="12" cy="12" r="10"></circle>
+          </svg>
+        </button>
+        <ul id="loginDropdown" class="menu menu-sm login-dropdown" role="menu" aria-label="用户菜单" th:aria-label="#{user.menu}" aria-hidden="true">
+          <li>
+            <a href="/uc" role="menuitem" class="login-menu-uc">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span th:text="#{user.center}">个人中心</span>
+            </a>
+          </li>
+          <li>
+            <a href="/logout" role="menuitem" class="login-menu-logout">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span th:text="#{user.logout}">退出登录</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </th:block>
+  </div>
+  <button class="nh-hm" id="mobileMenuToggle" type="button"
+          aria-controls="mobileMenu" aria-expanded="false" th:aria-label="#{home.heroMenuAria}">
+    <i></i><i></i><i></i>
+  </button>
+</header>
+</body>
+</html>

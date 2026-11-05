@@ -249,7 +249,10 @@
     el.textContent = text;
     el.classList.remove('is-two');
     var base = baseRem * 16, fs = base, lim = maxW * 0.975, guard = 0;
-    /* 一行放得下就一行 */
+    /* 一行优先：放不下就逐档缩字号，最低到基准的 50%
+       （长校名缩到这个比例仍比折成两行整齐；再长才允许折行） */
+    var floor = Math.max(11, base * 0.5);
+    while (fs > floor && nameWidth(text, fs) > lim) fs -= 0.5;
     if (nameWidth(text, fs) <= lim) { el.style.fontSize = (fs / 16).toFixed(3) + 'rem'; return; }
     /* 放不下 → 降一档，两行排；断行位置挑左右最接近的，避免最后一行只剩一个字 */
     fs = base * 0.72;
