@@ -4,6 +4,28 @@
 
 ---
 
+## 0.0.13 · 2026-11-06
+
+*影响面：成员页与 404 页的工牌卡片、所有页面的页脚（样式与脚本改为外置资源）、成员页错误提示文案。纯内部整理，前台观感与 0.0.12 一致。*
+
+### 重构（小）
+
+- **工牌卡片只留一份**：`badge-status` / 头像 / 二维码 / 卡扣那一整块 HTML（约 9.7K 字符）原本在 `templates/error/404.html` 与 `templates/members.html` 各存一份，改一处必忘另一处。现抽成 `templates/fragments/badge-card.html`，接收 `brandLabel`（品牌字样：404 页读后台配置的成员徽标，成员页固定 `Members Pass`）与 `ariaLabel`（无障碍标签，走 i18n）两个参数。两处页面各减 9.5K / 9.0K 字符。
+- **页脚样式与脚本从模板里搬出来**：`templates/modules/layout.html` 内联了 2 段 `<style>`（10,402 + 8,458 字符）与 2 段 `<script>`（约 12.5K 字符），文件一度到 1,033 行。现在样式外置到 `src/footer/style12.css` / `style33.css`、脚本外置到 `src/footer/style12.js` / `style33.js`，构建时按内容指纹产出到 `templates/assets/footer/`；模板只剩 `<link>`、一行配置注入与 `defer` 脚本引用，**551 行**（内联 32,729 → 3,192 字符）。
+- 脚本里原来用 Thymeleaf 内联注释（`/*[[${...}]]*/`）逐处取服务端值，外置后改为读模板注入的 `window.__NUCMA_FOOTER_12` / `__NUCMA_FOOTER_33`，两份页脚互不干扰。
+
+### 修复（小）
+
+- **成员页错误提示读错字段**：成员插件 0.0.8 起错误响应统一为 RFC 7807，`members.js` 里 4 处仍读 `data.message`，出错时会退化成通用文案。改为 `data.detail || data.message`，新旧插件都能显示具体原因。
+
+### 说明
+
+- `tools/migrate-theme-settings.mjs` 从工作区收进仓内（备份目录由 `.local-halo` 改为 `.backup/`，已进 `.gitignore`），单独 clone 仓库的协作者也能跑老站点设置迁移。
+- `tools/verify-theme.mjs` 增补页脚 4 个构建产物的断言；原先读 `layout.html` 的两条页脚断言（兜底列 `1.75fr`、按真实 `.footer-col` 数覆盖 `--l-cols`）改读外置后的 `src/footer/style12.*`，否则样式搬走后断言会「永远读不到内容却不报错」。
+- 安装包 91 个文件、资源指纹 `0.0.13-5ff63780`。
+
+---
+
 ## 0.0.12 · 2026-11-05
 
 *影响面：首页首屏数字、首页成员与友链区块、成员页与友链页的卡片渲染、后台四组设置的条件显隐。`0.0.11` 已发版上线，故按惯例升号。*
