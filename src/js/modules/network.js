@@ -198,11 +198,13 @@ export function createMemberNetwork(options) {
   var starSeed = 0;
 
   // —— 沉浸态：进入「关系网」视图后整页切夜色 ——
-  // immersive = 是否处于「关系网 + 强制夜色」状态；用户手动切回白天则解除。
+  // immersive = 是否处于「关系网 + 全屏星图」状态；由视图切换控制，明暗切换不再解除。
   var immersive = false;
   var immersivePrevTheme = 'light';
   var suppressThemeWatch = false;
   var themeTransitionTimer = null;
+  // 关系分析面板的 resize 监听解绑器：面板每次重建都要换新，避免监听堆积
+  var affinityResizeOff = null;
 
   function now() {
     return window.performance && window.performance.now ? window.performance.now() : Date.now();
@@ -966,12 +968,13 @@ export function createMemberNetwork(options) {
       return y.strength - x.strength;
     });
     // 关联成员：竖向单列胶囊，头像 + 名字占满浮层宽度。
-    // 成员多时浮层内走马灯（下→上渐出渐隐）；「查看全部关系」按钮在星图下方展开完整列表。
+    // 全部列出、不截断：条目超出面板高度时由下面的走马灯自动滚动（悬停暂停），
+    // 「查看全部关系」按钮仍在星图下方展开完整通栏列表。
     var scroll = document.createElement('div');
     scroll.className = 'member-network-affinity-scroll';
     var list = document.createElement('ul');
     list.className = 'member-network-affinity-list';
-    sorted.slice(0, 8).forEach(function(relation) {
+    sorted.forEach(function(relation) {
       var other = relation.a === focus ? relation.b : relation.a;
       var item = document.createElement('li');
       item.className = 'member-network-affinity-chip';
@@ -1012,7 +1015,9 @@ export function createMemberNetwork(options) {
     affinityEl.appendChild(scroll);
 
     // 胶囊超出可视高度时启动走马灯：复制一份内容，向上无缝循环滚动（无跳变卡顿）。
+    // 滚动速度按内容高度换算（每 30px 约 1s），成员越多滚得越慢，读得清。
     var markMarquee = function() {
+      if (!scroll.isConnected || !list.isConnected) return;
       var overflow = list.scrollHeight > scroll.clientHeight + 4;
       var running = scroll.classList.contains('is-marquee');
       if (overflow === running) return;
@@ -1021,8 +1026,14 @@ export function createMemberNetwork(options) {
         var clone = list.cloneNode(true);
         clone.className = 'member-network-affinity-list member-network-affinity-list-clone';
         clone.setAttribute('aria-hidden', 'true');
+        // 克隆体只做视觉循环，不能进 Tab 焦点顺序
+        Array.prototype.forEach.call(clone.querySelectorAll('button'), function(btn) {
+          btn.setAttribute('tabindex', '-1');
+        });
         scroll.appendChild(clone);
         scroll.classList.add('is-marquee');
+        scroll.style.setProperty('--affinity-marquee-duration',
+          Math.max(6, Math.round(list.scrollHeight / 30)) + 's');
       } else {
         var extra = scroll.querySelector('.member-network-affinity-list-clone');
         if (extra) scroll.removeChild(extra);
@@ -1030,7 +1041,13 @@ export function createMemberNetwork(options) {
       }
     };
     requestAnimationFrame(markMarquee);
+    // 面板重建后旧监听必须撤掉，否则每次点击成员都多挂一个 resize 监听
+    if (affinityResizeOff) affinityResizeOff();
     window.addEventListener('resize', markMarquee, { passive: true });
+    affinityResizeOff = function() {
+      window.removeEventListener('resize', markMarquee);
+      affinityResizeOff = null;
+    };
 
     // 主要关系人旁放「查看全部关系」：点开在星图下方通栏展示，无需悬浮
     if (sorted.length > 0) {
@@ -1042,13 +1059,6 @@ export function createMemberNetwork(options) {
         toggleAllPanel(focus);
       });
       affinityEl.appendChild(viewAll);
-    }
-
-    if (sorted.length > 8) {
-      var more = document.createElement('p');
-      more.className = 'member-network-affinity-empty';
-      more.textContent = t('network.omitted', sorted.length - 8);
-      affinityEl.appendChild(more);
     }
   }
 
@@ -2507,11 +2517,10 @@ export function createMemberNetwork(options) {
     var themeObserver = new MutationObserver(function() {
       accent = readAccent();
       requestDraw();
-      // 沉浸态下若检测到主题被外力切成白天（用户手动点主题按钮），
-      // 立即解除沉浸态并恢复隐藏元素与白色背景；不抢用户的选择。
-      if (!suppressThemeWatch && immersive && active
-        && document.documentElement.getAttribute('data-theme') === 'light') {
-        exitImmersive(false);
+      // 沉浸态下用户手动切明暗：不再退回内嵌星图（全屏星图自带夜色），
+      // 只把「退出时要恢复的主题」对齐成当前值，避免退出时把用户刚选的白天又翻回去。
+      if (!suppressThemeWatch && immersive && active) {
+        immersivePrevTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
       }
     });
     themeObserver.observe(document.documentElement, {

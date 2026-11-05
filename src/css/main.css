@@ -2869,10 +2869,11 @@ html.is-network-immersive body {
   mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
 }
 
-/* 走马灯状态：原列表 + 复制列表，各自向上平移自身高度实现无缝循环 */
+/* 走马灯状态：原列表 + 复制列表，各自向上平移自身高度实现无缝循环。
+   时长由 JS 按内容高度写入 --affinity-marquee-duration（每 30px 约 1s），成员越多越慢。 */
 .member-network-affinity-scroll.is-marquee .member-network-affinity-list {
   margin-top: 0;
-  animation: affinityMarquee 5s linear infinite;
+  animation: affinityMarquee var(--affinity-marquee-duration, 5s) linear infinite;
 }
 
 /* 复制列表紧贴原列表下方，去掉顶部间距，保证 -100% 位移首尾无缝 */
@@ -2888,6 +2889,19 @@ html.is-network-immersive body {
 @keyframes affinityMarquee {
   0% { transform: translateY(0); }
   100% { transform: translateY(-100%); }
+}
+
+/* 关掉动效偏好时不滚动，改成面板内手动滚动，内容照样全部可达 */
+@media (prefers-reduced-motion: reduce) {
+  .member-network-affinity-scroll.is-marquee .member-network-affinity-list {
+    animation: none;
+  }
+  .member-network-affinity-scroll.is-marquee {
+    -webkit-mask-image: none;
+    mask-image: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }
 
 /* 「查看全部关系」按钮：面板底部整宽 */
